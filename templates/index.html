@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <title>Hostel Management System</title>
     <style>
         * {
@@ -95,6 +97,71 @@
         #getinspired{
             margin-left: 100px;
         }
+        .footer {
+            background-color: #111;
+            color: white;
+            padding: 40px 10%;
+        }
+        .footer-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .footer-section {
+            margin-bottom: 20px;
+        }
+        .footer-section h3 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .footer-section a {
+            display: block;
+            text-decoration: none;
+            color: #ccc;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .footer-section a:hover {
+            color: #f8b400;
+        }
+        .social-icons a {
+            color: white;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        .social-icons a:hover {
+            color: #f8b400;
+        }
+        .footer-bottom {
+            border-top: 1px solid #444;
+            text-align: center;
+            padding-top: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .footer-bottom a {
+            color: #ccc;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        .footer-bottom a:hover {
+            color: #f8b400;
+        }
+        .app-box {
+            text-align: right;
+        }
+        .app-box img {
+            width: 100px;
+        }
+        @media (max-width: 768px) {
+            .footer-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            .app-box {
+                text-align: center;
+            }
+        }
     </style>
 
 </head>
@@ -145,7 +212,71 @@
             </div>
         </div>
     </div>
+<br><br><br><br><br>
 
+
+
+
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Follow us on</h3>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                    <a href="#"><i class="fab fa-pinterest"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                </div>
+                
+                <p>🌍 English | 💰 INR</p>
+            </div>
+            <div class="footer-section">
+                <h3>Accommodation</h3>
+                <a href="#">Hostels</a>
+                <a href="#">Hotels</a>
+                <a href="#">Bed and Breakfast</a>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="#">Blog</a>
+                <a href="#">Booking Guarantee</a>
+                <a href="#">Hostel Awards</a>
+                <a href="#">Tours & Experiences</a>
+                <a href="#">Solo Travel</a>
+                <a href="#">Student Discount</a>
+                <a href="#">Roomies</a>
+            </div>
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <a href="#">Hostelworld Group PLC</a>
+                <a href="#">Press</a>
+                <a href="#">Careers</a>
+            </div>
+            <div class="footer-section">
+                <h3>Work With Us</h3>
+                <a href="#">Hostel Sign Up</a>
+                <a href="#">Affiliate Program</a>
+                <a href="#">Hostelworld Inbox</a>
+            </div>
+            <div class="app-box">
+                <img src="qr-code.png" alt="Get the App QR Code">
+                <p>Get the App.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 1999-2025 Hostelworld.com Limited</p>
+            <a href="#">Data Protection Notice & DSA</a>
+            <a href="#">Terms & Legal</a>
+            <a href="#">Coupons</a>
+            <a href="#">Vouchers</a>
+            <a href="#">Website Testing</a>
+            <a href="#">Site Map</a>
+            <a href="#">Cookie Preferences</a>
+        </div>
+    </footer>
 
 
 
