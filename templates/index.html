@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostel Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            padding-top: 60px;
+            background-color: #f4f4f4;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            padding: 15px 20px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin: 0 10px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            font-size: 16px;
+        }
+
+        .nav-links a:hover {
+            background-color: #575757;
+            border-radius: 5px;
+        }
+
+        .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .container1 {
+            margin: 20px 100px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            min-height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #boss_container {
+            display: flex;
+            justify-content: center;
+        }
+
+        #container {
+            display: flex;
+            gap: 150px;
+        }
+
+        .child {
+            display: flex;
+            flex-direction: column;
+            gap: 100px;
+        }
+
+        img {
+            border-radius: 27px;
+        }
+
+        #container>div:nth-child(2),
+        #container>div:nth-child(4) {
+            margin-top: 100px;
+        }
+        #getinspired{
+            margin-left: 100px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">Hostel</div>
+        <ul class="nav-links">
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Room Allocation</a></li>
+            <li><a href="#">Fees Payment</a></li>
+            <li><a href="#">Login/Signup</a></li>
+            <li><a href="#">Complaint/Maintenance</a></li>
+        </ul>
+    </nav>
+
+    <div class="container1">
+        <h1>Welcome to Hostel</h1>
+    </div>
+    <br><br><br><br>
+
+    <div id="getinspired">
+        <h1>Get Inspired!!</h1>
+        <p>Explore our Hostels and there unforgettable ambiance and experience!!</p>
+        <br><br><br>
+    </div>
+    <div id="boss_container">
+        <div id="container">
+            <div class="child">
+                <img src="../static/amsterdam.jpg" alt="">
+                <img src="../static/barcelona.jpg" alt="">
+            </div>
+
+            <div class="child">
+                <img src="../static/dublin.jpg" alt="">
+                <img src="../static/london.jpg" alt="">
+            </div>
+
+            <div class="child">
+                <img src="../static/paris.jpg" alt="">
+                <img src="../static/amsterdam.jpg" alt="">
+            </div>
+
+            <div class="child">
+                <img src="../static/london.jpg" alt="">
+                <img src="../static/barcelona.jpg" alt="">
+            </div>
+        </div>
+    </div>
+
+
+
+
+</body>
+
+</html>
