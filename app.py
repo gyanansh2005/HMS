@@ -7,8 +7,9 @@ def home():
     return render_template('index.html')
 
 
-
-
+@app.route('/room_allocation')
+def room_allocation():
+    return render_template('room_allocation.html')
 
 
 

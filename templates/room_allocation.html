@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Allocation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 70%;
+            margin: 30px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .allocation-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .allocation-form label {
+            font-weight: bold;
+        }
+
+        .allocation-form select,
+        .allocation-form input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .allocation-form button {
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .allocation-form button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Room Availability Section */
+        .room-status {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Legend Section */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 3px;
+        }
+
+        .green { background-color: #4CAF50; }  /* Available */
+        .red { background-color: #FF5733; }   /* Booked */
+        .yellow { background-color: #FFC107; } /* Maintenance */
+
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .room {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .available {
+            background-color: #4CAF50; /* Green */
+            color: white;
+        }
+
+        .booked {
+            background-color: #FF5733; /* Red */
+            color: white;
+        }
+
+        .maintenance {
+            background-color: #FFC107; /* Yellow */
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    {%extends 'base.html'%}
+    {%block content%}
+    <div class="container">
+        <h2>Room Allocation</h2>
+
+        <!-- Room Allocation Form -->
+        <form class="allocation-form">
+            <label for="hostel">Select Hostel:</label>
+            <select id="hostel" name="hostel">
+                <option value="hostel-1">Hostel 1</option>
+                <option value="hostel-2">Hostel 2</option>
+                <option value="hostel-3">Hostel 3</option>
+                <option value="hostel-4">Hostel 4</option>
+                <option value="hostel-5">Hostel 5</option>
+                <option value="hostel-6">Hostel 6</option>
+            </select>
+
+            <label for="floor">Select Floor:</label>
+            <select id="floor" name="floor">
+                <option value="1">Floor 1</option>
+                <option value="2">Floor 2</option>
+                <option value="3">Floor 3</option>
+                <option value="4">Floor 4</option>
+                <option value="5">Floor 5</option>
+            </select>
+
+            <label for="room-type">Select Room Type:</label>
+            <select id="room-type" name="room-type">
+                <option value="single">Single Seater</option>
+                <option value="double">Double Sharing</option>
+                <option value="four">4 Sharing</option>
+            </select>
+
+            <label for="ac">AC/Non-AC:</label>
+            <select id="ac" name="ac">
+                <option value="ac">AC</option>
+                <option value="non-ac">Non-AC</option>
+            </select>
+
+            <label for="student-name">Student Name:</label>
+            <input type="text" id="student-name" name="student-name" required>
+
+            <button type="submit">Allocate Room</button>
+        </form>
+
+        <!-- Room Availability Status -->
+        <div class="room-status">
+            <h3>Room Availability Status</h3>
+
+            <!-- Legend for Room Colors -->
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-color green"></span> Available
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color red"></span> Booked
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color yellow"></span> Maintenance
+                </div>
+            </div>
+
+            <div class="room-grid" id="room-grid">
+                <!-- Rooms will be dynamically generated here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function generateRoomStatus() {
+            const roomGrid = document.getElementById('room-grid');
+            roomGrid.innerHTML = ''; // Clear previous rooms
+
+            for (let i = 1; i <= 15; i++) {
+                let roomDiv = document.createElement('div');
+                roomDiv.classList.add('room');
+                roomDiv.textContent = `Room ${i}`;
+
+                // Randomly assign status (for demo purposes)
+                let status = Math.random();
+                if (status < 0.6) {
+                    roomDiv.classList.add('available'); // 60% Available
+                } else if (status < 0.85) {
+                    roomDiv.classList.add('booked'); // 25% Booked
+                } else {
+                    roomDiv.classList.add('maintenance'); // 15% Maintenance
+                }
+                
+                roomGrid.appendChild(roomDiv);
+            }
+        }
+
+        // Update room availability when hostel/floor changes
+        document.getElementById('hostel').addEventListener('change', generateRoomStatus);
+        document.getElementById('floor').addEventListener('change', generateRoomStatus);
+        
+        // Initial call to populate the room status
+        generateRoomStatus();
+        </script>
+        {%endblock%}
+</body>
+</html>
