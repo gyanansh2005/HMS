@@ -20,46 +20,6 @@
             background-color: #f4f4f4;
         }
 
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #333;
-            padding: 15px 20px;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-        }
-
-        .nav-links li {
-            margin: 0 10px;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 15px;
-            font-size: 16px;
-        }
-
-        .nav-links a:hover {
-            background-color: #575757;
-            border-radius: 5px;
-        }
-
-        .logo {
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-        }
-
         .container1 {
             margin: 20px 100px;
             background: white;
@@ -97,89 +57,17 @@
         #getinspired{
             margin-left: 100px;
         }
-        .footer {
-            background-color: #111;
-            color: white;
-            padding: 40px 10%;
-        }
-        .footer-container {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-        }
-        .footer-section {
-            margin-bottom: 20px;
-        }
-        .footer-section h3 {
-            color: #fff;
-            margin-bottom: 10px;
-        }
-        .footer-section a {
-            display: block;
-            text-decoration: none;
-            color: #ccc;
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        .footer-section a:hover {
-            color: #f8b400;
-        }
-        .social-icons a {
-            color: white;
-            font-size: 24px;
-            margin-right: 15px;
-        }
-        .social-icons a:hover {
-            color: #f8b400;
-        }
-        .footer-bottom {
-            border-top: 1px solid #444;
-            text-align: center;
-            padding-top: 10px;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        .footer-bottom a {
-            color: #ccc;
-            margin: 0 10px;
-            text-decoration: none;
-        }
-        .footer-bottom a:hover {
-            color: #f8b400;
-        }
-        .app-box a{
-            text-align: right;
-            color: white;
-            text-decoration: none;
-        }
-        @media (max-width: 768px) {
-            .footer-container {
-                flex-direction: column;
-                text-align: center;
-            }
-            .app-box {
-                text-align: center;
-            }
-        }
     </style>
 
 </head>
 
 <body>
 
-    <nav class="navbar">
-        <div class="logo">Hostel</div>
-        <ul class="nav-links">
-            <li><a href="#">Home</a></li>
-            <li><a href="#">Room Allocation</a></li>
-            <li><a href="#">Fees Payment</a></li>
-            <li><a href="#">Login/Signup</a></li>
-            <li><a href="#">Complaint/Maintenance</a></li>
-        </ul>
-    </nav>
+    {%extends "base.html"%}
+    {%block content%}
 
     <div class="container1">
-        <h1>Welcome to Hostel</h1>
+        <h1>Welcome to Campusnet</h1>
     </div>
     <br><br><br><br>
 
@@ -210,72 +98,8 @@
                 <img src="../static/barcelona.jpg" alt="">
             </div>
         </div>
-    </div>
-<br><br><br><br><br>
-
-
-
-
-
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-section">
-                <h3>Follow us on</h3>
-                <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-youtube"></i></a>
-                    <a href="#"><i class="fab fa-pinterest"></i></a>
-                    <a href="#"><i class="fab fa-tiktok"></i></a>
-                </div>
-                
-                <p>🌍 English | 💰 INR</p>
-            </div>
-            <div class="footer-section">
-                <h3>Accommodation</h3>
-                <a href="#">Hostels</a>
-                <a href="#">Hotels</a>
-                <a href="#">Bed and Breakfast</a>
-            </div>
-            <div class="footer-section">
-                <h3>Quick Links</h3>
-                <a href="#">Blog</a>
-                <a href="#">Booking Guarantee</a>
-                <a href="#">Hostel Awards</a>
-                <a href="#">Tours & Experiences</a>
-                <a href="#">Solo Travel</a>
-                <a href="#">Student Discount</a>
-                <a href="#">Roomies</a>
-            </div>
-            <div class="footer-section">
-                <h3>About Us</h3>
-                <a href="#">Hostelworld Group PLC</a>
-                <a href="#">Press</a>
-                <a href="#">Careers</a>
-            </div>
-            <div class="footer-section">
-                <h3>Work With Us</h3>
-                <a href="#">Hostel Sign Up</a>
-                <a href="#">Affiliate Program</a>
-                <a href="#">Campusnet Inbox</a>
-            </div>
-            <div class="app-box" >
-                <a href="#"><p>Get to top</p></a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 1999-2025 Hostelworld.com Limited</p>
-            <a href="#">Data Protection Notice & DSA</a>
-            <a href="#">Terms & Legal</a>
-            <a href="#">Coupons</a>
-            <a href="#">Vouchers</a>
-            <a href="#">Website Testing</a>
-            <a href="#">Site Map</a>
-            <a href="#">Cookie Preferences</a>
-        </div>
-    </footer>
-
+    </div>   
+  {%endblock%}
 
 
 </body>
