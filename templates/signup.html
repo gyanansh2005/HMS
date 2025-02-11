@@ -17,7 +17,7 @@
             <div class="pill-4 rotate-45"></div>
         </div>
         <form class="signup" action="{{url_for('signup')}}" method="POST">
-            <h3 class="title">User    Signup</h3>
+            <h3 class="title">User  Signup</h3>
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages">
@@ -27,6 +27,7 @@
                 </div>
             {% endif %}
             {% endwith %}
+
             <div class="text-input">
                 <i class="ri-user-fill"></i>
                 <input type="text" id="name" name="name" placeholder="Name" required>
@@ -47,7 +48,7 @@
                 <i class="ri-lock-fill"></i>
                 <input type="password" placeholder="Confirm Password" id="confirm_password" name="confirm_password" required>
             </div>
-            <input type="submit" value="Signup" class="signup-btn">
+            <input type="submit" value="Signup" class="signup-btn" name="submit">
 
             <a href="#" class="create">Already have an account? Login</a>
         <br> <br>

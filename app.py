@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import InternalServerError
 import os
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SECRET_KEY'] = 'my_secret_key'
@@ -24,8 +25,7 @@ class User(db.Model):
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def __repr__(self):
-        return f"User ('{self.name}', '{self.username}', '{self.email}')"
-
+        return f"User  ('{self.name}', '{self.username}', '{self.email}')"
 
 app.config['DATABASE_CREATED'] = False
 
@@ -38,19 +38,13 @@ def create_tables():
             raise InternalServerError("Failed to create database tables")
         app.config['DATABASE_CREATED'] = True
 
-
-
 @app.route('/')
 def home():
     return render_template('index.html')
 
-
 @app.route('/room_allocation')
 def room_allocation():
     return render_template('room_allocation.html')
-
-
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -59,6 +53,7 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user and bcrypt.check_password_hash(user.password, password):
+            session['username'] = username
             flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
@@ -92,7 +87,20 @@ def signup():
                     flash('Failed to signup', 'danger')
     return render_template('signup.html')
 
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    flash('You have been logged out', 'success')
+    return redirect(url_for('home'))
 
+@app.route('/profile')
+def profile():
+    if 'username' in session:
+        user = User.query.filter_by(username=session['username']).first()
+        return render_template('profile.html', user=user)
+    else:
+        flash('You need to login to access your profile', 'danger')
+        return redirect(url_for('login'))
 
-if __name__=="__main__":
+if __name__ == "__main__":
     app.run(debug=True)

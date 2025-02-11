@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,7 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="../static/style.css">
 </head>
-
 <body>
     <div class="container">
         <div class="design">
@@ -19,14 +17,14 @@
             <div class="pill-4 rotate-45"></div>
         </div>
         <form class="login" action="{{url_for('login')}}" method="POST">
-            <h3 class="title">User Login</h3>
+            <h3 class="title">User  Login</h3>
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                <div class="flash-message {{ 'flash-message-' + category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ 'flash-message-' + category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
             {% endif %}
             {% endwith %}
 
@@ -49,5 +47,4 @@
         </form>
     </div>
 </body>
-
 </html>
