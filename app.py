@@ -46,6 +46,10 @@ def home():
 def room_allocation():
     return render_template('room_allocation.html')
 
+@app.route('/terms_and_conditions')
+def terms_and_conditions():
+    return render_template('terms_and_conditions.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

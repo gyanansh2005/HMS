@@ -91,13 +91,84 @@
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
+
+
+        .footer {
+        background: rgba(255, 255, 255, 0.15);
+        background-color: #fff;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        color: black;
+        text-align: center;
+        position: relative;
+        bottom: 0;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        border-top: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .footer-container {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        max-width: 100vw;
+    }
+
+    .footer-section {
+        flex: 1;
+        padding: 10px;
+        min-width: 150px;
+    }
+
+    .footer-section h3 {
+        margin-bottom: 10px;
+    }
+
+    .footer-section ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .footer-section ul li {
+        margin: 5px 0;
+    }
+
+    .footer-section ul li a {
+        text-decoration: none;
+        color: black;
+        transition: 0.3s;
+    }
+
+    .footer-section ul li a:hover {
+        color: darkgray;
+    }
+
+    .footer-bottom {
+        margin-top: 15px;
+        font-size: 14px;
+    }
+
+    .back-to-top {
+        display: inline-block;
+        margin-top: 10px;
+        text-decoration: none;
+        color: black;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .back-to-top:hover {
+        color: darkgray;
+    }
     </style>
 </head>
 <body>
 
     <!-- Navbar -->
     <div class="navbar" id="navbar">
-        <div class="logo">MyWebsite</div>
+        <div class="logo">CampusNest</div>
         <div>
             <a href="{{url_for('home')}}">Home</a>
 
@@ -114,10 +185,10 @@
             <div class="dropdown">
                 <a href="#">Hostels<i class="fa-solid fa-angle-down"></i></a>
                 <div class="dropdown-content">
-                    <a href="#">Hostel</a>
-                    <a href="#">Hoste2</a>
-                    <a href="#">Hoste3</a>
-                    <a href="#">House4</a>
+                    <a href="#">Campus 1</a>
+                    <a href="#">Campus 2</a>
+                    <a href="#">Campus 3</a>
+                    <a href="#">Campus 4</a>
                 </div>
             </div>
 
@@ -147,6 +218,49 @@
     </script>
     {%block content%}
     {%endblock%}
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <p>Providing the best hostel management services with efficiency and ease.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="{{url_for('terms_and_conditions')}}">Terms & Conditions</a></li>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Support</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <ul>
+                    <li><a href="#">Instagram</a></li>
+                    <li><a href="#">Facebook</a></li>
+                    <li><a href="#">Twitter</a></li>
+                    <li><a href="#">WhatsApp</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>Email: campusnest@gmail.com</p>
+                <p>Phone: +91 9876543210</p>
+            </div>
+            <div class="footer-section">
+                <h3>CampusNest</h3>
+                <p>Subscribe to our campusnest for updates.</p>
+                <input type="email" placeholder="Enter your email" style="padding: 5px; width: 80%; border-radius: 5px; border: 1px solid #ccc;">
+                <button style="padding: 5px 10px; margin-top: 5px; border: none; background: black; color: white; border-radius: 5px; cursor: pointer;">Subscribe</button>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Hostel Management System | CampusNest | All Rights Reserved</p>
+            <p><a href="#top" class="back-to-top">Back to Top</a></p>
+        </div>
+    </footer>
+
 
 </body>
 </html>
