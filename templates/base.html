@@ -133,10 +133,15 @@
             <li><a href="{{url_for('room_allocation')}}">Room Allocation</a></li>
             <li><a href="#">Fees Payment</a></li>
             <li><a href="#">Complaint/Maintenance</a></li>
+            {% if 'username' in session %}
+            <li><a href="#">Profile</a></li>
+            <li><a href="{{url_for('logout')}}">Logout</a></li>
+        {% else %}
             <li><a href="{{url_for('login')}}">Login/Signup</a></li>
+        {% endif %}
         </ul>
     </nav>
-    
+
     <br><br>
 
 
