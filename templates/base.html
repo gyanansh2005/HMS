@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
-            margin: 0;
-            padding: 0;
+            /* margin: 0;
+            padding: 0; */
             box-sizing: border-box;
             font-family: Arial, sans-serif;
         }
@@ -95,7 +95,7 @@
 
         .footer {
         background: rgba(255, 255, 255, 0.15);
-        background-color: #fff;
+        background-color: white;
         backdrop-filter: blur(15px);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         padding: 20px;
@@ -107,6 +107,8 @@
         max-width: 100vw;
         overflow-x: hidden;
         border-top: 1px solid rgba(255, 255, 255, 0.3);
+        margin: 0;
+        
     }
 
     .footer-container {
@@ -201,7 +203,7 @@
                 <a href="{{url_for('logout')}}">Logout</a>
             {% else %}
                 <a href="{{url_for('login')}}">Login</a>
-                <a href="{{url_for('signup')}}">Signup</a>
+                <!-- <a href="{{url_for('signup')}}">Signup</a> -->
             {% endif %}
         </div>
     </div><br><br>
