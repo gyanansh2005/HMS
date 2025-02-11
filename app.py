@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash,session
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import InternalServerError
@@ -59,7 +59,6 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user and bcrypt.check_password_hash(user.password, password):
-            session['username'] = username
             flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
@@ -92,23 +91,6 @@ def signup():
                     db.session.rollback()
                     flash('Failed to signup', 'danger')
     return render_template('signup.html')
-
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    flash('You have been logged out', 'success')
-    return redirect(url_for('home'))
-
-
-@app.route('/profile')
-def profile():
-    if 'username' in session:
-        user = User.query.filter_by(username=session['username']).first()
-        return render_template('profile.html', user=user)
-    else:
-        flash('You need to login to access your profile', 'danger')
-        return redirect(url_for('login'))
 
 
 
