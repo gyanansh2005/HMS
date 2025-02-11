@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Navbar with Dropdowns</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-
-
         * {
             margin: 0;
             padding: 0;
@@ -14,197 +13,133 @@
             font-family: Arial, sans-serif;
         }
 
-        body {
-            padding-top: 60px;
-            background-color: #f4f4f4;
-        }
-            .navbar {
+        /* Navbar - Initially Fully Transparent */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #333;
-            padding: 15px 20px;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            left: 0;
+            padding: 15px 50px;
+            background: transparent;
+            backdrop-filter: none;
+            transition: 0.3s ease-in-out;
             z-index: 1000;
         }
 
-        .nav-links {
-            display: flex;
-            list-style: none;
-        }
-
-        .nav-links li {
-            margin: 0 10px;
-        }
-
-        .nav-links a {
-            color: white;
+        .navbar a {
             text-decoration: none;
-            padding: 10px 15px;
-            font-size: 16px;
+            color: black;
+            font-size: 18px;
+            margin: 0 15px;
+            transition: 0.3s;
+            position: relative;
+            padding: 10px;
         }
 
-        .nav-links a:hover {
-            background-color: #575757;
-            border-radius: 5px;
+        .navbar a:hover {
+            color: darkgray;
         }
 
         .logo {
-            color: white;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
+            color: black;
         }
 
-        .footer {
-            background-color: #111;
-            color: white;
-            padding: 40px 10%;
+        /* Dropdown Container */
+        .dropdown {
+            position: relative;
+            display: inline-block;
         }
-        .footer-container {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
+
+        /* Dropdown Content (Hidden by Default) */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 5px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 150px;
         }
-        .footer-section {
-            margin-bottom: 20px;
-        }
-        .footer-section h3 {
-            color: #fff;
-            margin-bottom: 10px;
-        }
-        .footer-section a {
+
+        /* Dropdown Links */
+        .dropdown-content a {
             display: block;
-            text-decoration: none;
-            color: #ccc;
-            margin: 5px 0;
-            font-size: 14px;
+            padding: 10px;
+            color: black;
+            text-align: left;
         }
-        .footer-section a:hover {
-            color: #f8b400;
+
+        .dropdown-content a:hover {
+            background: rgba(200, 200, 200, 0.5);
         }
-        .social-icons a {
-            color: white;
-            font-size: 24px;
-            margin-right: 15px;
+
+        /* Show Dropdown on Hover */
+        .dropdown:hover .dropdown-content {
+            display: block;
         }
-        .social-icons a:hover {
-            color: #f8b400;
-        }
-        .footer-bottom {
-            border-top: 1px solid #444;
-            text-align: center;
-            padding-top: 10px;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        .footer-bottom a {
-            color: #ccc;
-            margin: 0 10px;
-            text-decoration: none;
-        }
-        .footer-bottom a:hover {
-            color: #f8b400;
-        }
-        .app-box a{
-            text-align: right;
-            color: white;
-            text-decoration: none;
-        }
-        @media (max-width: 768px) {
-            .footer-container {
-                flex-direction: column;
-                text-align: center;
-            }
-            .app-box {
-                text-align: center;
-            }
+
+        /* Add Glassmorphism effect on scroll */
+        .scrolled {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo">Campusnet</div>
-        <ul class="nav-links">
-            <li><a href="{{url_for('home')}}">Home</a></li>
-            <li><a href="">Services</a></li>
-            <li><a href="{{url_for('room_allocation')}}">Room Allocation</a></li>
-            <li><a href="#">Fees Payment</a></li>
-            <li><a href="#">Complaint/Maintenance</a></li>
-            <li><a href="{{url_for('login')}}">Login/Signup</a></li>
-        </ul>
-    </nav>
-    
-    <br><br>
 
+    <!-- Navbar -->
+    <div class="navbar" id="navbar">
+        <div class="logo">MyWebsite</div>
+        <div>
+            <a href="#">Home</a>
 
-    {%block content%}
-
-    {%endblock%}
-
-
-
-
-    <br><br><br><br><br><br>
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-section">
-                <h3>Follow us on</h3>
-                <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-youtube"></i></a>
-                    <a href="#"><i class="fab fa-pinterest"></i></a>
-                    <a href="#"><i class="fab fa-tiktok"></i></a>
+            <div class="dropdown">
+                <a href="#">Services<i class="fa-solid fa-angle-down"></i></a>
+                <div class="dropdown-content">
+                    <a href="{{url_for('room_allocation')}}">Room Allocation</a>
+                    <a href="#">Fee Payment</a>
+                    <a href="#">Service 3</a>
+                    <a href="#">Service 4</a>
                 </div>
-                
             </div>
-            <div class="footer-section">
-                <h3>Accommodation</h3>
-                <a href="#">Hostels</a>
-                <a href="#">Premium Hostels</a>
-                <a href="#">Bed and Breakfast</a>
+
+            <div class="dropdown">
+                <a href="#">Hostels<i class="fa-solid fa-angle-down"></i></a>
+                <div class="dropdown-content">
+                    <a href="#">Hostel</a>
+                    <a href="#">Hoste2</a>
+                    <a href="#">Hoste3</a>
+                    <a href="#">House4</a>
+                </div>
             </div>
-            <div class="footer-section">
-                <h3>Quick Links</h3>
-                <a href="#">Blog</a>
-                <a href="#">Booking Guarantee</a>
-                <a href="#">Hostel Awards</a>
-                <a href="#">Tours & Experiences</a>
-                <a href="#">Solo Stay</a>
-                <a href="#">Student Discount</a>
-                <a href="#">Roomies</a>
-            </div>
-            <div class="footer-section">
-                <h3>About Us</h3>
-                <a href="#">Campusnet Group PLC</a>
-                <a href="#">Press</a>
-                <a href="#">Careers</a>
-            </div>
-            <div class="footer-section">
-                <h3>Work With Us</h3>
-                <a href="#">Hostel Sign Up</a>
-                <a href="#">Affiliate Program</a>
-                <a href="#">Campusnet Inbox</a>
-            </div>
-            <div class="app-box" >
-                <a href="#"><p>Back to top <i class="fa-regular fa-circle-up"></i></p></a>
-            </div>
+
+            <a href="#">Complain</a>
+            <a href="#">Feedback</a>
+            <a href="#">About</a>
+            <a href="{{url_for('signup')}}">Sign In</a>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 1999-2025 Hostelworld.com Limited</p>
-            <a href="#">Data Protection Notice & DSA</a>
-            <a href="#">Terms & Legal</a>
-            <a href="#">Coupons</a>
-            <a href="#">Vouchers</a>
-            <a href="#">Website Testing</a>
-            <a href="#">Site Map</a>
-            <a href="#">Cookie Preferences</a>
-        </div>
-    </footer>
+    </div><br><br>
+
+    <script>
+        window.addEventListener("scroll", function () {
+            let navbar = document.getElementById("navbar");
+            if (window.scrollY > 10) { // Detects even small scroll
+                navbar.classList.add("scrolled");
+            } else {
+                navbar.classList.remove("scrolled");
+            }
+        });
+    </script>
+    {%block content%}
+    {%endblock%}
 
 </body>
 </html>
