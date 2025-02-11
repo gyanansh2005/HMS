@@ -27,6 +27,7 @@
             backdrop-filter: none;
             transition: 0.3s ease-in-out;
             z-index: 1000;
+            background-color:white;
         }
 
         .navbar a {
@@ -170,7 +171,14 @@
 
     <!-- Navbar -->
     <div class="navbar" id="navbar">
-        <div class="logo">CampusNest</div>
+        {% if 'username' in session %}
+                <a href="{{url_for('profile')}}" class="logo">{{ session['username'] }}</a>
+            {% else %}
+                <!-- <a href="{{url_for('login')}}">Login</a> -->
+                <div class="logo">CampusNest</div>
+                <!-- <a href="{{url_for('signup')}}">Signup</a> -->
+            {% endif %}
+        
         <div>
             <a href="{{url_for('home')}}">Home</a>
 
@@ -199,7 +207,7 @@
             <a href="#">About</a>
 
             {% if 'username' in session %}
-                <a href="{{url_for('profile')}}">Profile ({{ session['username'] }})</a>
+                <!-- <a href="{{url_for('profile')}}">Profile ({{ session['username'] }})</a> -->
                 <a href="{{url_for('logout')}}">Logout</a>
             {% else %}
                 <a href="{{url_for('login')}}">Login</a>
