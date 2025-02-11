@@ -1,166 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
     <title>Hostel Management System</title>
     <style>
-        * {
+        body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f9fa;
+            position: relative;
+            overflow-x: hidden;
         }
-
-        body {
-            padding-top: 60px;
-            background-color: #f4f4f4;
-        }
-
-        .container1 {
-            margin: 20px 100px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            min-height: 350px;
+        .container {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-        }
-        #boss_container {
-            display: flex;
-            justify-content: center;
-        }
-
-        #container {
-            display: flex;
-            gap: 150px;
-        }
-
-        .child {
-            display: flex;
-            flex-direction: column;
-            gap: 100px;
-            
-        }
-        img {
-            border-radius: 27px;
-        }
-
-        #container>div:nth-child(2),
-        #container>div:nth-child(4) {
-            margin-top: 100px;
-        }
-        #getinspired{
-            margin-left: 100px;
-        }
-
-
-        .container2 {
-            display: flex;
-            width: 90%;
-            height: 100vh;
-            align-items: center;
+            max-width: 1200px;
             margin: auto;
-            gap: 50px;
+            padding: 50px 20px;
+            position: relative;
+            z-index: 10;
         }
         .text-section {
-            max-width: 50%;
-            margin-left: 50px;
+            width: 50%;
+            text-align: left;
         }
-        .intro {
-            font-size: 24px;
-            font-weight: bold;
+        .text-section h1 {
+            font-size: 2.5em;
+            color: #222;
         }
-        .highlight {
-            color: #e4007f;
+        .text-section p {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
         }
-        h1 {
-            font-size: 48px;
-            font-weight: bold;
+        .buttons {
+            margin-top: 20px;
         }
-        .pink {
-            color: #e4007f;
-        }
-        .bold {
-            font-weight: bold;
-        }
-        .cta-button {
-            background-color: #ffcc00;
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            font-size: 1em;
             border: none;
-            padding: 15px 30px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
             border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            margin-right: 10px;
+        }
+        .btn-orange {
+            background-color: #ff7f50;
+        }
+        .btn-orange:hover {
+            background-color: #ff784d;
+        }
+        .btn-green {
+            background-color: #00b200;
+        }
+        .btn-green:hover {
+            background-color: #008f00;
+        }
+        .image-section {
+            width: 50%;
         }
         .image-section img {
-            max-width: 600px;
-            border-radius: 28px;
-            /* margin-left: 100px; */
+            max-width: 100%;
+        }
+        .container2 {
+            max-width: 900px;
+            margin: auto;
+            padding: 50px 20px;
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #222;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2em;
+            color: #555;
+            line-height: 1.6;
+            margin: 0 20px;
+        }
+        .btn-container2 {
+            margin-top: 30px;
+        }
+        .btn2 {
+            background-color: #ff7f50; /* Same as .btn-orange */
+            color: white;
+            padding: 12px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px; /* Match the border-radius */
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn2:hover {
+            background-color: #ff784d; /* Slightly darker shade for hover effect */
+        }
+        .feature-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 1200px;
+            margin: auto;
+            padding: 50px 20px;
+        }
+        .feature-text {
+            width: 50%;
+            text-align: left;
+            padding-left: 30px;
+        }
+        .feature-text h2 {
+            font-size: 2em;
+            color: #222;
+            border-left: 4px solid #ff7f50;
+            padding-left: 10px;
+        }
+        .feature-text p {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
+        }
+        .feature-text ul {
+            padding: 0;
+            list-style: none;
+        }
+        .feature-text ul li {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .feature-text ul li::before {
+            content: "✔";
+            color: #0073e6;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .feature-image {
+            width: 50%;
+        }
+        .feature-image img {
+            max-width: 100%;
+        }
+        .whatsapp-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #25d366;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        .whatsapp-btn img {
+            width: 20px;
+            margin-right: 10px;
         }
     </style>
-
 </head>
-
 <body>
 
     {%extends "base.html"%}
     {%block content%}
-
-    <div class="container1">
-        <h1>Welcome to Campusnet</h1>
-    </div>
-    <br><br><br><br>
-
-    
-    
-    <div class="container2">
+    <div class="container">
         <div class="text-section">
-            <p class="intro">This is the <span class="highlight">NEW</span> Hostelworld.</p>
-            <h1>Helping you <span class="pink">connect with facilities.</span> Even <span class="pink">before</span> you get to your <span class="bold">hostel.</span></h1><br><br>
-            <button class="cta-button">Check what's new ↓</button>
+            <h1>Online Hostel Management System Built on Salesforce</h1>
+            <p>
+                Simplify your hostel operations with a management system built on Salesforce. 
+                Solve data integration challenges, ensure strong security, and support 
+                scalability to grow with your business.
+            </p>
+            <div class="buttons">
+                <a href="#" class="btn btn-orange">Schedule a Meeting</a>
+                <a href="#" class="btn btn-green">WhatsApp Us</a>
+            </div>
         </div>
         <div class="image-section">
-            <img src="../static/The_Spindrift_Hostel-img (1).jpg" alt="Travelers on a tuk-tuk">
+            <img src="../static/illustration-1.svg" alt="Hostel Management Illustration">
         </div>
     </div>
-    
-    
-    <div id="getinspired">
-        <h1>Get Inspired!!</h1>
-        <p>Explore our Hostels and there unforgettable ambiance and experience!!</p>
-    </div>
-    <br><br><br>
-    <div id="boss_container">
-        <div id="container">
-            <div class="child">
-                <img src="../static/amsterdam.jpg" alt="">
-                <img src="../static/barcelona.jpg" alt="">
-            </div>
 
-            <div class="child">
-                <img src="../static/dublin.jpg" alt="">
-                <img src="../static/london.jpg" alt="">
-            </div>
 
-            <div class="child">
-                <img src="../static/paris.jpg" alt="">
-                <img src="../static/amsterdam.jpg" alt="">
-            </div>
 
-            <div class="child">
-                <img src="../static/london.jpg" alt="">
-                <img src="../static/barcelona.jpg" alt="">
-            </div>
+    <div class="container2">
+        <h1>Modernize Hostel Management with Our Powerful Features</h1>
+        <p>Streamline operations to reduce manual tasks and improve efficiency. Enhance guest satisfaction with user-friendly features and tools. 
+        Manage all aspects of your hostel from one centralized platform.</p>
+        <p>Booking Ninjas can be packaged with existing Salesforce integrations, reducing friction in accessing multiple parts of your current Salesforce system.</p>
+        <div class="btn-container2">
+            <a href="#" class="btn2">Plan & Pricing</a>
+        </div>
+    </div><br><br><br>
+
+
+
+
+    <div class="feature-section">
+        <div class="feature-image">
+            <img src="../static/illustration-5.svg" alt="Hostel Reservation Software">
+        </div>
+        <div class="feature-text">
+            <h2>Hostel Reservation Software</h2>
+            <ul>
+                <li>Manage hostel beds and private rooms using our Central Reservation System (CRS).</li>
+                <li>Oversee room availability, rates, guest information, and payment processing while keeping track of guests and room availability.</li>
+            </ul>
         </div>
     </div>
-  {%endblock%}
+
+    <div class="feature-section">
+        <div class="feature-text">
+            <h2>Centralized Guest Profiles & Booking Data</h2>
+            <ul>
+                <li>Guest management tools to retrieve and organize all the information about your guests.</li>
+                <li>Helps you understand your guests better to create personalized experiences for them.</li>
+            </ul>
+        </div>
+        <div class="feature-image">
+            <img src="../static/illustration-6.svg" alt="Guest Booking Data">
+        </div>
+    </div>  
 
 
+
+
+    <div class="feature-section">
+        <div class="feature-image">
+            <img src="../static/illustration-5.svg" alt="Hostel Reservation Software">
+        </div>
+        <div class="feature-text">
+            <h2>Hostel Reservation Software</h2>
+            <ul>
+                <li>Manage hostel beds and private rooms using our Central Reservation System (CRS).</li>
+                <li>Oversee room availability, rates, guest information, and payment processing while keeping track of guests and room availability.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="feature-section">
+        <div class="feature-text">
+            <h2>Centralized Guest Profiles & Booking Data</h2>
+            <ul>
+                <li>Guest management tools to retrieve and organize all the information about your guests.</li>
+                <li>Helps you understand your guests better to create personalized experiences for them.</li>
+            </ul>
+        </div>
+        <div class="feature-image">
+            <img src="../static/illustration-6.svg" alt="Guest Booking Data">
+        </div>
+    </div>
+    {%endblock%}
 </body>
-
 </html>
