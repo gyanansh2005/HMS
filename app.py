@@ -54,6 +54,12 @@ def terms_and_conditions():
 def complaint_and_maintenance():
     return render_template('complaint_and_maintenance.html')
 
+@app.route('/feedback')
+def feedback():
+    return render_template('feedback.html')
+
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback CampusNest</title>
+    <style>
+        body {
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            border-radius: 20px;
+            background: white;
+            padding: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .left-section, .right-section {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .left-section img {
+            width: 100%;
+            border-radius: 16px;
+        }
+
+        .left-section .additional-content {
+            margin-top: 20px;
+            font-size: 16px;
+            text-align: center;
+            color: #555;
+        }
+
+        .right-section img {
+            display: block;
+            margin: 0 auto 20px auto;
+            height: 100px;
+        }
+
+        form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+        .footer{display: none;}
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {%extends 'base.html'%}
+    {%block content%}
+
+    <br><br>
+    <div class="container">
+        <div class="left-section">
+            <img src="../static/WhatsApp Image 2025-02-12 at 14.44.49_b885b516.jpg" alt="Side Image"><br><br><br><br><br>
+            <div class="additional-content">
+                <p>Have any issues or suggestions? Feel free to share your feedback with us. "Your feedback matters! We strive to make CampusNest a better place for everyone. Let us know about your experiences, any issues you've faced, or suggestions for improvement. Your valuable input helps us enhance our services and provide a comfortable stay. Thank you for sharing your thoughts with us!"</p>
+            </div>
+        </div>
+
+        <div class="right-section">
+            <img src="../static/WhatsApp Image 2025-02-12 at 14.44.49_e4836184.jpg" alt="Feedback">
+            <form>
+                <input type="text" name="first_name" placeholder="First Name*" required>
+                <input type="text" name="last_name" placeholder="Last Name*" required>
+                <input type="email" name="email" placeholder="Email*" required>
+                
+                <label>Our Environment*</label>
+                <select required>
+                    <option selected disabled>Choose</option>
+                    <option>Excellent</option>
+                    <option>Good</option>
+                    <option>Bad</option>
+                </select>
+                
+                <label>How Would you rate Our Services (out of 5)?*</label>
+                <select>
+                    <option selected disabled>Choose</option>
+                    <option>5</option>
+                    <option>4</option>
+                    <option>3</option>
+                    <option>2</option>
+                    <option>1</option>
+                </select>
+                
+                <label>How would you rate Our Services (Description)?</label>
+                <textarea name="descr" placeholder="Description" required rows="4"></textarea>
+                
+                <label>From which Hostel are you?</label>
+                <select>
+                    <option selected disabled>Select Hostel</option>
+                    <option>Hostel 1</option>
+                    <option>Hostel 2</option>
+                    <option>Hostel 3</option>
+                    <option>Hostel 4</option>
+                    <option>Others</option>
+                </select>
+                
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+    {%endblock%}
+</body>
+</html>

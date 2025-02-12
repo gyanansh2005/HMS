@@ -66,9 +66,15 @@
             border-radius: 4px;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
         }
+        .footer{
+            display: none;
+        }
     </style>
 </head>
 <body>
+    {%extends 'base.html'%}
+    {%block content%}
+    <br><br><br>
     <div class="container">
         <h2>Complaint & Maintenance</h2>
         
@@ -168,5 +174,6 @@
             }
         });
     </script>
+    {%endblock%}
 </body>
 </html>
