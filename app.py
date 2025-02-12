@@ -50,15 +50,14 @@ def room_allocation():
 def terms_and_conditions():
     return render_template('terms_and_conditions.html')
 
+
 @app.route('/complaint_and_maintenance')
 def complaint_and_maintenance():
     return render_template('complaint_and_maintenance.html')
 
-@app.route('/feedback')
-def feedback():
-    return render_template('feedback.html')
-
-
+@app.route('/feedback1')
+def feedback1():
+    return render_template('feedback1.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
