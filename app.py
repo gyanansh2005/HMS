@@ -50,6 +50,11 @@ def room_allocation():
 def terms_and_conditions():
     return render_template('terms_and_conditions.html')
 
+@app.route('/complaint_and_maintenance')
+def complaint_and_maintenance():
+    return render_template('complaint_and_maintenance.html')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
