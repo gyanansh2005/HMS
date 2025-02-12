@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback CampusNest</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<style type="text/css">
+
+    .container{
+        margin-top: 30px;
+        margin-bottom: 30px;
+        box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+         border-radius: 20px;
+         /* font-size:medium; */
+         font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+         /* padding: 20px; */
+
+    }
+
+    #sideimg{
+     position: relative;
+     right: 30px;
+     border-radius: 16px;
+    }
+
+    #subcont2{
+      padding: 30px;
+    }
+
+    #headingimg{
+        position: relative;
+        right: 35px;
+    }
+
+    
+
+    
+    </style>
+
+<body>
+
+    <div class="container">
+
+        <div class="col-md-6" >
+            <img src="images/sideimg.jpg" width="100%" height="710px" id="sideimg">
+
+        </div>
+
+        <div class="col-md-6" id="subcont2">
+            <img src="images/feedback.png" height="100px" style="margin: 10px;" id="headingimg">
+
+            <div class="row">
+                <form>
+                <div class="col-md-6">
+                    <input type="text" name="name" placeholder="First Name*" class="form-control form-group" required="">
+
+                </div>
+
+                <div class="col-md-6">
+                    <input type="text" name="name" placeholder="Last Name*" class="form-control form-group" required="">
+
+                </div>
+            </div>
+            <input type="Email" name="email" placeholder="Email*" class="form-control form-group" required="">
+            <br>
+            <label>Our Environment*</label>
+            <select class="form-control" required="">
+                <option selected disabled>Excellent</option>
+                <option>Good</option>
+                <option>Bad</option>
+
+            </select>
+            <br>
+            <label>How Would you rate Our Services (out of 5)?*</label>
+            <select class="form-control">
+                <option selected disabled>5</option>
+                <option>4</option>
+                <option>3</option>
+                <option>2</option>
+                <option>1</option>
+            </select>
+            <br>
+            <label> How would you rate Our Services (Description)?</label><br>
+            <input type="text" name="descr" id="form-control" placeholder="Description" required="" style="height: 60px;">
+            <br>
+            <br>
+            <label>From which Hostel are you?</label>
+            <div class="row">
+                <div class="col-md-6">
+                    <select class="form-control">
+                           <option selected disabled>Select Hostel</option>
+                        <option>Hostel 1</option>
+                        <option>Hostel 2</option>
+                        <option>Hostel 3</option>
+                        <option>Hostel 4</option>
+                        <option>others</option>
+                    </select>
+                </div>
+
+            </div>
+            <br><br>
+            <button class="btn btn-success btn-block">Submit</button>
+        </div>
+    </form>
+    </div>
+</body>
+
+</html>
