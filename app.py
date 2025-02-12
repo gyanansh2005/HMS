@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session,jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import InternalServerError
@@ -42,9 +42,62 @@ def create_tables():
 def home():
     return render_template('index.html')
 
-@app.route('/room_allocation')
+
+class RoomAllocation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    hostel = db.Column(db.String(20), nullable=False)
+    floor = db.Column(db.Integer, nullable=False)
+    room_number = db.Column(db.Integer, nullable=False)
+    room_type = db.Column(db.String(10), nullable=False)
+    beds_left = db.Column(db.Integer, nullable=False, default=4)
+    student_name = db.Column(db.String(50), nullable=True)
+
+with app.app_context():
+    db.create_all()
+
+
+@app.route('/room_allocation', methods=['GET', 'POST'])
 def room_allocation():
-    return render_template('room_allocation.html')
+    if request.method == 'GET':
+        return render_template('room_allocation.html')
+
+    if request.method == 'POST':
+        hostel = request.form['hostel']
+        floor = int(request.form['floor'])
+        room_number = int(request.form['room-number'])
+        room_type = request.form['room-type']
+        student_name = request.form['student-name']
+
+        room = RoomAllocation.query.filter_by(room_number=room_number).first()
+        if not room:
+            beds_left = 4 if room_type == "four" else (2 if room_type == "double" else 1)
+            room = RoomAllocation(
+                hostel=hostel, floor=floor, room_number=room_number,
+                room_type=room_type, beds_left=beds_left - 1, student_name=student_name
+            )
+            db.session.add(room)
+            db.session.commit()
+            return jsonify({'message': 'Room allocated successfully!', 'success': True})
+        elif room.beds_left > 0:
+            room.beds_left -= 1
+            room.student_name = student_name
+            db.session.commit()
+            return jsonify({'message': 'Room allocated successfully!', 'success': True})
+        else:
+            return jsonify({'message': 'Room not available!', 'success': False})
+
+
+
+@app.route('/get_available_rooms', methods=['GET'])
+def get_available_rooms():
+    all_rooms = {
+        "four": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
+        "double": [201, 202, 203, 204, 205, 206, 207, 208, 209, 210],
+        "single": [301, 302, 303, 304, 305, 306, 307, 308, 309, 310]
+    }
+    booked_rooms = [room.room_number for room in RoomAllocation.query.filter(RoomAllocation.beds_left == 0).all()]
+    return jsonify({"available": all_rooms, "booked": booked_rooms})
+
 
 @app.route('/terms_and_conditions')
 def terms_and_conditions():

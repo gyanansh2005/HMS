@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room Allocation</title>
     <link rel="shortcut icon" href="../static/favicon.png" type="image/x-icon">
     <link rel="stylesheet" href="../static/css/room_allocation.css">
-    <style>
-    </style>
 </head>
+
 <body>
     {%extends 'base.html'%}
     {%block content%}
     <br><br><br>
     <div class="container">
         <h2>Room Allocation</h2>
-
-        <form class="allocation-form">
+        <form class="allocation-form" id="allocation-form">
             <label for="hostel">Select Hostel:</label>
             <select id="hostel" name="hostel">
                 <option value="hostel-1">Hostel 1</option>
@@ -36,23 +35,6 @@
                 <option value="5">Floor 5</option>
             </select>
 
-            <label for="room-type">Select Room Sharing:</label>
-            <select id="room-type" name="room-type" onchange="updateRoomNumbers()">
-                <option value="four">4 Sharing</option>
-                <option value="single">Single Seater</option>
-                <option value="double">Double Sharing</option>
-            </select>
-
-            <!-- <label for="ac">AC/Non-AC:</label>
-            <select id="ac" name="ac">
-                <option value="ac">AC</option>
-                <option value="non-ac">Non-AC</option>
-            </select> -->
-            <label for="room-number">Select Room Number:</label>
-            <select id="room-number" name="room-number" required>
-                <option value="">Select Room</option>
-            </select>
-            
             <label for="student-name">Student Name:</label>
             <input type="text" id="student-name" name="student-name" required>
 
@@ -68,75 +50,94 @@
             <div class="room-grid" id="single-seater-grid"></div>
         </div>
     </div>
-    
+
     <script>
-        const roomAvailability = {
-            'four': [],
-            'double': [],
-            'single': []
-        };
-    
-        function generateRoomStatus(gridId, maxBeds, roomType) {
-            const roomGrid = document.getElementById(gridId);
-            roomGrid.innerHTML = '';
-            roomAvailability[roomType] = []; // Reset available rooms for the type
-            
-            for (let i = 1; i <= 10; i++) {
-                let roomDiv = document.createElement('div');
-                roomDiv.classList.add('room');
-                let bedsLeft = Math.floor(Math.random() * (maxBeds + 1));
-                roomDiv.textContent = `Room ${i} (Beds Left: ${bedsLeft})`;
-                roomDiv.classList.add(bedsLeft > 0 ? 'available' : 'booked');
-                roomGrid.appendChild(roomDiv);
-                
-                // Update room availability based on beds left
-                if (bedsLeft > 0) {
-                    roomAvailability[roomType].push(i);
-                }
+        document.addEventListener("DOMContentLoaded", function () {
+            let selectedRoom = null;
+            let selectedRoomType = null;
+
+            function fetchAvailableRooms() {
+                fetch('/get_available_rooms')
+                    .then(response => response.json())
+                    .then(data => {
+                        const availableRooms = data.available || {};
+                        const bookedRooms = new Set(data.booked || []);
+
+                        populateRoomGrid('four-sharing-grid', availableRooms['four'] || [], bookedRooms, 'four');
+                        populateRoomGrid('double-sharing-grid', availableRooms['double'] || [], bookedRooms, 'double');
+                        populateRoomGrid('single-seater-grid', availableRooms['single'] || [], bookedRooms, 'single');
+                    })
+                    .catch(error => console.error('Error fetching rooms:', error));
             }
-        }
-    
-        function getRoomType() {
-            return document.getElementById('room-type').value;
-        }
-    
-        function updateRoomNumbers() {
-            const roomType = getRoomType();
-            const roomNumberSelect = document.getElementById('room-number');
-            roomNumberSelect.innerHTML = '<option value="">Select Room</option>'; // Reset options
-    
-            roomAvailability[roomType].forEach(roomNumber => {
-                const option = document.createElement('option');
-                option.value = roomNumber;
-                option.textContent = `Room ${roomNumber}`;
-                roomNumberSelect.appendChild(option);
+
+            function populateRoomGrid(gridId, rooms, bookedRooms, roomType) {
+                const grid = document.getElementById(gridId);
+                grid.innerHTML = '';
+
+                rooms.forEach(roomNumber => {
+                    let roomDiv = document.createElement('div');
+                    roomDiv.classList.add('room');
+                    roomDiv.textContent = `Room ${roomNumber}`;
+                    roomDiv.dataset.roomNumber = roomNumber;
+                    roomDiv.dataset.roomType = roomType;
+
+                    if (bookedRooms.has(roomNumber)) {
+                        roomDiv.classList.add('booked');
+                    } else {
+                        roomDiv.addEventListener('click', function () {
+                            selectRoom(roomDiv);
+                        });
+                    }
+
+                    grid.appendChild(roomDiv);
+                });
+            }
+
+            function selectRoom(roomDiv) {
+                if (roomDiv.classList.contains('booked')) return;
+
+                if (selectedRoom) {
+                    selectedRoom.classList.remove('selected');
+                }
+                selectedRoom = roomDiv;
+                selectedRoom.classList.add('selected');
+                selectedRoomType = roomDiv.dataset.roomType;
+            }
+
+            document.getElementById("allocation-form").addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                if (!selectedRoom) {
+                    alert("Please select a room first.");
+                    return;
+                }
+
+                const formData = new FormData(event.target);
+                formData.append("room-number", selectedRoom.dataset.roomNumber);
+                formData.append("room-type", selectedRoomType);
+
+                fetch("/room_allocation", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) {
+                        fetchAvailableRooms();
+                        selectedRoom.classList.remove('selected');
+                        selectedRoom.classList.add('booked');
+                        selectedRoom = null;
+                        selectedRoomType = null;
+                    }
+                })
+                .catch(error => console.error("Error allocating room:", error));
             });
-    
-            // Ensure room grids update first before applying blur effect
-            setTimeout(() => {
-                document.getElementById('four-sharing-grid').classList.toggle('blurred', roomType !== 'four');
-                document.getElementById('double-sharing-grid').classList.toggle('blurred', roomType !== 'double');
-                document.getElementById('single-seater-grid').classList.toggle('blurred', roomType !== 'single');
-            }, 50);
-        }
-    
-        function updateRooms() {
-            generateRoomStatus('four-sharing-grid', 4, 'four');
-            generateRoomStatus('double-sharing-grid', 2, 'double');
-            generateRoomStatus('single-seater-grid', 1, 'single');
-        }
-    
-        document.getElementById('hostel').addEventListener('change', updateRooms);
-        document.getElementById('floor').addEventListener('change', updateRooms);
-        document.getElementById('room-type').addEventListener('change', function () {
-            updateRoomNumbers();
+
+            fetchAvailableRooms();
         });
-    
-        updateRooms();
-        updateRoomNumbers();
     </script>
-    
-    
     {%endblock%}
 </body>
+
 </html>
