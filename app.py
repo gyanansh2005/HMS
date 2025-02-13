@@ -112,6 +112,10 @@ def complaint_and_maintenance():
 def feedback():
     return render_template('feedback.html')
 
+@app.route('/payment')
+def payment():
+    return render_template('payment.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
