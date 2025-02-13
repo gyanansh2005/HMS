@@ -58,6 +58,11 @@ with app.app_context():
 
 @app.route('/room_allocation', methods=['GET', 'POST'])
 def room_allocation():
+    if 'username' not in session:
+        flash('You need to log in to access Room Allocation!', 'danger')
+        return redirect(url_for('login'))    
+
+
     if request.method == 'GET':
         return render_template('room_allocation.html')
 
@@ -106,10 +111,19 @@ def terms_and_conditions():
 
 @app.route('/complaint_and_maintenance')
 def complaint_and_maintenance():
+    if 'username' not in session:
+        flash('You need to log in to access this section', 'danger')
+        return redirect(url_for('login')) 
+
     return render_template('complaint_and_maintenance.html')
 
 @app.route('/feedback')
 def feedback():
+    if 'username' not in session:
+        flash('You need to log in to access this section', 'danger')
+        return redirect(url_for('login'))   
+
+
     return render_template('feedback.html')
 
 @app.route('/payment')
