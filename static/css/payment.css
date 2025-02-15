@@ -92,3 +92,6 @@ body {
 .pay-button:hover {
     background: #218838;
 }
+.footer{
+    display: none;
+}

@@ -13,6 +13,8 @@
     </script>
 </head>
 <body>
+    {%extends 'base.html'%}
+    {%block content%}
     <div class="container">
         <div class="payment-summary">
             <h3>Payment Summary</h3>
@@ -67,5 +69,6 @@
             <button class="pay-button">Proceed to Pay</button>
         </div>
     </div>
+    {%endblock%}
 </body>
 </html>

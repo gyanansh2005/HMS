@@ -142,7 +142,7 @@ def login():
 
         if user and user.check_password(password):
             login_user(user)
-            session['username'] = user.username  # Store username in session
+            session['username'] = user.name  # Store username in session
             flash("Login successful!", "success")
             return redirect(url_for("home"))
         else:
