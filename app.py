@@ -1,46 +1,43 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session,jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import InternalServerError
 import os
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///" + os.path.join(basedir, "app.db")
 app.config['SECRET_KEY'] = 'my_secret_key'
-
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Corrected typo
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
-class User(db.Model):
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+class User(db.Model, UserMixin):
+    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    username = db.Column(db.String(100), nullable=False, unique=True)
     email = db.Column(db.String(100), nullable=False, unique=True)
-    password = db.Column(db.String(100), nullable=False)
+    password_hash = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(50), nullable=False, default="user")
+    username = db.Column(db.String(100), nullable=False, unique=True)
 
-    def __init__(self, name, username, email, password):
-        self.name = name
-        self.username = username
-        self.email = email
-        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
+    def set_password(self, password):
+        self.password_hash = bcrypt.generate_password_hash(password)
 
-    def __repr__(self):
-        return f"User  ('{self.name}', '{self.username}', '{self.email}')"
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password_hash, password)
 
-app.config['DATABASE_CREATED'] = False
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-@app.before_request
-def create_tables():
-    if not app.config['DATABASE_CREATED']:
-        try:
-            db.create_all()
-        except Exception as e:
-            raise InternalServerError("Failed to create database tables")
-        app.config['DATABASE_CREATED'] = True
-
-@app.route('/')
-def home():
-    return render_template('index.html')
+with app.app_context():
+    db.create_all()
 
 
 class RoomAllocation(db.Model):
@@ -52,20 +49,13 @@ class RoomAllocation(db.Model):
     beds_left = db.Column(db.Integer, nullable=False, default=4)
     student_name = db.Column(db.String(50), nullable=True)
 
-with app.app_context():
-    db.create_all()
-
+@app.route('/')
+def home():
+    return render_template('index.html')
 
 @app.route('/room_allocation', methods=['GET', 'POST'])
+@login_required
 def room_allocation():
-    if 'username' not in session:
-        flash('You need to log in to access Room Allocation!', 'danger')
-        return redirect(url_for('login'))    
-
-
-    if request.method == 'GET':
-        return render_template('room_allocation.html')
-
     if request.method == 'POST':
         hostel = request.form['hostel']
         floor = int(request.form['floor'])
@@ -91,8 +81,6 @@ def room_allocation():
         else:
             return jsonify({'message': 'Room not available!', 'success': False})
 
-
-
 @app.route('/get_available_rooms', methods=['GET'])
 def get_available_rooms():
     all_rooms = {
@@ -103,26 +91,20 @@ def get_available_rooms():
     booked_rooms = [room.room_number for room in RoomAllocation.query.filter(RoomAllocation.beds_left == 0).all()]
     return jsonify({"available": all_rooms, "booked": booked_rooms})
 
-
 @app.route('/terms_and_conditions')
 def terms_and_conditions():
     return render_template('terms_and_conditions.html')
 
-
 @app.route('/complaint_and_maintenance')
+@login_required
 def complaint_and_maintenance():
-    if 'username' not in session:
-        flash('You need to log in to access this section', 'danger')
-        return redirect(url_for('login')) 
-
     return render_template('complaint_and_maintenance.html')
 
 @app.route('/feedback')
 def feedback():
     if 'username' not in session:
         flash('You need to log in to access this section', 'danger')
-        return redirect(url_for('login'))   
-
+        return redirect(url_for('login'))
 
     return render_template('feedback.html')
 
@@ -130,22 +112,30 @@ def feedback():
 def payment():
     return render_template('payment.html')
 
-
-@app.route('/login', methods=['GET', 'POST'])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        if user and bcrypt.check_password_hash(user.password, password):
-            session['username'] = username
-            flash('Login successful!', 'success')
-            return redirect(url_for('home'))
-        else:
-            flash('Invalid username or password', 'danger')
-    return render_template('login.html')
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        role = request.form.get("role")
 
-@app.route('/signup', methods=['GET', 'POST'])
+        print("Role selected in form:", role)
+        print("Email entered:", email)
+
+        user = User.query.filter_by(email=email, role=role).first()
+        print("Query:", User.query.filter_by(email=email, role=role))
+
+        if user and user.check_password(password):
+            login_user(user)
+            session['username'] = user.username  # Store username in session
+            flash("Login successful!", "success")
+            return redirect(url_for("home"))
+        else:
+            flash("Invalid credentials!", "danger")
+
+    return render_template("login.html")
+
+@app.route('/signup' , methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
         name = request.form['name']
@@ -156,37 +146,39 @@ def signup():
 
         if password != confirm_password:
             flash('Passwords do not match!', 'danger')
-        else:
-            user = User.query.filter_by(username=username).first()
-            if user:
-                flash('Username already exists!', 'danger')
-            else:
-                new_user = User(name, username, email, password)
-                try:
-                    db.session.add(new_user)
-                    db.session.commit()
-                    flash('Signup successful!', 'success')
-                    return redirect(url_for('login'))
-                except Exception as e:
-                    db.session.rollback()
-                    flash('Failed to signup', 'danger')
+            return redirect(url_for('signup'))
+        if User.query.filter_by(email=email).first():
+            flash('Email already exists!', 'danger')
+            return redirect(url_for('login'))
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists!', 'danger')
+            return redirect(url_for('login'))
+        new_user = User(name=name, email=email, username=username)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Registration successful! Please log in.", "success")
+        return redirect(url_for("login"))
     return render_template('signup.html')
+
+@app.route('/profile')
+@login_required
+def profile():
+    user = User.query.get(current_user.id)
+    return render_template('profile.html', user=user)
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
+    logout_user()
     session.clear()
     flash('You have been logged out', 'success')
     return redirect(url_for('home'))
 
-@app.route('/profile')
-def profile():
-    if 'username' in session:
-        user = User.query.filter_by(username=session['username']).first()
-        return render_template('profile.html', user=user)
-    else:
-        flash('You need to login to access your profile', 'danger')
-        return redirect(url_for('login'))
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html')
 
 if __name__ == "__main__":
     app.run(debug=True)
