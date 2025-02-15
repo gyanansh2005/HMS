@@ -131,6 +131,11 @@ def payment():
     return render_template('payment.html')
 
 
+@app.route('/hostel_details')
+def hostel_details():
+    return render_template('hostel_details.html')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
