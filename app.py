@@ -133,6 +133,11 @@ def payment():
 
 @app.route('/hostel_details')
 def hostel_details():
+    if 'username' not in session:
+        flash('You need to log in to access this section', 'danger')
+        return redirect(url_for('login'))   
+
+
     return render_template('hostel_details.html')
 
 
