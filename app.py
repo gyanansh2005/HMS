@@ -80,6 +80,7 @@ def room_allocation():
             return jsonify({'message': 'Room allocated successfully!', 'success': True})
         else:
             return jsonify({'message': 'Room not available!', 'success': False})
+    return render_template('room_allocation.html')
 
 @app.route('/get_available_rooms', methods=['GET'])
 def get_available_rooms():
@@ -117,9 +118,7 @@ def payment():
 def hostel_details():
     if 'username' not in session:
         flash('You need to log in to access this section', 'danger')
-        return redirect(url_for('login'))   
-
-
+        return redirect(url_for('login'))  
     return render_template('hostel_details.html')
 
 
