@@ -112,7 +112,6 @@ def feedback():
 def payment():
     return render_template('payment.html')
 
-@app.route("/login", methods=["GET", "POST"])
 
 @app.route('/hostel_details')
 def hostel_details():
