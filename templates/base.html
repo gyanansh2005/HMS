@@ -28,7 +28,7 @@
                     <a href="{{url_for('room_allocation')}}">Room Allocation</a>
                     <a href="#">Fee Payment</a>
                     <a href="{{url_for('complaint_and_maintenance')}}">Complaint/Maintenance</a>
-                    <a href="#">Service 4</a>
+                    <!-- <a href="#">Service 4</a> -->
                 </div>
             </div>
 
@@ -44,7 +44,7 @@
 
 
             <a href="{{url_for('feedback')}}">Feedback</a>
-            <a href="#">About</a>
+            <a href="{{url_for('about')}}">About</a>
 
             {% if 'username' in session %}
                 <!-- <a href="{{url_for('profile')}}">Profile ({{ session['username'] }})</a> -->

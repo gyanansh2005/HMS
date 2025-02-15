@@ -136,6 +136,11 @@ def hostel_details():
     return render_template('hostel_details.html')
 
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
