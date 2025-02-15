@@ -4,66 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            width: 50%;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-        }
-        .payment-methods {
-            margin: 20px 0;
-        }
-        .payment-methods label {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border: 1px solid #ddd;
-            margin: 5px 0;
-            border-radius: 5px;
-            cursor: pointer;
-            justify-content: space-between;
-        }
-        .toggle-section {
-            padding: 10px;
-            margin-left: 20px;
-            border-left: 2px solid #ddd;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .hidden {
-            display: none;
-        }
-        .pay-button {
-            width: 100%;
-            padding: 12px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-        .pay-button:hover {
-            background: #218838;
-        }
-    </style>
+    <link rel="stylesheet" href="../static/css/payment.css">
     <script>
         function toggleInput(targetId) {
             document.querySelectorAll('.toggle-section').forEach(el => el.classList.add('hidden'));
@@ -73,8 +14,17 @@
 </head>
 <body>
     <div class="container">
-        <h2>Select Payment Method</h2>
+        <div class="payment-summary">
+            <h3>Payment Summary</h3>
+            <p>Hostel Price: ₹70,000</p>
+            <p>Maintenance Fee: ₹4,000</p>
+            <p>Other Charges: ₹500</p>
+            <hr>
+            <p><strong>Total Amount: ₹74,500</strong></p>
+        </div>
+        
         <div class="payment-methods">
+            <h2>Select Payment Method</h2>
             <h3>UPI Payments</h3>
             <label><input type="radio" name="payment" onclick="toggleInput('upiIdInput')"> Pay with UPI ID or Number</label>
             <div id="upiIdInput" class="toggle-section hidden"><input type="text" placeholder="Enter UPI ID or Number"></div>
@@ -114,8 +64,8 @@
             </div>
             <label><input type="radio" name="payment" value="gift_card"> Pay with Gift Card</label>
             <label><input type="radio" name="payment" value="voucher"> Voucher</label>
+            <button class="pay-button">Proceed to Pay</button>
         </div>
-        <button class="pay-button">Proceed to Pay</button>
     </div>
 </body>
 </html>

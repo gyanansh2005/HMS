@@ -28,23 +28,23 @@
                     <a href="{{url_for('room_allocation')}}">Room Allocation</a>
                     <a href="#">Fee Payment</a>
                     <a href="{{url_for('complaint_and_maintenance')}}">Complaint/Maintenance</a>
-                    <a href="#">Service 4</a>
+                    <!-- <a href="#">Service 4</a> -->
                 </div>
             </div>
 
             <div class="dropdown">
-                <a href="#">Hostels<i class="fa-solid fa-angle-down"></i></a>
-                <div class="dropdown-content">
+                <a href="{{url_for('hostel_details')}}">Hostel Details</a>
+                <!-- <div class="dropdown-content">
                     <a href="#">Campus 1</a>
                     <a href="#">Campus 2</a>
                     <a href="#">Campus 3</a>
                     <a href="#">Campus 4</a>
-                </div>
+                </div> -->
             </div>
 
 
             <a href="{{url_for('feedback')}}">Feedback</a>
-            <a href="#">About</a>
+            <a href="{{url_for('about')}}">About</a>
 
             {% if 'username' in session %}
                 <!-- <a href="{{url_for('profile')}}">Profile ({{ session['username'] }})</a> -->

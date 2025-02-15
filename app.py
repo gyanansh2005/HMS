@@ -113,6 +113,23 @@ def payment():
     return render_template('payment.html')
 
 @app.route("/login", methods=["GET", "POST"])
+
+@app.route('/hostel_details')
+def hostel_details():
+    if 'username' not in session:
+        flash('You need to log in to access this section', 'danger')
+        return redirect(url_for('login'))   
+
+
+    return render_template('hostel_details.html')
+
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == "POST":
         email = request.form.get("email")
