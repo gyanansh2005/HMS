@@ -12,6 +12,15 @@
 <body>
     {%extends 'base.html'%}
     {%block content%}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash-message {{ 'flash-message-' + category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
     <div class="container">
         <div class="design">
             <div class="pill-1 rotate-45"></div>
@@ -21,15 +30,7 @@
         </div>
         <form class="signup" action="{{url_for('signup')}}" method="POST">
             <h3 class="title">User  Signup</h3>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ 'flash-message-' + category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-            {% endwith %}
+            
 
             <div class="text-input">
                 <i class="ri-user-fill"></i>
@@ -52,6 +53,7 @@
                 <input type="password" placeholder="Confirm Password" id="confirm_password" name="confirm_password" required>
             </div>
             <input type="submit" value="Signup" class="signup-btn" name="submit">
+            <br><br>
 
             <a href="{{url_for('login')}}" class="create">Already have an account? Login</a>
         <br> <br>
