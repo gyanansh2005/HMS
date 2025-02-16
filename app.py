@@ -130,18 +130,37 @@ def room_allocation():
 
 @app.route('/get_available_rooms', methods=['GET'])
 def get_available_rooms():
-    predefined_rooms = {
-        "four": list(range(101, 117)),  # 101 to 116
-        "double": list(range(201, 218)),  # 201 to 217
-        "single": list(range(301, 319))  # 301 to 318
+    # Get selected hostel and floor from the request
+    selected_hostel = request.args.get('hostel', default='hostel-1')
+    selected_floor = int(request.args.get('floor', default=1))
+
+    # Define room numbers based on hostel and floor
+    base_room = {
+        "hostel-1": 0,
+        "hostel-2": 0,
+        "hostel-3": 0,
+        "hostel-4": 0,
     }
+    room_offset = base_room.get(selected_hostel, 100)  # Default to hostel-1 if invalid
+    room_start = room_offset + (selected_floor * 100)  # Example: hostel-1, floor 2 → 100 + 200 = 300
+    predefined_rooms = {
+        "four": list(range(room_start + 1, room_start + 17)),   # Rooms 101-116 for hostel-1 floor 1
+        "double": list(range(room_start + 18, room_start + 25)),  # Rooms 201-217 for hostel-1 floor 2
+        "single": list(range(room_start + 26, room_start + 35))   # Rooms 301-318 for hostel-1 floor 3
+    }
+
     available = {"four": [], "double": [], "single": []}
     booked = []
 
     for room_type, numbers in predefined_rooms.items():
         max_beds = 4 if room_type == 'four' else 2 if room_type == 'double' else 1
         for number in numbers:
-            count = RoomAllocation.query.filter_by(room_number=number, room_type=room_type).count()
+            count = RoomAllocation.query.filter_by(
+                hostel=selected_hostel,
+                floor=selected_floor,
+                room_number=number,
+                room_type=room_type
+            ).count()
             beds_left = max_beds - count
             if beds_left > 0:
                 available[room_type].append({'number': number, 'beds_left': beds_left})
