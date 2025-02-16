@@ -1,26 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Navbar with Dropdowns</title>
+    <link rel="shortcut icon" href="../static/images/favicon.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../static/css/base.css">
 </head>
+
 <body>
 
     <!-- Navbar -->
     <div class="navbar" id="navbar">
         {% if 'username' in session %}
-                <a href="{{url_for('profile')}}" class="logo">{{ session['username'] }}</a>
-            {% else %}
-                <!-- <a href="{{url_for('login')}}">Login</a> -->
-                <div class="logo">CampusNest</div>
-                <!-- <a href="{{url_for('signup')}}">Signup</a> -->
-            {% endif %}
-        
+        <a href="{{url_for('profile')}}" class="logo">{{ session['username'] }}</a>
+        {% else %}
+        <!-- <a href="{{url_for('login')}}">Login</a> -->
+        <div class="logo">CampusNest</div>
+        <!-- <a href="{{url_for('signup')}}">Signup</a> -->
+        {% endif %}
+
         <div>
             <a href="{{url_for('home')}}">Home</a>
+
+            {% if 'username' in session %}
+            {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('dashboard') }}">Admin Dashboard</a>
+            {% endif %}
+            {% endif %}
 
             <div class="dropdown">
                 <a href="#">Services<i class="fa-solid fa-angle-down"></i></a>
@@ -47,11 +56,11 @@
             <a href="{{url_for('about')}}">About</a>
 
             {% if 'username' in session %}
-                <!-- <a href="{{url_for('profile')}}">Profile ({{ session['username'] }})</a> -->
-                <!-- <a href="{{url_for('logout')}}">Logout</a> -->
+            <!-- <a href="{{url_for('profile')}}">Profile ({{ session['username'] }})</a> -->
+            <!-- <a href="{{url_for('logout')}}">Logout</a> -->
             {% else %}
-                <a href="{{url_for('login')}}">Login</a>
-                <!-- <a href="{{url_for('signup')}}">Signup</a> -->
+            <a href="{{url_for('login')}}">Login</a>
+            <!-- <a href="{{url_for('signup')}}">Signup</a> -->
             {% endif %}
         </div>
     </div><br><br>
@@ -101,8 +110,10 @@
             <div class="footer-section">
                 <h3>CampusNest</h3>
                 <p>Subscribe to campusnest for updates.</p>
-                <input type="email" placeholder="Enter your email" style="padding: 5px; width: 80%; border-radius: 5px; border: 1px solid #ccc;">
-                <button style="padding: 5px 10px; margin-top: 5px; border: none; background: black; color: white; border-radius: 5px; cursor: pointer;">Subscribe</button>
+                <input type="email" placeholder="Enter your email"
+                    style="padding: 5px; width: 80%; border-radius: 5px; border: 1px solid #ccc;">
+                <button
+                    style="padding: 5px 10px; margin-top: 5px; border: none; background: black; color: white; border-radius: 5px; cursor: pointer;">Subscribe</button>
             </div>
         </div>
         <div class="footer-bottom">
@@ -113,4 +124,5 @@
 
 
 </body>
+
 </html>

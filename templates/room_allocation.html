@@ -1,18 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room Allocation</title>
-    <link rel="shortcut icon" href="../static/favicon.png" type="image/x-icon">
     <link rel="stylesheet" href="../static/css/room_allocation.css">
+    <style>
+        .room-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .room {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            width: 100px;
+        }
+        .room.booked {
+            background-color: #ffcccc;
+            cursor: not-allowed;
+        }
+        .room.selected {
+            background-color: #ccffcc;
+        }
+    </style>
 </head>
-
 <body>
-    {%extends 'base.html'%}
-    {%block content%}
-    <br><br><br>
+    {% extends 'base.html' %}
+    {% block content %}
     <div class="container">
         <h2>Room Allocation</h2>
         <form class="allocation-form" id="allocation-form">
@@ -45,6 +64,7 @@
             <div class="room-grid" id="double-sharing-grid"></div>
             <h3>Single Seater Room Availability</h3>
             <div class="room-grid" id="single-seater-grid"></div>
+            <div id="no-rooms-message"></div>
         </div>
     </div>
 
@@ -58,7 +78,7 @@
                     .then(response => response.json())
                     .then(data => {
                         const availableRooms = data.available || {};
-                        const bookedRooms = new Set(data.booked || []);
+                        const bookedRooms = data.booked || [];
 
                         populateRoomGrid('four-sharing-grid', availableRooms['four'] || [], bookedRooms, 'four');
                         populateRoomGrid('double-sharing-grid', availableRooms['double'] || [], bookedRooms, 'double');
@@ -71,23 +91,29 @@
                 const grid = document.getElementById(gridId);
                 grid.innerHTML = '';
 
-                rooms.forEach(roomNumber => {
-                    let roomDiv = document.createElement('div');
-                    roomDiv.classList.add('room');
-                    roomDiv.textContent = `Room ${roomNumber}`;
-                    roomDiv.dataset.roomNumber = roomNumber;
-                    roomDiv.dataset.roomType = roomType;
+                if (rooms.length === 0) {
+                    const noRoomsMessage = document.getElementById('no-rooms-message');
+                    noRoomsMessage.textContent = 'No available rooms';
+                    noRoomsMessage.style.display = 'block';
+                } else {
+                    rooms.forEach(room => {
+                        const roomDiv = document.createElement('div');
+                        roomDiv.classList.add('room');
+                        roomDiv.textContent = `Room ${room.number} (${room.beds_left} left)`;
+                        roomDiv.dataset.roomNumber = room.number;
+                        roomDiv.dataset.roomType = roomType;
 
-                    if (bookedRooms.has(roomNumber)) {
-                        roomDiv.classList.add('booked');
-                    } else {
-                        roomDiv.addEventListener('click', function () {
-                            selectRoom(roomDiv);
-                        });
-                    }
+                        if (bookedRooms.includes(room.number)) {
+                            roomDiv.classList.add('booked');
+                        } else {
+                            roomDiv.addEventListener('click', function () {
+                                selectRoom(roomDiv);
+                            });
+                        }
 
-                    grid.appendChild(roomDiv);
-                });
+                        grid.appendChild(roomDiv);
+                    });
+                }
             }
 
             function selectRoom(roomDiv) {
@@ -111,30 +137,29 @@
 
                 const formData = new FormData(event.target);
                 formData.append("room-number", selectedRoom.dataset.roomNumber);
-                formData.append("room-type", selectedRoomType);
+                formData.append("room-type", selectedRoom.dataset.roomType);
 
                 fetch("/room_allocation", {
                     method: "POST",
                     body: formData
                 })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                    if (data.success) {
-                        fetchAvailableRooms();
-                        selectedRoom.classList.remove('selected');
-                        selectedRoom.classList.add('booked');
-                        selectedRoom = null;
-                        selectedRoomType = null;
-                    }
-                })
-                .catch(error => console.error("Error allocating room:", error));
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        if (data.success) {
+                            fetchAvailableRooms();
+                            selectedRoom.classList.remove('selected');
+                            selectedRoom.classList.add('booked');
+                            selectedRoom = null;
+                            selectedRoomType = null;
+                        }
+                    })
+                    .catch(error => console.error("Error allocating room:", error));
             });
 
             fetchAvailableRooms();
         });
     </script>
-    {%endblock%}
+    {% endblock %}
 </body>
-
 </html>

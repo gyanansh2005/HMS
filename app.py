@@ -4,12 +4,13 @@ from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import InternalServerError
 import os
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///" + os.path.join(basedir, "app.db")
 app.config['SECRET_KEY'] = 'my_secret_key'
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Corrected typo
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
@@ -32,22 +33,37 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-with app.app_context():
-    db.create_all()
-
-
 class RoomAllocation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     hostel = db.Column(db.String(20), nullable=False)
     floor = db.Column(db.Integer, nullable=False)
     room_number = db.Column(db.Integer, nullable=False)
     room_type = db.Column(db.String(10), nullable=False)
-    beds_left = db.Column(db.Integer, nullable=False, default=4)
-    student_name = db.Column(db.String(50), nullable=True)
+    beds_left = db.Column(db.Integer, nullable=False, default=4)  # Added beds_left column
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    student_name = db.Column(db.String(50), nullable=False)
+    __table_args__ = (
+        db.UniqueConstraint('hostel', 'floor', 'room_number', 'user_id', name='uq_hostel_floor_room_user'),
+    )
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Ensure the database and tables are created
+with app.app_context():
+    db.create_all()
+    admin_user = User.query.filter_by(username='admin').first()
+    if admin_user is None:
+        admin_user = User(
+            name="Admin",
+            email="admin@example.com",
+            username="admin",
+            role="admin"
+        )
+        admin_user.set_password("password123")
+        db.session.add(admin_user)
+        db.session.commit()
 
 @app.route('/')
 def home():
@@ -57,40 +73,81 @@ def home():
 @login_required
 def room_allocation():
     if request.method == 'POST':
-        hostel = request.form['hostel']
-        floor = int(request.form['floor'])
-        room_number = int(request.form['room-number'])
-        room_type = request.form['room-type']
-        student_name = request.form['student-name']
+        try:
+            hostel = request.form['hostel']
+            floor = int(request.form['floor'])
+            room_number = int(request.form['room-number'])
+            room_type = request.form['room-type']
+            student_name = request.form['student-name']
 
-        room = RoomAllocation.query.filter_by(room_number=room_number).first()
-        if not room:
-            beds_left = 4 if room_type == "four" else (2 if room_type == "double" else 1)
-            room = RoomAllocation(
-                hostel=hostel, floor=floor, room_number=room_number,
-                room_type=room_type, beds_left=beds_left - 1, student_name=student_name
-            )
-            db.session.add(room)
-            db.session.commit()
-            return jsonify({'message': 'Room allocated successfully!', 'success': True})
-        elif room.beds_left > 0:
-            room.beds_left -= 1
-            room.student_name = student_name
-            db.session.commit()
-            return jsonify({'message': 'Room allocated successfully!', 'success': True})
-        else:
-            return jsonify({'message': 'Room not available!', 'success': False})
+            print("Received data:", {
+                "hostel": hostel,
+                "floor": floor,
+                "room_number": room_number,
+                "room_type": room_type,
+                "student_name": student_name
+            })
+
+            # Check if the room already exists
+            room = RoomAllocation.query.filter_by(room_number=room_number).first()
+
+            if not room:
+                # If the room doesn't exist, create it
+                beds_left = 4 if room_type == "four" else (2 if room_type == "double" else 1)
+                room = RoomAllocation(
+                    hostel=hostel, 
+                    floor=floor, 
+                    room_number=room_number,
+                    room_type=room_type, 
+                    beds_left=beds_left - 1, 
+                    user_id=current_user.id,  # Set the user_id to the current user's ID
+                    student_name=student_name
+                )
+                db.session.add(room)
+                db.session.commit()
+                print("Room created successfully!")
+                return jsonify({'message': 'Room allocated successfully!', 'success': True})
+            
+            elif room.beds_left > 0:
+                # If the room exists and has beds left, allocate it
+                room.beds_left -= 1
+                room.student_name = student_name
+                room.user_id = current_user.id  # Set the user_id to the current user's ID
+                db.session.commit()
+                print("Room allocated successfully!")
+                return jsonify({'message': 'Room allocated successfully!', 'success': True})
+            
+            else:
+                # If the room is full
+                print("Room is full!")
+                return jsonify({'message': 'Room not available!', 'success': False})
+
+        except Exception as e:
+            print("Error:", str(e))
+            return jsonify({'message': f'Internal Server Error: {str(e)}', 'success': False}), 500
+
     return render_template('room_allocation.html')
 
 @app.route('/get_available_rooms', methods=['GET'])
 def get_available_rooms():
-    all_rooms = {
-        "four": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
-        "double": [201, 202, 203, 204, 205, 206, 207, 208, 209, 210],
-        "single": [301, 302, 303, 304, 305, 306, 307, 308, 309, 310]
+    predefined_rooms = {
+        "four": list(range(101, 117)),  # 101 to 116
+        "double": list(range(201, 218)),  # 201 to 217
+        "single": list(range(301, 319))  # 301 to 318
     }
-    booked_rooms = [room.room_number for room in RoomAllocation.query.filter(RoomAllocation.beds_left == 0).all()]
-    return jsonify({"available": all_rooms, "booked": booked_rooms})
+    available = {"four": [], "double": [], "single": []}
+    booked = []
+
+    for room_type, numbers in predefined_rooms.items():
+        max_beds = 4 if room_type == 'four' else 2 if room_type == 'double' else 1
+        for number in numbers:
+            count = RoomAllocation.query.filter_by(room_number=number, room_type=room_type).count()
+            beds_left = max_beds - count
+            if beds_left > 0:
+                available[room_type].append({'number': number, 'beds_left': beds_left})
+            else:
+                booked.append(number)
+    return jsonify({"available": available, "booked": booked})
 
 @app.route('/terms_and_conditions')
 def terms_and_conditions():
@@ -106,26 +163,22 @@ def feedback():
     if 'username' not in session:
         flash('You need to log in to access this section', 'danger')
         return redirect(url_for('login'))
-
     return render_template('feedback.html')
 
 @app.route('/payment')
 def payment():
     return render_template('payment.html')
 
-
 @app.route('/hostel_details')
 def hostel_details():
     if 'username' not in session:
         flash('You need to log in to access this section', 'danger')
-        return redirect(url_for('login'))  
+        return redirect(url_for('login'))
     return render_template('hostel_details.html')
-
 
 @app.route('/about')
 def about():
     return render_template('about.html')
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -150,7 +203,7 @@ def login():
 
     return render_template("login.html")
 
-@app.route('/signup' , methods=['GET', 'POST'])
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
         name = request.form['name']
@@ -193,7 +246,36 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    if current_user.role != 'admin':
+        return redirect(url_for('home'))
+    users = User.query.all()
+    return render_template('dashboard.html', users=users)
+
+@app.route('/update_user/<int:user_id>', methods=['POST'])
+@login_required
+def update_user(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('home'))
+    user = User.query.get(user_id)
+    if user:
+        user.name = request.form['name']
+        user.email = request.form['email']
+        user.username = request.form['username']
+        db.session.commit()
+        flash('User updated successfully!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/delete_user/<int:user_id>')
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('home'))
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        flash('User deleted successfully!', 'success')
+    return redirect(url_for('dashboard'))
 
 if __name__ == "__main__":
     app.run(debug=True)
