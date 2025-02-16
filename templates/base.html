@@ -1,82 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Navbar with Dropdowns</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../static/css/base.css">
-
 </head>
-
 <body>
 
     <!-- Navbar -->
     <div class="navbar" id="navbar">
         {% if 'username' in session %}
-        <a href="{{url_for('profile')}}" class="logo">{{ session['username'] }}</a>
-        {% else %}
-        <!-- <a href="{{url_for('login')}}">Login</a> -->
-        <div class="logo">CampusNest</div>
-        <!-- <a href="{{url_for('signup')}}">Signup</a> -->
-        {% endif %}
+                <a href="{{url_for('profile')}}" class="logo">{{ session['username'] }}</a>
+            {% else %}
+                <!-- <a href="{{url_for('login')}}">Login</a> -->
+                <div class="logo">CampusNest</div>
+                <!-- <a href="{{url_for('signup')}}">Signup</a> -->
+            {% endif %}
+        
+        <div>
+            <a href="{{url_for('home')}}">Home</a>
 
-
-        <div class="navbar-toggle" id="navbar-toggle">
-            <i class="fa-solid fa-bars"></i>
-        </div>
-
-
-        <div class="navbar-collapse" id="navbar-collapse">
-            <div>
-                <a href="{{url_for('home')}}">Home</a>
-                <div class="dropdown">
-                    <a href="#">Services<i class="fa-solid fa-angle-down"></i></a>
-                    <div class="dropdown-content">
-                        <a href="{{url_for('room_allocation')}}">Room Allocation</a>
-                        <a href="#">Fee Payment</a>
-                        <a href="{{url_for('complaint_and_maintenance')}}">Complaint/Maintenance</a>
-                        <!-- <a href="#">Service 4</a> -->
-                    </div>
+            <div class="dropdown">
+                <a href="#">Services<i class="fa-solid fa-angle-down"></i></a>
+                <div class="dropdown-content">
+                    <a href="{{url_for('room_allocation')}}">Room Allocation</a>
+                    <a href="#">Fee Payment</a>
+                    <a href="{{url_for('complaint_and_maintenance')}}">Complaint/Maintenance</a>
+                    <!-- <a href="#">Service 4</a> -->
                 </div>
+            </div>
 
+            <div class="dropdown">
                 <a href="{{url_for('hostel_details')}}">Hostel Details</a>
-                
+                <!-- <div class="dropdown-content">
+                    <a href="#">Campus 1</a>
+                    <a href="#">Campus 2</a>
+                    <a href="#">Campus 3</a>
+                    <a href="#">Campus 4</a>
+                </div> -->
+            </div>
 
-                <a href="{{url_for('feedback')}}">Feedback</a>
-                <a href="{{url_for('about')}}">About</a>
 
-                {% if 'username' in session %}
+            <a href="{{url_for('feedback')}}">Feedback</a>
+            <a href="{{url_for('about')}}">About</a>
+
+            {% if 'username' in session %}
                 <!-- <a href="{{url_for('profile')}}">Profile ({{ session['username'] }})</a> -->
                 <!-- <a href="{{url_for('logout')}}">Logout</a> -->
-                {% else %}
+            {% else %}
                 <a href="{{url_for('login')}}">Login</a>
                 <!-- <a href="{{url_for('signup')}}">Signup</a> -->
-                {% endif %}
-            </div>
+            {% endif %}
         </div>
-    </div>
-    <br><br>
+    </div><br><br>
 
     <script>
-        // Get the navbar toggle button and collapse
-        const navbarToggle = document.getElementById('navbar-toggle');
-        const navbarCollapse = document.getElementById('navbar-collapse');
-
-        // Add event listener to the navbar toggle button
-        navbarToggle.addEventListener('click', () => {
-            // Toggle the navbar collapse
-            navbarCollapse.classList.toggle('show-navbar-collapse');
-        });
-         // Add event listener to the document
-    document.addEventListener('click', (e) => {
-        // Check if the click is outside the navbar
-        if (!navbarToggle.contains(e.target) && !navbarCollapse.contains(e.target)) {
-            // Collapse the navbar
-            navbarCollapse.classList.remove('show-navbar-collapse');
-        }
-    });
         window.addEventListener("scroll", function () {
             let navbar = document.getElementById("navbar");
             if (window.scrollY > 10) { // Detects even small scroll
@@ -85,20 +65,6 @@
                 navbar.classList.remove("scrolled");
             }
         });
-
-       
-    // Get the dropdown buttons
-    const dropdownButtons = document.querySelectorAll('.dropdown a');
-
-    // Add event listener to the dropdown buttons
-    dropdownButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            // Toggle the dropdown content
-            const dropdownContent = button.nextElementSibling;
-            dropdownContent.classList.toggle('show');
-        });
-    });
-
     </script>
     {%block content%}
     {%endblock%}
@@ -135,10 +101,8 @@
             <div class="footer-section">
                 <h3>CampusNest</h3>
                 <p>Subscribe to campusnest for updates.</p>
-                <input type="email" placeholder="Enter your email"
-                    style="padding: 5px; width: 80%; border-radius: 5px; border: 1px solid #ccc;">
-                <button
-                    style="padding: 5px 10px; margin-top: 5px; border: none; background: black; color: white; border-radius: 5px; cursor: pointer;">Subscribe</button>
+                <input type="email" placeholder="Enter your email" style="padding: 5px; width: 80%; border-radius: 5px; border: 1px solid #ccc;">
+                <button style="padding: 5px 10px; margin-top: 5px; border: none; background: black; color: white; border-radius: 5px; cursor: pointer;">Subscribe</button>
             </div>
         </div>
         <div class="footer-bottom">
@@ -149,5 +113,4 @@
 
 
 </body>
-
 </html>

@@ -49,7 +49,6 @@
 }
 
 /* Dropdown Content (Hidden by Default) */
-/* Dropdown Content (Hidden by Default) */
 .dropdown-content {
     display: none;
     position: absolute;
@@ -60,22 +59,8 @@
     border-radius: 5px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     min-width: 150px;
-    z-index: 1000;
-    padding: 10px;
 }
 
-/* Dropdown Content Position Adjustment */
-.dropdown-content {
-    left: 100%;
-    transform: translateX(-50%);
-}
-
-/* Dropdown Content Position Adjustment for Second Level Dropdowns */
-.dropdown-content .dropdown-content {
-    left: 100%;
-    top: 0;
-    transform: translateX(0);
-}
 /* Dropdown Links */
 .dropdown-content a {
     display: block;
@@ -169,91 +154,4 @@ transition: 0.3s;
 
 .back-to-top:hover {
 color:rgb(202, 226, 247);
-}
-
-
-
-/* Navbar Toggle Button */
-.navbar-toggle {
-    display: none;
-    position: absolute;
-    top: 15px;
-    right: 50px;
-    cursor: pointer;
-    z-index: 1000;
-}
-
-.navbar-toggle i {
-    font-size: 24px;
-    color: black;
-}
-
-/* Navbar Collapse */
-.navbar-collapse {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 50px;
-    background-color: white;
-    transition: 0.3s ease-in-out;
-    z-index: 1000;
-}
-
-.navbar-collapse a {
-    text-decoration: none;
-    color: black;
-    font-size: 18px;
-    margin: 0 15px;
-    transition: 0.3s;
-    position: relative;
-    padding: 10px;
-}
-
-.navbar-collapse a:hover {
-    color: darkgray;
-}
-
-/* Show Navbar Collapse on Toggle */
-.show-navbar-collapse {
-    display: block;
-}
-
-/* Hide Navbar Collapse on Toggle */
-.hide-navbar-collapse {
-    display: none;
-}
-
-/* Media Query for Small Screens */
-@media only screen and (max-width: 768px) {
-    .navbar {
-        padding: 15px 20px;
-    }
-
-    .navbar a {
-        display: none;
-    }
-
-    .navbar-toggle {
-        display: block;
-    }
-
-    .navbar-collapse {
-        display: none;
-        position: absolute;
-        top: 60px;
-        left: 0;
-        width: 100%;
-        background-color: white;
-        padding: 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .navbar-collapse a {
-        display: block;
-        margin: 10px 0;
-    }
-
-    .show-navbar-collapse {
-        display: block;
-    }
 }
