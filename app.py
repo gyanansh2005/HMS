@@ -216,7 +216,10 @@ def login():
             login_user(user)
             session['username'] = user.name  # Store username in session
             flash("Login successful!", "success")
-            return redirect(url_for("home"))
+            if user.role == "admin":
+                return redirect(url_for("dashboard"))  # Redirect admin to dashboard
+            else:
+                return redirect(url_for("home"))  # Redirect normal users to home
         else:
             flash("Invalid credentials!", "danger")
 
