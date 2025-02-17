@@ -317,3 +317,28 @@ th {
   background: #6c757d;
   color: white;
 }
+.feedback-table table th:nth-child(5),
+.feedback-table table td:nth-child(5) {
+    max-width: 300px;
+}
+
+.allocations-table table th:nth-child(7),
+.allocations-table table td:nth-child(7) {
+    text-align: center;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+}
+
+.status-badge.pending {
+    background: #ffcc00;
+    color: #000;
+}
+
+.status-badge.resolved {
+    background: #28a745;
+    color: #fff;
+}

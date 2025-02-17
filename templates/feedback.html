@@ -23,13 +23,13 @@
 
         <div class="right-section">
             <img src="../static/images/feedback1.png" alt="Feedback">
-            <form>
+            <form method="POST" action="{{ url_for('feedback') }}">
                 <input type="text" name="first_name" placeholder="First Name*" required>
                 <input type="text" name="last_name" placeholder="Last Name*" required>
                 <input type="email" name="email" placeholder="Email*" required>
                 
                 <label>Our Environment*</label>
-                <select required>
+                <select name="environment" required>
                     <option selected disabled>Choose</option>
                     <option>Excellent</option>
                     <option>Good</option>
@@ -37,7 +37,7 @@
                 </select>
                 
                 <label>How Would you rate Our Services (out of 5)?*</label>
-                <select>
+                <select name="service_rating">
                     <option selected disabled>Choose</option>
                     <option>5</option>
                     <option>4</option>
@@ -50,7 +50,7 @@
                 <textarea name="descr" placeholder="Description" required rows="4"></textarea>
                 
                 <label>From which Hostel are you?</label>
-                <select>
+                <select name="hostel">
                     <option selected disabled>Select Hostel</option>
                     <option>Hostel 1</option>
                     <option>Hostel 2</option>
@@ -61,7 +61,7 @@
                 
                 <button type="submit">Submit</button>
             </form>
-            <div class="feedback-list">
+            <!-- <div class="feedback-list">
                 <h3>Previous Feedback Submissions</h3>
                 {% for feedback in feedbacks %}
                 <div class="feedback-item">
@@ -74,7 +74,7 @@
                 {% else %}
                 <p>No feedback submissions yet.</p>
                 {% endfor %}
-              </div>
+              </div> -->
         </div>
     </div>
     {%endblock%}

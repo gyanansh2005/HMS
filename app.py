@@ -255,7 +255,8 @@ def hostel_details():
 
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    feedbacks = Feedback.query.order_by(Feedback.created_at.desc()).all()
+    return render_template('about.html', feedbacks=feedbacks)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -350,28 +351,20 @@ def get_user(user_id):
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    
     if current_user.role != 'admin':
         return redirect(url_for('home'))
     
     search_query = request.args.get('search', '')
-    if search_query:
-        users = User.query.filter(User.name.contains(search_query) ) | \
-                User.query.filter(User.email.contains(search_query)) \
-               .all()
-    else:
-        users = User.query.all()
+    users = User.query.filter(User.name.contains(search_query)) | User.query.filter(User.email.contains(search_query)) if search_query else User.query.all()
     
-    rooms_count = RoomAllocation.query.count()
-    pending_requests = Request.query.filter_by(status='pending').count()
-    
-    return render_template('dashboard.html',
-                         users=users,
-                         rooms_count=rooms_count,
-                         pending_requests=pending_requests,
-                         active_tab='users',
-                         search_query=search_query)
-    
+    return render_template('dashboard.html',users=users,
+        rooms_count=RoomAllocation.query.count(),
+        pending_requests=Request.query.filter_by(status='pending').count(),
+        feedback_count=Feedback.query.count(),
+        active_tab='users',
+        search_query=search_query
+    )
+
     
 @app.route('/submit_request', methods=['POST'])
 @login_required
@@ -431,6 +424,34 @@ def view_requests():
                          requests=requests,
                          pending_requests=pending_requests,
                          active_tab='requests')
+    
+@app.route('/view_feedback')
+@login_required
+def view_feedback():
+    if current_user.role != 'admin':
+        return redirect(url_for('home'))
+    
+    return render_template('dashboard.html',
+        feedbacks=Feedback.query.order_by(Feedback.created_at.desc()).all(),
+        rooms_count=RoomAllocation.query.count(),
+        pending_requests=Request.query.filter_by(status='pending').count(),
+        feedback_count=Feedback.query.count(),
+        active_tab='feedback'
+    )
+
+@app.route('/view_allocations')
+@login_required
+def view_allocations():
+    if current_user.role != 'admin':
+        return redirect(url_for('home'))
+    
+    return render_template('dashboard.html',
+        allocations=RoomAllocation.query.order_by(RoomAllocation.hostel, RoomAllocation.floor).all(),
+        rooms_count=RoomAllocation.query.count(),
+        pending_requests=Request.query.filter_by(status='pending').count(),
+        feedback_count=Feedback.query.count(),
+        active_tab='allocations'
+    )
     
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @login_required

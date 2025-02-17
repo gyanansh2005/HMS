@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
     <link rel="stylesheet" href="../static/css/about.css">
 </head>
+
 <body>
     {%extends 'base.html'%}
     {%block content%}
@@ -93,8 +95,19 @@
                     <h5>- Aslesha</h5>
                 </div>
             </div>
+            <div class="col-md-4">
+                <div class="p-3 shadow rounded">
+                    {% for feedback in feedbacks %}
+                    <p>"{{ feedback.description }}!"</p>
+                    <h5>- {{ feedback.first_name }} {{ feedback.last_name }} </h5>
+                    {% else %}
+                    <p>No feedback submissions yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
     {%endblock%}
 </body>
+
 </html>
