@@ -6,6 +6,8 @@ import os
 from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
+
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
@@ -49,13 +51,16 @@ class RoomAllocation(db.Model):
     )
 class Request(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(50), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # 'maintenance' or 'complaint'
+    maintenance_type = db.Column(db.String(50))
+    complaint_type = db.Column(db.String(50))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     room_number = db.Column(db.String(20), nullable=False)
     details = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref='requests')
+    
     
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -86,6 +91,8 @@ with app.app_context():
         admin_user.set_password("password123")
         db.session.add(admin_user)
         db.session.commit()
+        
+
 
 @app.route('/')
 def home():
@@ -202,10 +209,7 @@ def get_available_rooms():
 def terms_and_conditions():
     return render_template('terms_and_conditions.html')
 
-@app.route('/complaint_and_maintenance')
-@login_required
-def complaint_and_maintenance():    
-    return render_template('complaint_and_maintenance.html')
+
 
 @app.route('/get_requests', methods=['GET'])
 @login_required
@@ -367,6 +371,52 @@ def dashboard():
                          pending_requests=pending_requests,
                          active_tab='users',
                          search_query=search_query)
+    
+    
+@app.route('/submit_request', methods=['POST'])
+@login_required
+def submit_request():
+    try:
+        request_type = request.form.get('request_type')
+        req = Request(
+            type=request_type,
+            maintenance_type=request.form.get('maintenance_type'),
+            complaint_type=request.form.get('complaint_type'),
+            user_id=current_user.id,
+            room_number=request.form.get('room_number'),
+            details=request.form.get('details'),
+            status='pending'
+        )
+        
+        db.session.add(req)
+        db.session.commit()
+        flash('Request submitted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error submitting request: {str(e)}', 'error')
+    
+    return redirect(url_for('complaint_and_maintenance'))
+
+@app.route('/complaint_and_maintenance')
+@login_required
+def complaint_and_maintenance():
+    maintenance_requests = Request.query.filter_by(
+        user_id=current_user.id, 
+        type='maintenance'
+    ).order_by(Request.created_at.desc()).limit(5).all()
+    
+    complaints = Request.query.filter_by(
+        user_id=current_user.id, 
+        type='complaint'
+    ).order_by(Request.created_at.desc()).limit(5).all()
+    
+    return render_template(
+        'complaint_and_maintenance.html',
+        maintenance_requests=maintenance_requests,
+        complaints=complaints
+    )
+    
+    
     
 @app.route('/view_requests')
 @login_required

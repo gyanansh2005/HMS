@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,17 +14,20 @@
     <div class="container">
         <h2>Complaint & Maintenance</h2>
         
+        <!-- Maintenance Request Form -->
         <div class="section">
             <h3>Maintenance Request</h3>
-            <form id="maintenanceForm" method="POST" action="dashboard.html">
+            <form method="POST" action="{{ url_for('submit_request') }}">
+                <input type="hidden" name="request_type" value="maintenance">
+                
                 <label for="name">Your Name:</label>
-                <input type="text" id="maintenanceName" required>
+                <input type="text" name="name" value="{{ current_user.name }}" required readonly>
                 
                 <label for="room">Room Number:</label>
-                <input type="text" id="maintenanceRoom" required>
+                <input type="text" name="room_number" required>
                 
                 <label for="maintenanceType">Maintenance Type:</label>
-                <select id="maintenanceType" required>
+                <select name="maintenance_type" required>
                     <option value="Plumbing">Plumbing</option>
                     <option value="Electricity">Electricity</option>
                     <option value="Furniture">Furniture</option>
@@ -31,23 +35,26 @@
                 </select>
                 
                 <label for="details">Details:</label>
-                <textarea id="maintenanceDetails" rows="4" required></textarea>
+                <textarea name="details" rows="4" required></textarea>
                 
                 <button type="submit">Submit Maintenance Request</button>
             </form>
         </div>
         
+        <!-- Complaint Form -->
         <div class="section">
             <h3>Complaint Submission</h3>
-            <form id="complaintForm">
+            <form method="POST" action="{{ url_for('submit_request') }}">
+                <input type="hidden" name="request_type" value="complaint">
+                
                 <label for="name">Your Name:</label>
-                <input type="text" id="name" required>
+                <input type="text" name="name" value="{{ current_user.name }}" required readonly>
                 
                 <label for="room">Room Number:</label>
-                <input type="text" id="room" required>
+                <input type="text" name="room_number" required>
                 
                 <label for="complaintType">Complaint Type:</label>
-                <select id="complaintType" required>
+                <select name="complaint_type" required>
                     <option value="Noise">Noise</option>
                     <option value="Cleanliness">Cleanliness</option>
                     <option value="Staff Behavior">Staff Behavior</option>
@@ -55,60 +62,51 @@
                 </select>
                 
                 <label for="complaint">Complaint Details:</label>
-                <textarea id="complaint" rows="4" required></textarea>
+                <textarea name="details" rows="4" required></textarea>
                 
                 <button type="submit">Submit Complaint</button>
             </form>
         </div>
-        
+
+        <!-- Submitted Requests Display -->
         <div class="section">
-            <h3>Successfully Submitted Maintenance Requests</h3>
-            <ul id="maintenanceList"></ul>
-        </div>
-        
-        <div class="section">
-            <h3>Successfully Submitted Complaints</h3>
-            <ul id="complaintList"></ul>
+            <h3>Your Recent Requests</h3>
+            <div class="requests-container">
+                <div class="request-list">
+                    <h4>Maintenance Requests</h4>
+                    <ul>
+                        {% for req in maintenance_requests %}
+                        <li>
+                            <strong>{{ req.type }} - {{ req.maintenance_type }}</strong><br>
+                            Room {{ req.room_number }}<br>
+                            {{ req.details }}<br>
+                            <small>Status: {{ req.status }} ({{ req.created_at.strftime('%Y-%m-%d %H:%M') }})</small>
+                        </li>
+                        {% else %}
+                        <li>No maintenance requests found</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="request-list">
+                    <h4>Complaints</h4>
+                    <ul>
+                        {% for comp in complaints %}
+                        <li>
+                            <strong>{{ comp.type }} - {{ comp.complaint_type }}</strong><br>
+                            Room {{ comp.room_number }}<br>
+                            {{ comp.details }}<br>
+                            <small>Status: {{ comp.status }} ({{ comp.created_at.strftime('%Y-%m-%d %H:%M') }})</small>
+                        </li>
+                        {% else %}
+                        <li>No complaints found</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <script>
-        document.getElementById('complaintForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('name').value;
-            const room = document.getElementById('room').value;
-            const complaintType = document.getElementById('complaintType').value;
-            const complaint = document.getElementById('complaint').value;
-            
-            if (name && room && complaint) {
-                const complaintList = document.getElementById('complaintList');
-                const listItem = document.createElement('li');
-                listItem.textContent = `${name} (Room ${room}) - ${complaintType}: ${complaint}`;
-                complaintList.appendChild(listItem);
-                
-                document.getElementById('complaintForm').reset();
-            }
-        });
-        
-        document.getElementById('maintenanceForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('maintenanceName').value;
-            const room = document.getElementById('maintenanceRoom').value;
-            const maintenanceType = document.getElementById('maintenanceType').value;
-            const details = document.getElementById('maintenanceDetails').value;
-            
-            if (name && room && details) {
-                const maintenanceList = document.getElementById('maintenanceList');
-                const listItem = document.createElement('li');
-                listItem.textContent = `${name} (Room ${room}) - ${maintenanceType}: ${details}`;
-                maintenanceList.appendChild(listItem);
-                
-                document.getElementById('maintenanceForm').reset();
-            }
-        });
-    </script>
     {%endblock%}
 </body>
 </html>
+[file content end]
