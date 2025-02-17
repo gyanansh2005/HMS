@@ -3,22 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navbar with Dropdowns</title>
+    <title>Nav & Foot</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../static/css/base.css">
+    <style>
+.profile-circle {
+    width: 35px;            /* Small size of the circle */
+    height: 35px;
+    border-radius: 50%;     /* Makes it circular */
+    overflow: hidden;       /* Ensures image stays inside the circle */
+    border: 2px solid #ccc; /* Optional border */
+    display: inline-block;  /* Makes it an inline element */
+    position: absolute;  
+    margin-top: -7px;
+}
+
+.profile-circle img {
+    width: 100%;            /* Makes image fill the circle */
+    height: 100%;
+    object-fit: cover;      /* Ensures image is cropped to fit the circle */
+}
+
+    </style>
 </head>
 <body>
 
     <!-- Navbar -->
     <div class="navbar" id="navbar">
-        {% if 'username' in session %}
-                <a href="{{url_for('profile')}}" class="logo">{{ session['username'] }}</a>
-            {% else %}
-                <!-- <a href="{{url_for('login')}}">Login</a> -->
-                <div class="logo">CampusNest</div>
-                <!-- <a href="{{url_for('signup')}}">Signup</a> -->
-            {% endif %}
-        
+        <div class="logo">CampusNest</div>
         <div>
             <a href="{{url_for('home')}}">Home</a>
 
@@ -47,7 +59,7 @@
             <a href="{{url_for('about')}}">About</a>
 
             {% if 'username' in session %}
-                <!-- <a href="{{url_for('profile')}}">Profile ({{ session['username'] }})</a> -->
+                <a href="{{url_for('profile')}}"><div class="profile-circle"><img src="../static/images/about5.jpg" alt="Profile Picture"></div></a>
                 <!-- <a href="{{url_for('logout')}}">Logout</a> -->
             {% else %}
                 <a href="{{url_for('login')}}">Login</a>

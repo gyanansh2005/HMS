@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Signup Page </title>
+    <title>Signup</title>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="../static/css/login_signup.css">
     <link rel="shortcut icon" href="../static/favicon.png" type="image/x-icon">
@@ -59,7 +59,7 @@
        
             <div class="terms">
                 <input type="checkbox" id="terms" name="terms" required>
-                <label for="terms">I agree to the terms and conditions</label>
+                <label for="terms"><a href="{{url_for('terms_and_conditions')}}">I agree to the terms and conditions</a></label>
             </div>
         </form>
     </div>
