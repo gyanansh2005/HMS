@@ -67,7 +67,7 @@ label {
 button {
     margin-top: 20px;
     padding: 12px;
-    background: #28a745;
+    background: var(--primary);
     color: white;
     border: none;
     border-radius: 6px;

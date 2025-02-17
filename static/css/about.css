@@ -1,4 +1,7 @@
 :root {
+    --primary: #FF6B35;
+    --secondary: #FFF;
+    --accent: #FFA500;
     --teal: #2ec1ac;
     --teal-dark: #279e8c;
 }
@@ -23,12 +26,12 @@ body {
 }
 
 .box {
-    border-top: 4px solid var(--teal);
+    border-top: 4px solid var(--primary);
     transition: transform 0.3s;
 }
 .box:hover {
     transform: scale(1.05);
-    border-top-color: var(--teal-dark);
+    border-top-color: var(--accent);
 }
 .footer{
     display: none;

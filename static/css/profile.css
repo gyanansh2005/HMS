@@ -58,7 +58,7 @@ body {
     margin-bottom: 15px;
 }
 .profile-sidebar .edit-btn {
-    background-color: #007bff;
+    background-color: var(--primary);
     color: white;
     padding: 8px 12px;
     border-radius: 5px;
@@ -119,7 +119,7 @@ body {
     transition: all 0.3s ease;
 }
 .edit {
-    background-color: #007bff;
+    background-color: var(--primary);
     color: white;
 }
 .logout {

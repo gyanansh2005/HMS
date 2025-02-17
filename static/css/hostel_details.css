@@ -3,25 +3,27 @@
             font-weight: bold;
             text-align: center;
             padding: 20px;
-            color: #004d40;
+            color: var(--accent);
         }
 
         .nav-tabs {
             justify-content: center;
-            border-bottom: 3px solid #00897b;
+            border-bottom: 3px solid var(--primary);
         }
 
         .nav-item .nav-link {
             color: #00897b;
-            font-weight: bold;
-            padding: 12px 20px;
+            font-weight: bold; 
             transition: 0.3s;
+            padding: 12px 20px;
+           
             border-radius: 10px 10px 0 0;
         }
 
         .nav-item .nav-link.active {
-            background-color: #00897b;
+            background-color: var(--primary);
             color: white;
+            border-bottom: 3px solid var(--primary);
         }
 
         .container {
@@ -29,6 +31,8 @@
         }
 
         .hostel-card {
+            border: none;
+            overflow: hidden;
             transition: 0.3s ease-in-out;
         }
 
@@ -64,7 +68,7 @@
         .info-section {
             margin-top: 20px;
             padding: 15px;
-            background: #e0f2f1;
+            background: #f2e9e0;
             border-radius: 10px;
         }
 
@@ -96,6 +100,7 @@
         .card.hostel-card .carousel {
             height: 100%;
         }
+        
 
         .footer {
             display: none;
