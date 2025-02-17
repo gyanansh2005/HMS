@@ -78,6 +78,37 @@ button {
 button:hover {
     background: #218838;
 }
+
+
+.feedback-list {
+    margin-top: 40px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .feedback-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  
+  .feedback-item h4 {
+    color: #2a2a72;
+    margin-bottom: 10px;
+  }
+  
+  .feedback-item p {
+    margin: 5px 0;
+    color: #555;
+  }
+  
+  .feedback-item small {
+    color: #888;
+    font-size: 0.9em;
+  }
 .footer{display: none;}
 
 @media (max-width: 768px) {

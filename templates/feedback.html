@@ -61,6 +61,20 @@
                 
                 <button type="submit">Submit</button>
             </form>
+            <div class="feedback-list">
+                <h3>Previous Feedback Submissions</h3>
+                {% for feedback in feedbacks %}
+                <div class="feedback-item">
+                  <h4>{{ feedback.first_name }} {{ feedback.last_name }} - {{ feedback.hostel }}</h4>
+                  <p><strong>Environment Rating:</strong> {{ feedback.environment }}</p>
+                  <p><strong>Service Rating:</strong> {{ feedback.service_rating }}/5</p>
+                  <p><strong>Comments:</strong> {{ feedback.description }}</p>
+                  <small>Submitted on {{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+                {% else %}
+                <p>No feedback submissions yet.</p>
+                {% endfor %}
+              </div>
         </div>
     </div>
     {%endblock%}

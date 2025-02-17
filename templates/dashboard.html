@@ -3,18 +3,206 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <link rel="stylesheet" href="../static/css/dashboard.css">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
 <body>
-<a href="{{url_for('logout')}}">Back to Home</a>
   <div class="admin-container">
-    <h1>Admin Dashboard</h1>
-    <div class="coming-soon">
-      <h2>Page will be available soon</h2>
-      <p>We are working on something amazing. Stay tuned!</p>
+    <div class="sidebar">
+      <div class="logo">
+        <h2>CampusNest Admin</h2>
+      </div>
+      <nav>
+        <ul>
+          <li class="{{ 'active' if active_tab == 'users' }}"><a href="{{ url_for('dashboard') }}"><i class="fas fa-users"></i> Users</a></li>
+          <li class="{{ 'active' if active_tab == 'requests' }}"><a href="{{ url_for('view_requests') }}"><i class="fas fa-tools"></i> Requests</a></li>
+          <li class="{{ 'active' if active_tab == 'feedback' }}"><a href="#"><i class="fas fa-comment"></i> Feedback</a></li>
+          <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
+        <div class="stats">
+          <div class="stat-card">
+            <h3>Total Users</h3>
+            <p>{{ users|length }}</p>
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="stat-card">
+            <h3>Active Rooms</h3>
+            <p>{{ rooms_count }}</p>
+            <i class="fas fa-bed"></i>
+          </div>
+          <div class="stat-card">
+            <h3>Pending Requests</h3>
+            <p>{{ pending_requests }}</p>
+            <i class="fas fa-exclamation-circle"></i>
+          </div>
+          <div class="stat-card">
+            <h3>Total Feedback</h3>
+            <p>{{ feedback_count }}</p>
+            <i class="fas fa-comment"></i>
+          </div>
+        </div>
+      </div>
+
+      {% if active_tab == 'users' %}
+      <div class="users-table">
+        <div class="table-header">
+          <h2>User Management</h2>
+          <form method="GET" action="{{ url_for('dashboard') }}" class="search-box">
+            <input type="text" name="search" placeholder="Search users..." value="{{ search_query }}">
+            <button type="submit"><i class="fas fa-search"></i></button>
+          </form>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>{{ user.name }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.username }}</td>
+              <td><span class="role-badge">{{ user.role }}</span></td>
+              <td class="actions">
+                <button class="edit-btn" data-user-id="{{ user.id }}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <a href="{{ url_for('delete_user', user_id=user.id) }}" class="delete-btn" onclick="return confirm('Are you sure?')">
+                  <i class="fas fa-trash-alt"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% elif active_tab == 'requests' %}
+      <div class="requests-table">
+        <h2>Maintenance & Complaint Requests</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>User</th>
+              <th>Room</th>
+              <th>Details</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for request in requests %}
+            <tr>
+              <td>{{ request.type|capitalize }}</td>
+              <td>{{ request.user.name }}</td>
+              <td>{{ request.room_number }}</td>
+              <td>{{ request.details }}</td>
+              <td><span class="status-badge {{ request.status }}">{{ request.status|capitalize }}</span></td>
+              <td>{{ request.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                <a href="{{ url_for('update_request', request_id=request.id, status='resolved') }}" class="action-btn resolve">Resolve</a>
+                <a href="{{ url_for('update_request', request_id=request.id, status='pending') }}" class="action-btn pending">Pending</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+     
     </div>
   </div>
 
+  <!-- Edit User Modal -->
+  <div class="modal" id="editUserModal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Edit User</h2>
+      <form id="editUserForm" method="POST">
+        <input type="hidden" name="user_id" id="editUserId">
+        <div class="form-group">
+          <label>Full Name:</label>
+          <input type="text" name="name" id="editName" required>
+        </div>
+        <div class="form-group">
+          <label>Email:</label>
+          <input type="email" name="email" id="editEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Username:</label>
+          <input type="text" name="username" id="editUsername" required>
+        </div>
+        <div class="form-group">
+          <label>Role:</label>
+          <select name="role" id="editRole">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn save">Save Changes</button>
+          <button type="button" class="btn cancel" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Modal handling
+    const modal = document.getElementById('editUserModal');
+    
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const userId = btn.dataset.userId;
+        const response = await fetch(`/get_user/${userId}`);
+        const user = await response.json();
+        
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('editName').value = user.name;
+        document.getElementById('editEmail').value = user.email;
+        document.getElementById('editUsername').value = user.username;
+        document.getElementById('editRole').value = user.role;
+        
+        modal.style.display = "block";
+      });
+    });
+
+    function closeModal() {
+      modal.style.display = "none";
+    }
+
+    window.onclick = (event) => {
+      if (event.target == modal) closeModal();
+    }
+
+    // Handle form submission
+    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      
+      const response = await fetch('/update_user/' + formData.get('user_id'), {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        window.location.reload();
+      }
+    });
+  </script>
 </body>
 </html>
