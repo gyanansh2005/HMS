@@ -33,7 +33,7 @@ button {
     margin-top: 15px;
     padding: 10px;
     background: var(--primary);
-    color: white;
+    color: rgb(16, 15, 15);
     border: none;
     border-radius: 20px;
     cursor: pointer;

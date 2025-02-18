@@ -114,4 +114,26 @@
     </div>
     {%endblock%}
 </body>
+<script>
+    // Scroll-triggered animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const animateOnScroll = () => {
+            const elements = document.querySelectorAll('.container, .container2, .feature-section');
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementBottom = element.getBoundingClientRect().bottom;
+                
+                if (elementTop < window.innerHeight * 0.9 && elementBottom > 0) {
+                    element.classList.add('animated');
+                }
+            });
+        };
+
+        // Initial check
+        animateOnScroll();
+        
+        // Add scroll listener
+        window.addEventListener('scroll', animateOnScroll);
+    });
+</script>
 </html>

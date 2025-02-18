@@ -181,9 +181,9 @@ def get_available_rooms():
     room_offset = base_room.get(selected_hostel, 100)  # Default to hostel-1 if invalid
     room_start = room_offset + (selected_floor * 100)  # Example: hostel-1, floor 2 → 100 + 200 = 300
     predefined_rooms = {
-        "four": list(range(room_start + 1, room_start + 17)),   # Rooms 101-116 for hostel-1 floor 1
-        "double": list(range(room_start + 18, room_start + 25)),  # Rooms 201-217 for hostel-1 floor 2
-        "single": list(range(room_start + 26, room_start + 35))   # Rooms 301-318 for hostel-1 floor 3
+        "four": list(range(room_start + 1, room_start + 17)),          
+        "double": list(range(room_start + 17, room_start + 25)),
+        "single": list(range(room_start + 25, room_start + 35)) ,
     }
 
     available = {"four": [], "double": [], "single": []}

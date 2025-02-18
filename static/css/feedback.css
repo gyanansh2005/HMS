@@ -19,6 +19,95 @@ body {
     gap: 20px;
 }
 
+::selection {
+    background: rgba(255,107,53,0.3);
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background: #f9f9f9;
+}
+
+h1, h2, h3, h4, h5 {
+    color: #333;
+    font-weight: 700;
+}
+
+/* Desktop layout */
+.container {
+    display: flex;
+    justify-content: space-between;
+    margin: 40px auto;
+    width: 80%;
+}
+
+.left-section {
+    width: 40%;
+}
+
+.right-section {
+    width: 60%;
+}
+
+/* Tablet layout */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .left-section {
+        width: 80%;
+        margin-bottom: 20px;
+    }
+    .left-section img{
+        width:auto;
+
+    }
+
+    .right-section {
+        width: 80%;
+    }
+}
+
+/* Mobile layout */
+@media (max-width: 480px) {
+    .container {
+        width: 90%;
+    }
+
+    .left-section {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .right-section {
+        width: 100%;
+    }
+
+    .additional-content {
+        font-size: 14px;
+    }
+
+    .right-section img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+
+    form {
+        padding: 20px;
+    }
+
+    input, select, textarea {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    button[type="submit"] {
+        width: 100%;
+    }
+}
 .left-section, .right-section {
     flex: 1;
     padding: 20px;
@@ -68,7 +157,7 @@ button {
     margin-top: 20px;
     padding: 12px;
     background: var(--primary);
-    color: white;
+    color: rgb(22, 20, 20);
     border: none;
     border-radius: 6px;
     cursor: pointer;

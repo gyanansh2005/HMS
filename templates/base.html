@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,90 +8,86 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../static/css/base.css">
     <style>
-.profile-circle {
-    width: 35px;            /* Small size of the circle */
-    height: 35px;
-    border-radius: 50%;     /* Makes it circular */
-    overflow: hidden;       /* Ensures image stays inside the circle */
-    border: 2px solid #ccc; /* Optional border */
-    display: inline-block;  /* Makes it an inline element */
-    position: absolute;  
-    margin-top: -7px;
-}
+        .profile-circle {
+            width: 35px;
+            /* Small size of the circle */
+            height: 35px;
+            border-radius: 50%;
+            /* Makes it circular */
+            overflow: hidden;
+            /* Ensures image stays inside the circle */
+            border: 2px solid #ccc;
+            /* Optional border */
+            display: inline-block;
+            /* Makes it an inline element */
+            position: absolute;
+            margin-top: -7px;
+        }
 
-.profile-circle img {
-    width: 100%;            /* Makes image fill the circle */
-    height: 100%;
-    object-fit: cover;      /* Ensures image is cropped to fit the circle */
-}
-::selection {
-        background: rgba(255,107,53,0.3);
-    }
-    
-    body {
-        font-family: 'Roboto', sans-serif;
-        background: #f9f9f9;
-    }
-    
-    h1, h2, h3, h4, h5 {
-        color: #333;
-        font-weight: 700;
-    }
+        .profile-circle img {
+            width: 100%;
+            /* Makes image fill the circle */
+            height: 100%;
+            object-fit: cover;
+            /* Ensures image is cropped to fit the circle */
+        }
 
+        ::selection {
+            background: rgba(255, 107, 53, 0.3);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f9f9f9;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            color: #333;
+            font-weight: 700;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- Navbar -->
     <div class="navbar" id="navbar">
         <div class="logo">CampusNest</div>
-        <div>
+        <div class="nav-links">
             <a href="{{url_for('home')}}">Home</a>
-
             <div class="dropdown">
                 <a href="#">Services<i class="fa-solid fa-angle-down"></i></a>
                 <div class="dropdown-content">
                     <a href="{{url_for('room_allocation')}}">Room Allocation</a>
                     <a href="#">Fee Payment</a>
                     <a href="{{url_for('complaint_and_maintenance')}}">Complaint/Maintenance</a>
-                    <!-- <a href="#">Service 4</a> -->
                 </div>
             </div>
-
-            <div class="dropdown">
-                <a href="{{url_for('hostel_details')}}">Hostel Details</a>
-                <!-- <div class="dropdown-content">
-                    <a href="#">Campus 1</a>
-                    <a href="#">Campus 2</a>
-                    <a href="#">Campus 3</a>
-                    <a href="#">Campus 4</a>
-                </div> -->
-            </div>
-
-
+            <a href="{{url_for('hostel_details')}}">Hostel Details</a>
             <a href="{{url_for('feedback')}}">Feedback</a>
             <a href="{{url_for('about')}}">About</a>
-
             {% if 'username' in session %}
-                <a href="{{url_for('profile')}}"><div class="profile-circle"><img src="../static/images/about5.jpg" alt="Profile Picture"></div></a>
-                <!-- <a href="{{url_for('logout')}}">Logout</a> -->
+            <a href="{{url_for('profile')}}">
+                <div class="profile-circle"><img src="../static/images/about5.jpg" alt="Profile Picture"></div>
+            </a>
+            <!-- <a href="{{url_for('logout')}}">Logout</a> -->
             {% else %}
-                <a href="{{url_for('login')}}">Login</a>
-                <!-- <a href="{{url_for('signup')}}">Signup</a> -->
+            <a href="{{url_for('login')}}">Login</a>
+            <!-- <a href="{{url_for('signup')}}">Signup</a> -->
             {% endif %}
         </div>
-    </div><br><br>
+        <button class="nav-toggle" id="nav-toggle">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
 
-    <script>
-        window.addEventListener("scroll", function () {
-            let navbar = document.getElementById("navbar");
-            if (window.scrollY > 10) { // Detects even small scroll
-                navbar.classList.add("scrolled");
-            } else {
-                navbar.classList.remove("scrolled");
-            }
-        });
-    </script>
+    <br><br>
+
+
     {%block content%}
     {%endblock%}
 
@@ -126,8 +123,10 @@
             <div class="footer-section">
                 <h3>CampusNest</h3>
                 <p>Subscribe to campusnest for updates.</p>
-                <input type="email" placeholder="Enter your email" style="padding: 5px; width: 80%; border-radius: 5px; border: 1px solid #ccc;">
-                <button style="padding: 5px 10px; margin-top: 5px; border: none; background: black; color: white; border-radius: 5px; cursor: pointer;">Subscribe</button>
+                <input type="email" placeholder="Enter your email"
+                    style="padding: 5px; width: 80%; border-radius: 5px; border: 1px solid #ccc;">
+                <button
+                    style="padding: 5px 10px; margin-top: 5px; border: none; background: black; color: white; border-radius: 5px; cursor: pointer;">Subscribe</button>
             </div>
         </div>
         <div class="footer-bottom">
@@ -138,4 +137,64 @@
 
 
 </body>
+<script>
+    // Scroll effect
+    window.addEventListener("scroll", function () {
+        let navbar = document.getElementById("navbar");
+        navbar.classList.toggle("scrolled", window.scrollY > 10);
+    });
+
+    // Nav toggle functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        const navToggle = document.getElementById('nav-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        navToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('show');
+        });
+
+        // Close menu when clicking outside on mobile
+        document.addEventListener('click', function (event) {
+            if (!navToggle.contains(event.target) && !navLinks.contains(event.target)) {
+                navLinks.classList.remove('show');
+            }
+        });
+
+        // Close menu when clicking a link (mobile)
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 300) {
+                    navLinks.classList.remove('show');
+                }
+            });
+        });
+    });
+
+// Add this dropdown toggle functionality
+document.addEventListener('DOMContentLoaded', function () {
+    const dropdowns = document.querySelectorAll('.dropdown');
+
+    dropdowns.forEach(dropdown => {
+        const link = dropdown.querySelector('a');
+        const content = dropdown.querySelector('.dropdown-content');
+
+        link.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                e.preventDefault();
+                content.classList.toggle('show');
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target)) {
+                content.classList.remove('show');
+            }
+        });
+    });
+});
+
+
+</script>
+
 </html>

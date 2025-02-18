@@ -342,3 +342,105 @@ th {
     background: #28a745;
     color: #fff;
 }
+
+
+/* Responsive Design */
+
+/* For screens smaller than 768px (tablets and mobile devices) */
+@media only screen and (max-width: 768px) {
+  .admin-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    padding: 20px;
+  }
+
+  .main-content {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .stats {
+    flex-direction: column;
+  }
+
+  .stat-card {
+    margin-bottom: 20px;
+  }
+
+  .users-table,
+  .requests-table,
+  .feedback-table,
+  .allocations-table {
+    overflow-x: auto;
+  }
+
+  .table-header {
+    flex-direction: column;
+  }
+
+  .search-box {
+    margin-bottom: 20px;
+  }
+
+  .modal {
+    width: 90%;
+    height: 90vh;
+    margin: 20px auto;
+  }
+
+  .modal-content {
+    padding: 20px;
+  }
+}
+
+/* For screens smaller than 480px (mobile devices) */
+@media only screen and (max-width: 480px) {
+  .admin-container {
+    padding: 10px;
+  }
+
+  .sidebar {
+    padding: 10px;
+  }
+
+  .main-content {
+    padding: 10px;
+  }
+
+  .stats {
+    padding: 10px;
+  }
+
+  .stat-card {
+    margin-bottom: 10px;
+  }
+
+  .users-table,
+  .requests-table,
+  .feedback-table,
+  .allocations-table {
+    font-size: 14px;
+  }
+
+  .table-header {
+    padding: 10px;
+  }
+
+  .search-box {
+    margin-bottom: 10px;
+  }
+
+  .modal {
+    width: 80%;
+    height: 80vh;
+    margin: 10px auto;
+  }
+
+  .modal-content {
+    padding: 10px;
+  }
+}

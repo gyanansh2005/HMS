@@ -139,6 +139,9 @@ color: white;
 flex: 1;
 padding: 10px;
 min-width: 150px;
+width: 100%;
+        max-width: 300px;
+        margin-bottom: 20px;
 }
 
 .footer-section h3 {
@@ -181,4 +184,207 @@ transition: opacity 0.3s ease;
 .back-to-top:hover {
 color:rgb(202, 226, 247);
 opacity: 0.8;
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 50px;
+    background: var(--secondary);
+    backdrop-filter: none;
+    transition: all 0.3s ease-in-out;
+    z-index: 1000;
+    background-color: white;
+}
+
+.navbar.scrolled {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: black;
+    font-size: 18px;
+    margin: 0 15px;
+    transition: 0.3s;
+    position: relative;
+    padding: 10px;
+}
+
+.nav-links a:hover {
+    color: darkgray;
+}
+
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -5px;
+    left: 0;
+    background-color: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after {
+    width: 100%;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 5px;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    min-width: 150px;
+}
+
+.dropdown-content a {
+    display: block;
+    padding: 10px;
+    color: black;
+    text-align: left;
+}
+
+.dropdown-content a:hover {
+    background: rgba(200, 200, 200, 0.5);
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 10px;
+}
+.nav-toggle::before {
+    content: "Menu"; /* Add a text */
+}
+
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        padding: 20px;
+    }
+    .nav-toggle {
+        display: block;
+    }
+    .nav-toggle i {
+        font-size: 24px;
+    }
+     .nav-links.show {
+        display: flex;
+    }
+    .dropdown {
+        width: 100%;
+        text-align: center;
+    }
+
+    .dropdown-content {
+        display:none;
+        position: absolute;
+        width: 100%;
+        margin-top: 5px;
+        top: 100%;
+        left: 0;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 5px;
+        box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+        min-width: 150px;
+    }
+    .dropdown-content.show {
+        display: block;
+        position: relative;
+    }
+    
+    .dropdown-content a {
+        display: block;
+        padding: 10px;
+        color: black;
+        text-align: left;
+    }
+    
+    .dropdown-content a:hover {
+        background: rgba(200, 200, 200, 0.5);
+    }
+    
+    .dropdown:hover .dropdown-content {
+        display: none;
+    }
+    .footer{
+        width:fit-content
+    }
+    
+}
+
+@media (max-width: 480px) {
+    .nav-links {
+        display: none;
+    }
+    .nav-toggle {
+        display: block;
+    }
+    .nav-toggle i {
+        font-size: 24px;
+    }
+    .dropdown-content {
+        display: none;
+        position: relative;
+        top: 100%;
+        left: 0;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 5px;
+        box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+        min-width: 150px;
+    }
+    
+    .dropdown-content a {
+        display: block;
+        padding: 10px;
+        color: black;
+        text-align: left;
+    }
+    
+    .dropdown-content a:hover {
+        background: rgba(200, 200, 200, 0.5);
+    }
+    
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+    
 }

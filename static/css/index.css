@@ -7,6 +7,7 @@ body {
     position: relative;
     overflow-x: hidden;
 }
+
 .container {
     /* background: linear-gradient(to right, white 50%, rgba(255,107,53,0.05)); */
     display: flex;
@@ -17,23 +18,33 @@ body {
     padding: 50px 20px;
     position: relative;
     z-index: 10;
+    animation: fadeIn 1s;
 }
+
 .text-section {
     width: 50%;
     text-align: left;
+    animation: slideInFromLeft 1s;
 }
+
 .text-section h1 {
     font-size: 2.5em;
     color: #222;
+    animation: fadeIn 1s;
 }
+
 .text-section p {
     font-size: 1.1em;
     color: #555;
     line-height: 1.6;
+    animation: fadeIn 1s;
 }
+
 .buttons {
     margin-top: 20px;
+    animation: slideInFromBottom 1s;
 }
+
 .btn {
     display: inline-block;
     padding: 12px 20px;
@@ -44,51 +55,71 @@ body {
     text-decoration: none;
     color: white;
     margin-right: 10px;
+    animation: fadeIn 1s;
 }
+
 .btn-orange {
     background: var(--primary);
     color: white;
     padding: 12px 30px;
     border-radius: 30px;
     transition: all 0.3s ease;
+    animation: fadeIn 1s;
 }
+
 .btn-orange:hover {
     background-color: #ff784d;
     transform: translateY(-3px);
     box-shadow: 0 10px 20px rgba(255,107,53,0.3);
 }
+
 .btn-green {
     background-color: #00b200;
     border-radius: 30px;
+    animation: fadeIn 1s;
 }
+
 .btn-green:hover {
     background-color: #008f00;
 }
+
 .image-section {
     width: 50%;
+    animation: slideInFromRight 1s;
 }
+
 .image-section img {
     max-width: 100%;
+    animation: fadeIn 1s;
 }
+
 .container2 {
     max-width: 900px;
     margin: auto;
     padding: 50px 20px;
+    animation: fadeIn 1s;
 }
+
 h1 {
     font-size: 2.5em;
     color: #222;
     margin-bottom: 20px;
+    animation: fadeIn 1s;
 }
+
 #para {
     font-size: 1.2em;
     color: #555;
     line-height: 1.6;
     margin: 0 20px;
+    animation: fadeIn 1s;
 }
+
 .btn-container2 {
     margin-top: 30px;
+    animation: slideInFromBottom 1s;
 }
+
 .btn2 {
     background-color: #ff7f50; /* Same as .btn-orange */
     color: white;
@@ -99,10 +130,13 @@ h1 {
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
+    animation: fadeIn 1s;
 }
+
 .btn2:hover {
     background-color: #ff784d; /* Slightly darker shade for hover effect */
 }
+
 .feature-section {
     display: flex;
     align-items: center;
@@ -110,28 +144,37 @@ h1 {
     max-width: 1200px;
     margin: auto;
     padding: 50px 20px;
-    
+    animation: fadeIn 1s;
 }
+
 .feature-text {
     width: 50%;
     text-align: left;
     padding-left: 30px;
+    animation: slideInFromLeft 1s;
 }
+
 .feature-text h2 {
     font-size: 2em;
     color: #222;
     border-left: 4px solid #ff7f50;
     padding-left: 10px;
+    animation: fadeIn 1s;
 }
+
 .feature-text p {
     font-size: 1.1em;
     color: #555;
     line-height: 1.6;
+    animation: fadeIn 1s;
 }
+
 .feature-text ul {
     padding: 0;
     list-style: none;
+    animation: fadeIn 1s;
 }
+
 .feature-text ul li {
     font-size: 1.1em;
     color: #555;
@@ -139,19 +182,27 @@ h1 {
     margin-bottom: 10px;
     display: flex;
     align-items: center;
+    animation: fadeIn 1s;
 }
+
 .feature-text ul li::before {
     content: "✔";
     color: #0073e6;
     font-weight: bold;
     margin-right: 10px;
+    animation: fadeIn 1s;
 }
+
 .feature-image {
     width: 50%;
+    animation: slideInFromRight 1s;
 }
+
 .feature-image img {
     max-width: 100%;
+    animation: fadeIn 1s;
 }
+
 .whatsapp-btn {
     position: fixed;
     bottom: 20px;
@@ -168,8 +219,114 @@ h1 {
     display: flex;
     align-items: center;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    animation: slideInFromBottom 1s;
 }
+
 .whatsapp-btn img {
     width: 20px;
     margin-right: 10px;
+    animation: fadeIn 1s;
+}
+
+/* View Time Transitions */
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromRight {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromBottom {
+    0% {
+        transform: translateY(100%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Media Queries */
+
+/* Large screens (1200px and above) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1200px;
+    }
+    .container2 {
+        max-width: 900px;
+    }
+    .feature-section {
+        max-width: 1200px;
+    }
+}
+
+/* Medium screens (992px to 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .container {
+        max-width: 1000px;
+    }
+    .container2 {
+        max-width: 800px;
+    }
+    .feature-section {
+        max-width: 1000 px;
+    }
+    .text-section, .image-section {
+        width: 45%;
+    }
+}
+
+/* Small screens (768px to 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .container {
+        flex-direction: column;
+        align-items: center;
+    .text-section, .image-section {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}
+
+/* Extra small screens (below 768px) */
+@media (max-width: 767px) {
+    body {
+        padding: 10px;
+    }
+    .text-section h1 {
+        font-size: 2em;
+    }
+    .text-section p {
+        font-size: 1em;
+    }
+    .btn {
+        padding: 10px 15px;
+        font-size: 0.9em;
+    }
+    .feature-text h2 {
+        font-size: 1.5em;
+    }
+    .feature-text p {
+        font-size: 1em;
+    }
 }

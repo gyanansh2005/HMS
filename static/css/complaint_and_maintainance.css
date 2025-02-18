@@ -80,7 +80,7 @@ form textarea:focus {
 button {
     padding: 10px 15px;
     background-color: var(--primary);
-    color: white;
+    color: rgb(19, 18, 18);
     border: none;
     border-radius: 4px;
     font-size: 16px;
@@ -156,3 +156,100 @@ li:last-child {
 .request-list h4 {
     margin-bottom: 15px;
 }
+/* Media Query for Small Screens (max-width: 768px) */
+@media (max-width: 768px) {
+    .container {
+      margin: 20px auto;
+      padding: 10px;
+    }
+  
+    #upper_container {
+      flex-direction: column;
+      gap: 20px;
+    }
+  
+    .section {
+      width: 100%;
+      padding: 15px;
+    }
+  
+    .submission-section {
+      flex-direction: column;
+      gap: 10px;
+    }
+  
+    .submission-section .section {
+      width: 100%;
+    }
+  
+    .requests-container {
+      flex-direction: column;
+      gap: 10px;
+    }
+  
+    .request-list {
+      width: 100%;
+    }
+  }
+  
+  /* Media Query for Extra Small Screens (max-width: 480px) */
+  @media (max-width: 480px) {
+
+
+    .container {
+      margin: 10px auto;
+      padding: 5px;
+    }
+  
+    #upper_container {
+      gap: 10px;
+    }
+  
+    .section {
+      padding: 10px;
+    }
+  
+    .submission-section {
+      gap: 5px;
+    }
+  
+    .requests-container {
+      gap: 5px;
+    }
+  
+    button {
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+  
+    form input,
+    form select,
+    form textarea {
+      padding: 5px;
+      font-size: 14px;
+    }
+    
+  }
+  
+  /* Media Query for Large Screens (min-width: 1200px) */
+  @media (min-width: 1200px) {
+    .container {
+      max-width: 1200px;
+    }
+  
+    #upper_container {
+      gap: 50px;
+    }
+  
+    .section {
+      padding: 25px;
+    }
+  
+    .submission-section {
+      gap: 30px;
+    }
+  
+    .requests-container {
+      gap: 30px;
+    }
+  }
