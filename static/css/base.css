@@ -110,7 +110,6 @@
 
 
 .footer {
-    background: linear-gradient(to right, var(--primary), #b15922);
 background-color:black;
 backdrop-filter: blur(15px);
 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -145,6 +144,7 @@ width: 100%;
 }
 
 .footer-section h3 {
+    color: aliceblue;
     border-left: 4px solid var(--secondary);
     padding-left: 1rem;
 }
