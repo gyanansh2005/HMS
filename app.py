@@ -416,8 +416,15 @@ def view_requests():
     
     requests = Request.query.order_by(Request.created_at.desc()).all()
     pending_requests = Request.query.filter_by(status='pending').count()
+    search_query = request.args.get('search', '')
+    users = User.query.filter(User.name.contains(search_query)) | User.query.filter(User.email.contains(search_query)) if search_query else User.query.all()
+    
     
     return render_template('dashboard.html',
+                           users=users,
+                        rooms_count=RoomAllocation.query.count(),
+                        feedback_count=Feedback.query.count(),
+        
                          requests=requests,
                          pending_requests=pending_requests,
                          active_tab='requests')
@@ -427,12 +434,18 @@ def view_requests():
 def view_feedback():
     if current_user.role != 'admin':
         return redirect(url_for('home'))
+    search_query = request.args.get('search', '')
+    users = User.query.filter(User.name.contains(search_query)) | User.query.filter(User.email.contains(search_query)) if search_query else User.query.all()
     
     return render_template('dashboard.html',
-        feedbacks=Feedback.query.order_by(Feedback.created_at.desc()).all(),
+                           users=users,
         rooms_count=RoomAllocation.query.count(),
         pending_requests=Request.query.filter_by(status='pending').count(),
-        feedback_count=Feedback.query.count(),
+        feedback_count=Feedback.query.count(),                   
+        feedbacks=Feedback.query.order_by(Feedback.created_at.desc()).all(),
+        
+       
+        
         active_tab='feedback'
     )
 
@@ -442,11 +455,16 @@ def view_allocations():
     if current_user.role != 'admin':
         return redirect(url_for('home'))
     
+    search_query = request.args.get('search', '')
+    users = User.query.filter(User.name.contains(search_query)) | User.query.filter(User.email.contains(search_query)) if search_query else User.query.all()
+    
+    
     return render_template('dashboard.html',
-        allocations=RoomAllocation.query.order_by(RoomAllocation.hostel, RoomAllocation.floor).all(),
+        users=users,
         rooms_count=RoomAllocation.query.count(),
         pending_requests=Request.query.filter_by(status='pending').count(),
-        feedback_count=Feedback.query.count(),
+        feedback_count=Feedback.query.count(),   
+        allocations=RoomAllocation.query.order_by(RoomAllocation.hostel, RoomAllocation.floor).all(),
         active_tab='allocations'
     )
     
