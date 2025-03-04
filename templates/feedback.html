@@ -1,83 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback</title>
+    <title>Feedback - CampusNest</title>
     <link rel="stylesheet" href="../static/css/feedback.css">
 </head>
-
-
 <body>
-    {%extends 'base.html'%}
-    {%block content%}
+    {% extends 'base.html' %}
+    {% block content %}
 
-    <br><br>
-    <div class="container">
-        <div class="left-section">
-            <img src="../static/images/feedback2.jpg" alt="Side Image"><br><br><br><br><br>
-            <div class="additional-content">
-                <p>Have any issues or suggestions? Feel free to share your feedback with us. "Your feedback matters! We strive to make CampusNest a better place for everyone. Let us know about your experiences, any issues you've faced, or suggestions for improvement. Your valuable input helps us enhance our services and provide a comfortable stay. Thank you for sharing your thoughts with us!"</p>
+    <section class="feedback-header">
+        <div class="header-content">
+            <div class="header-logo-text">CampusNest</div>
+            <h1>Share Your Feedback</h1>
+            <p>Your thoughts help us make CampusNest a better place for everyone!</p>
+        </div>
+    </section>
+
+    <div class="feedback-container">
+        <div class="form-section">
+            <div class="form-image">
+                <div class="form-tagline">We Value Your Voice!</div>
             </div>
+            <form method="POST" action="{{ url_for('feedback') }}" class="feedback-form">
+                <div class="form-group">
+                    <label for="first_name">First Name*</label>
+                    <input type="text" name="first_name" id="first_name" placeholder="First Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last Name*</label>
+                    <input type="text" name="last_name" id="last_name" placeholder="Last Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email*</label>
+                    <input type="email" name="email" id="email" placeholder="Email" required>
+                </div>
+                <div class="form-group">
+                    <label for="environment">Our Environment*</label>
+                    <select name="environment" id="environment" required>
+                        <option selected disabled>Choose</option>
+                        <option>Excellent</option>
+                        <option>Good</option>
+                        <option>Bad</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="service_rating">Service Rating (out of 5)*</label>
+                    <select name="service_rating" id="service_rating" required>
+                        <option selected disabled>Choose</option>
+                        <option>5</option>
+                        <option>4</option>
+                        <option>3</option>
+                        <option>2</option>
+                        <option>1</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="descr">How Would You Rate Our Services? (Description)*</label>
+                    <textarea name="descr" id="descr" placeholder="Tell us more..." required rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="hostel">From Which Hostel Are You?</label>
+                    <select name="hostel" id="hostel" required>
+                        <option selected disabled>Select Hostel</option>
+                        <option>Hostel 1</option>
+                        <option>Hostel 2</option>
+                        <option>Hostel 3</option>
+                        <option>Hostel 4</option>
+                        <option>Others</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">Submit Feedback</button>
+            </form>
         </div>
 
-        <div class="right-section">
-            <img src="../static/images/feedback1.png" alt="Feedback">
-            <form method="POST" action="{{ url_for('feedback') }}">
-                <input type="text" name="first_name" placeholder="First Name*" required>
-                <input type="text" name="last_name" placeholder="Last Name*" required>
-                <input type="email" name="email" placeholder="Email*" required>
-                
-                <label>Our Environment*</label>
-                <select name="environment" required>
-                    <option selected disabled>Choose</option>
-                    <option>Excellent</option>
-                    <option>Good</option>
-                    <option>Bad</option>
-                </select>
-                
-                <label>How Would you rate Our Services (out of 5)?*</label>
-                <select name="service_rating">
-                    <option selected disabled>Choose</option>
-                    <option>5</option>
-                    <option>4</option>
-                    <option>3</option>
-                    <option>2</option>
-                    <option>1</option>
-                </select>
-                
-                <label>How would you rate Our Services (Description)?</label>
-                <textarea name="descr" placeholder="Description" required rows="4"></textarea>
-                
-                <label>From which Hostel are you?</label>
-                <select name="hostel">
-                    <option selected disabled>Select Hostel</option>
-                    <option>Hostel 1</option>
-                    <option>Hostel 2</option>
-                    <option>Hostel 3</option>
-                    <option>Hostel 4</option>
-                    <option>Others</option>
-                </select>
-                
-                <button type="submit">Submit</button>
-            </form>
-            <!-- <div class="feedback-list">
-                <h3>Previous Feedback Submissions</h3>
+        <div class="feedback-list-section">
+            <h2>Previous Feedback</h2>
+            <div class="feedback-list">
                 {% for feedback in feedbacks %}
                 <div class="feedback-item">
-                  <h4>{{ feedback.first_name }} {{ feedback.last_name }} - {{ feedback.hostel }}</h4>
-                  <p><strong>Environment Rating:</strong> {{ feedback.environment }}</p>
-                  <p><strong>Service Rating:</strong> {{ feedback.service_rating }}/5</p>
-                  <p><strong>Comments:</strong> {{ feedback.description }}</p>
-                  <small>Submitted on {{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    <h4>{{ feedback.first_name }} {{ feedback.last_name }} - {{ feedback.hostel }}</h4>
+                    <p><strong>Environment:</strong> {{ feedback.environment }}</p>
+                    <p><strong>Service Rating:</strong> {{ feedback.service_rating }}/5</p>
+                    <p><strong>Comments:</strong> {{ feedback.description }}</p>
+                    <small>Submitted on {{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                 </div>
                 {% else %}
                 <p>No feedback submissions yet.</p>
                 {% endfor %}
-              </div> -->
+            </div>
         </div>
     </div>
-    {%endblock%}
+
+    {% endblock %}
 </body>
 </html>
