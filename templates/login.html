@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -13,15 +14,19 @@
 <body>
     {%extends 'base.html'%}
     {%block content%}
-     {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ 'flash-message-' + category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-            {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash-message {{ 'flash-message-' + category }}">
+            {{ message }}
+            <i class="ri-close-line flash-close" onclick="this.parentElement.style.display='none'"></i>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <div class="container">
         <div class="design">
             <div class="pill-1 rotate-45"></div>
@@ -30,8 +35,8 @@
             <div class="pill-4 rotate-45"></div>
         </div>
         <form class="login" action="{{url_for('login')}}" method="POST">
-            <h3 class="title">User  Login</h3>
-           
+            <h3 class="title">User Login</h3>
+
 
             <div class="text-input">
                 <i class="ri-user-fill"></i>
@@ -49,7 +54,7 @@
                     <option value="user">user</option>
                     <option value="admin">admin</option>
                 </select>
-    
+
             </div>
             <input type="submit" value="Login" class="login-btn" name="submit">
 
@@ -64,4 +69,5 @@
     </div>
     {%endblock%}
 </body>
+
 </html>

@@ -6,8 +6,6 @@ import os
 from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
-
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
@@ -42,16 +40,17 @@ class RoomAllocation(db.Model):
     floor = db.Column(db.Integer, nullable=False)
     room_number = db.Column(db.Integer, nullable=False)
     room_type = db.Column(db.String(10), nullable=False)
-    beds_left = db.Column(db.Integer, nullable=False, default=4)  # Added beds_left column
+    beds_left = db.Column(db.Integer, nullable=False, default=4)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     student_name = db.Column(db.String(50), nullable=False)
-    student_roll_no = db.Column(db.String(20), nullable=False, unique=True)  
+    student_roll_no = db.Column(db.String(20), nullable=False, unique=True)
     __table_args__ = (
         db.UniqueConstraint('hostel', 'floor', 'room_number', 'user_id', name='uq_hostel_floor_room_user'),
     )
+
 class Request(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(50), nullable=False)  # 'maintenance' or 'complaint'
+    type = db.Column(db.String(50), nullable=False)
     maintenance_type = db.Column(db.String(50))
     complaint_type = db.Column(db.String(50))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -60,8 +59,7 @@ class Request(db.Model):
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref='requests')
-    
-    
+
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50), nullable=False)
@@ -91,8 +89,6 @@ with app.app_context():
         admin_user.set_password("password123")
         db.session.add(admin_user)
         db.session.commit()
-        
-
 
 @app.route('/')
 def home():
@@ -117,26 +113,22 @@ def room_allocation():
                 "room_type": room_type,
                 "student_name": student_name,
                 "student_roll": student_roll_no,
-                
             })
             existing_allocation = RoomAllocation.query.filter_by(student_roll_no=student_roll_no).first()
             if existing_allocation:
                 return jsonify({'message': 'You have already booked a room!', 'success': False})
 
-
-            # Check if the room already exists
             room = RoomAllocation.query.filter_by(room_number=room_number).first()
 
             if not room:
-                # If the room doesn't exist, create it
                 beds_left = 4 if room_type == "four" else (2 if room_type == "double" else 1)
                 room = RoomAllocation(
-                    hostel=hostel, 
-                    floor=floor, 
+                    hostel=hostel,
+                    floor=floor,
                     room_number=room_number,
-                    room_type=room_type, 
-                    beds_left=beds_left - 1, 
-                    user_id=current_user.id,  # Set the user_id to the current user's ID
+                    room_type=room_type,
+                    beds_left=beds_left - 1,
+                    user_id=current_user.id,
                     student_name=student_name,
                     student_roll_no=student_roll_no
                 )
@@ -146,16 +138,14 @@ def room_allocation():
                 return jsonify({'message': 'Room allocated successfully!', 'success': True})
             
             elif room.beds_left > 0:
-                # If the room exists and has beds left, allocate it
                 room.beds_left -= 1
                 room.student_name = student_name
-                room.user_id = current_user.id  # Set the user_id to the current user's ID
+                room.user_id = current_user.id
                 db.session.commit()
                 print("Room allocated successfully!")
                 return jsonify({'message': 'Room allocated successfully!', 'success': True})
             
             else:
-                # If the room is full
                 print("Room is full!")
                 return jsonify({'message': 'Room not available!', 'success': False})
 
@@ -167,23 +157,21 @@ def room_allocation():
 
 @app.route('/get_available_rooms', methods=['GET'])
 def get_available_rooms():
-    # Get selected hostel and floor from the request
     selected_hostel = request.args.get('hostel', default='hostel-1')
     selected_floor = int(request.args.get('floor', default=1))
 
-    # Define room numbers based on hostel and floor
     base_room = {
         "hostel-1": 0,
         "hostel-2": 0,
         "hostel-3": 0,
         "hostel-4": 0,
     }
-    room_offset = base_room.get(selected_hostel, 100)  # Default to hostel-1 if invalid
-    room_start = room_offset + (selected_floor * 100)  # Example: hostel-1, floor 2 → 100 + 200 = 300
+    room_offset = base_room.get(selected_hostel, 100)
+    room_start = room_offset + (selected_floor * 100)
     predefined_rooms = {
-        "four": list(range(room_start + 1, room_start + 17)),          
+        "four": list(range(room_start + 1, room_start + 17)),
         "double": list(range(room_start + 17, room_start + 25)),
-        "single": list(range(room_start + 25, room_start + 35)) ,
+        "single": list(range(room_start + 25, room_start + 35)),
     }
 
     available = {"four": [], "double": [], "single": []}
@@ -209,14 +197,11 @@ def get_available_rooms():
 def terms_and_conditions():
     return render_template('terms_and_conditions.html')
 
-
-
 @app.route('/get_requests', methods=['GET'])
 @login_required
 def get_requests():
     requests = Request.query.order_by(Request.created_at.desc()).all()
     return jsonify([{'id': request.id, 'type': request.type, 'user': request.user.name, 'room_number': request.room_number, 'details': request.details, 'status': request.status} for request in requests])
-
 
 @app.route('/feedback', methods=['GET', 'POST'])
 @login_required
@@ -270,12 +255,12 @@ def login():
 
         if user and user.check_password(password):
             login_user(user)
-            session['username'] = user.name  # Store username in session
+            session['username'] = user.name
             flash("Login successful!", "success")
             if user.role == "admin":
-                return redirect(url_for("dashboard"))  # Redirect admin to dashboard
+                return redirect(url_for("dashboard"))
             else:
-                return redirect(url_for("home"))  # Redirect normal users to home
+                return redirect(url_for("home"))
         else:
             flash("Invalid credentials!", "danger")
 
@@ -321,21 +306,14 @@ def logout():
     flash('You have been logged out', 'success')
     return redirect(url_for('home'))
 
-# @app.route('/dashboard')
-# @login_required
-# def dashboard():
-#     if current_user.role != 'admin':
-#         return redirect(url_for('home'))
-#     users = User.query.all()
-#     return render_template('dashboard.html', users=users)
-
-# Add this route to get user data for editing
 @app.route('/get_user/<int:user_id>')
 @login_required
 def get_user(user_id):
     if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
     user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
     return jsonify({
         'id': user.id,
         'name': user.name,
@@ -344,25 +322,23 @@ def get_user(user_id):
         'role': user.role
     })
 
-# Update the dashboard route to include stats
 @app.route('/dashboard')
 @login_required
 def dashboard():
     if current_user.role != 'admin':
         return redirect(url_for('home'))
-    
-    search_query = request.args.get('search', '')
-    users = User.query.filter(User.name.contains(search_query)) | User.query.filter(User.email.contains(search_query)) if search_query else User.query.all()
-    
-    return render_template('dashboard.html',users=users,
-        rooms_count=RoomAllocation.query.count(),
-        pending_requests=Request.query.filter_by(status='pending').count(),
-        feedback_count=Feedback.query.count(),
-        active_tab='users',
-        search_query=search_query
-    )
 
+    search_query = request.args.get('search', '')
+    users = User.query.filter(User.name.contains(search_query) | User.email.contains(search_query)).all() if search_query else User.query.all()
     
+    return render_template('dashboard.html',
+                           users=users,
+                           rooms_count=RoomAllocation.query.count(),
+                           pending_requests=Request.query.filter_by(status='pending').count(),
+                           feedback_count=Feedback.query.count(),
+                           active_tab='users',
+                           search_query=search_query)
+
 @app.route('/submit_request', methods=['POST'])
 @login_required
 def submit_request():
@@ -405,9 +381,7 @@ def complaint_and_maintenance():
         maintenance_requests=maintenance_requests,
         complaints=complaints
     )
-    
-    
-    
+
 @app.route('/view_requests')
 @login_required
 def view_requests():
@@ -417,37 +391,31 @@ def view_requests():
     requests = Request.query.order_by(Request.created_at.desc()).all()
     pending_requests = Request.query.filter_by(status='pending').count()
     search_query = request.args.get('search', '')
-    users = User.query.filter(User.name.contains(search_query)) | User.query.filter(User.email.contains(search_query)) if search_query else User.query.all()
-    
+    users = User.query.filter(User.name.contains(search_query) | User.email.contains(search_query)).all() if search_query else User.query.all()
     
     return render_template('dashboard.html',
                            users=users,
-                        rooms_count=RoomAllocation.query.count(),
-                        feedback_count=Feedback.query.count(),
-        
-                         requests=requests,
-                         pending_requests=pending_requests,
-                         active_tab='requests')
-    
+                           rooms_count=RoomAllocation.query.count(),
+                           feedback_count=Feedback.query.count(),
+                           requests=requests,
+                           pending_requests=pending_requests,
+                           active_tab='requests')
+
 @app.route('/view_feedback')
 @login_required
 def view_feedback():
     if current_user.role != 'admin':
         return redirect(url_for('home'))
     search_query = request.args.get('search', '')
-    users = User.query.filter(User.name.contains(search_query)) | User.query.filter(User.email.contains(search_query)) if search_query else User.query.all()
+    users = User.query.filter(User.name.contains(search_query) | User.email.contains(search_query)).all() if search_query else User.query.all()
     
     return render_template('dashboard.html',
                            users=users,
-        rooms_count=RoomAllocation.query.count(),
-        pending_requests=Request.query.filter_by(status='pending').count(),
-        feedback_count=Feedback.query.count(),                   
-        feedbacks=Feedback.query.order_by(Feedback.created_at.desc()).all(),
-        
-       
-        
-        active_tab='feedback'
-    )
+                           rooms_count=RoomAllocation.query.count(),
+                           pending_requests=Request.query.filter_by(status='pending').count(),
+                           feedback_count=Feedback.query.count(),
+                           feedbacks=Feedback.query.order_by(Feedback.created_at.desc()).all(),
+                           active_tab='feedback')
 
 @app.route('/view_allocations')
 @login_required
@@ -456,38 +424,58 @@ def view_allocations():
         return redirect(url_for('home'))
     
     search_query = request.args.get('search', '')
-    users = User.query.filter(User.name.contains(search_query)) | User.query.filter(User.email.contains(search_query)) if search_query else User.query.all()
-    
+    users = User.query.filter(User.name.contains(search_query) | User.email.contains(search_query)).all() if search_query else User.query.all()
     
     return render_template('dashboard.html',
-        users=users,
-        rooms_count=RoomAllocation.query.count(),
-        pending_requests=Request.query.filter_by(status='pending').count(),
-        feedback_count=Feedback.query.count(),   
-        allocations=RoomAllocation.query.order_by(RoomAllocation.hostel, RoomAllocation.floor).all(),
-        active_tab='allocations'
-    )
-    
-@app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
+                           users=users,
+                           rooms_count=RoomAllocation.query.count(),
+                           pending_requests=Request.query.filter_by(status='pending').count(),
+                           feedback_count=Feedback.query.count(),
+                           allocations=RoomAllocation.query.order_by(RoomAllocation.hostel, RoomAllocation.floor).all(),
+                           active_tab='allocations')
+
+@app.route('/update_user/<int:user_id>', methods=['POST'])
 @login_required
-def edit_user(user_id):
+def update_user(user_id):
     if current_user.role != 'admin':
+        flash('Unauthorized access!', 'danger')
         return redirect(url_for('home'))
-    
+
     user = User.query.get_or_404(user_id)
-    
-    if request.method == 'POST':
-        user.name = request.form['name']
-        user.email = request.form['email']
-        user.username = request.form['username']
-        user.role = request.form['role']
+    try:
+        name = request.form.get('name')
+        email = request.form.get('email')
+        username = request.form.get('username')
+        role = request.form.get('role')
+
+        # Validate input
+        if not all([name, email, username, role]):
+            flash('All fields are required!', 'danger')
+            return redirect(url_for('dashboard'))
+
+        # Check for duplicate email (excluding the current user)
+        existing_email = User.query.filter(User.email == email, User.id != user_id).first()
+        if existing_email:
+            flash('Email already exists!', 'danger')
+            return redirect(url_for('dashboard'))
+
+        # Check for duplicate username (excluding the current user)
+        existing_username = User.query.filter(User.username == username, User.id != user_id).first()
+        if existing_username:
+            flash('Username already exists!', 'danger')
+            return redirect(url_for('dashboard'))
+
+        # Update user
+        user.name = name
+        user.email = email
+        user.username = username
+        user.role = role
         db.session.commit()
         flash('User updated successfully!', 'success')
-        return redirect(url_for('dashboard'))
-    
-    return render_template('edit_user.html', user=user)
-    
-
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating user: {str(e)}', 'danger')
+    return redirect(url_for('dashboard'))
 
 @app.route('/update_request/<int:request_id>/<status>')
 @login_required
@@ -496,21 +484,40 @@ def update_request(request_id, status):
         return redirect(url_for('home'))
     
     request = Request.query.get_or_404(request_id)
-    request.status = status
-    db.session.commit()
-    flash(f'Request marked as {status}', 'success')
+    try:
+        request.status = status
+        db.session.commit()
+        flash(f'Request marked as {status}', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating request: {str(e)}', 'danger')
     return redirect(url_for('view_requests'))
 
 @app.route('/delete_user/<int:user_id>')
 @login_required
 def delete_user(user_id):
     if current_user.role != 'admin':
+        flash('Unauthorized access!', 'danger')
         return redirect(url_for('home'))
+
     user = User.query.get(user_id)
-    if user:
+    if not user:
+        flash('User not found!', 'danger')
+        return redirect(url_for('dashboard'))
+
+    try:
+        # Check for associated records and delete them
+        RoomAllocation.query.filter_by(user_id=user_id).delete()
+        Request.query.filter_by(user_id=user_id).delete()
+        Feedback.query.filter_by(email=user.email).delete()
+
+        # Delete the user
         db.session.delete(user)
         db.session.commit()
-        flash('User deleted successfully!', 'success')
+        flash('User and associated records deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting user: {str(e)}', 'danger')
     return redirect(url_for('dashboard'))
 
 if __name__ == "__main__":

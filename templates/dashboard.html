@@ -4,11 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
+  <title>Admin Dashboard - CampusNest</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
-
 
 <body>
   <div class="admin-container">
@@ -18,14 +17,10 @@
       </div>
       <nav>
         <ul>
-          <li class="{{ 'active' if active_tab == 'users' }}"><a href="{{ url_for('dashboard') }}"><i
-                class="fas fa-users"></i> Users</a></li>
-          <li class="{{ 'active' if active_tab == 'requests' }}"><a href="{{ url_for('view_requests') }}"><i
-                class="fas fa-tools"></i> Requests</a></li>
-          <li class="{{ 'active' if active_tab == 'feedback' }}"><a href="{{ url_for('view_feedback') }}"><i class="fas fa-comment"></i> Feedback</a>
-          </li>
-          <li class="{{ 'active' if active_tab == 'allocations' }}"><a href="{{ url_for('view_allocations') }}"><i
-                class="fas fa-home"></i> Room Allocations</a></li>
+          <li class="{{ 'active' if active_tab == 'users' }}"><a href="{{ url_for('dashboard') }}"><i class="fas fa-users"></i> Users</a></li>
+          <li class="{{ 'active' if active_tab == 'requests' }}"><a href="{{ url_for('view_requests') }}"><i class="fas fa-tools"></i> Requests</a></li>
+          <li class="{{ 'active' if active_tab == 'feedback' }}"><a href="{{ url_for('view_feedback') }}"><i class="fas fa-comment"></i> Feedback</a></li>
+          <li class="{{ 'active' if active_tab == 'allocations' }}"><a href="{{ url_for('view_allocations') }}"><i class="fas fa-home"></i> Room Allocations</a></li>
           <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
       </nav>
@@ -38,22 +33,22 @@
           <div class="stat-card">
             <h3>Total Users</h3>
             <p>{{ users|length }}</p>
-            <i class="fas fa-users"></i>
+            <i class="fas fa-users stat-icon"></i>
           </div>
           <div class="stat-card">
             <h3>Active Rooms</h3>
             <p>{{ rooms_count }}</p>
-            <i class="fas fa-bed"></i>
+            <i class="fas fa-bed stat-icon"></i>
           </div>
           <div class="stat-card">
             <h3>Pending Requests</h3>
             <p>{{ pending_requests }}</p>
-            <i class="fas fa-exclamation-circle"></i>
+            <i class="fas fa-exclamation-circle stat-icon"></i>
           </div>
           <div class="stat-card">
             <h3>Total Feedback</h3>
             <p>{{ feedback_count }}</p>
-            <i class="fas fa-comment"></i>
+            <i class="fas fa-comment stat-icon"></i>
           </div>
         </div>
       </div>
@@ -90,7 +85,7 @@
                   <i class="fas fa-edit"></i>
                 </button>
                 <a href="{{ url_for('delete_user', user_id=user.id) }}" class="delete-btn"
-                  onclick="return confirm('Are you sure?')">
+                  onclick="return confirm('Are you sure you want to delete this user?')">
                   <i class="fas fa-trash-alt"></i>
                 </a>
               </td>
@@ -111,6 +106,7 @@
               <th>Room</th>
               <th>Details</th>
               <th>Status</th>
+              <th>Date</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -134,6 +130,7 @@
           </tbody>
         </table>
       </div>
+
       {% elif active_tab == 'feedback' %}
       <div class="feedback-table">
         <h2>User Feedback</h2>
@@ -194,14 +191,13 @@
         </table>
       </div>
       {% endif %}
-
     </div>
   </div>
 
   <!-- Edit User Modal -->
   <div class="modal" id="editUserModal">
     <div class="modal-content">
-      <span class="close">&times;</span>
+      <span class="close">×</span>
       <h2>Edit User</h2>
       <form id="editUserForm" method="POST">
         <input type="hidden" name="user_id" id="editUserId">
@@ -233,8 +229,8 @@
   </div>
 
   <script>
-    // Modal handling
     const modal = document.getElementById('editUserModal');
+    const form = document.getElementById('editUserForm');
 
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -242,13 +238,21 @@
         const response = await fetch(`/get_user/${userId}`);
         const user = await response.json();
 
+        if (user.error) {
+          alert(user.error);
+          return;
+        }
+
         document.getElementById('editUserId').value = user.id;
         document.getElementById('editName').value = user.name;
         document.getElementById('editEmail').value = user.email;
         document.getElementById('editUsername').value = user.username;
         document.getElementById('editRole').value = user.role;
 
-        modal.style.display = "block";
+        // Dynamically set the form action with the user ID
+        form.action = `/update_user/${userId}`;
+
+        modal.style.display = "flex";
       });
     });
 
@@ -259,21 +263,6 @@
     window.onclick = (event) => {
       if (event.target == modal) closeModal();
     }
-
-    // Handle form submission
-    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-
-      const response = await fetch('/update_user/' + formData.get('user_id'), {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        window.location.reload();
-      }
-    });
   </script>
 </body>
 
