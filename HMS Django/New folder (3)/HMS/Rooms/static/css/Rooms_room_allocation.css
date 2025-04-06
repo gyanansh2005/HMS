@@ -1,0 +1,357 @@
+/* Root Variables (Ensure this is the only or last-loaded definition) */
+:root {
+    --primary1: #4361ee;
+    --secondary1: #3a0ca3;
+    --accent1: #f72585;
+    --success1: #4CAF50;
+    --warning1: #FFD700;
+    --danger1: #d9534f;
+    --text-dark1: #2b2d42;
+    --text-light1: #8d99ae;
+    --white: #ffffff;
+    --light-bg: #f8f9fa;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.2);
+    --transition: all 0.3s ease;
+}
+
+/* Container */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 80px auto 20px;
+    padding: 2rem;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+/* Updated h2 styling with increased specificity and !important */
+.container h2 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    color: var(--text-dark1); /* Fallback */
+    background: linear-gradient(to right, var(--primary1), var(--accent1)) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    color: transparent !important;
+}
+
+/* Forms */
+.filter-form, .allocation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: var(--text-dark1);
+}
+
+select, input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--text-light1);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+select:focus, input:focus {
+    border-color: var(--primary1);
+    outline: none;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(45deg, var(--primary1), var(--secondary1));
+    color: var(--white);
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn:hover {
+    background: linear-gradient(45deg, var(--secondary1), var(--accent1));
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn:disabled {
+    background: var(--text-light1);
+    cursor: not-allowed;
+}
+
+form > a {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(45deg, var(--primary1), var(--secondary1));
+    color: var(--white);
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+form > a:hover {
+    background: linear-gradient(45deg, var(--secondary1), var(--accent1));
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Room Status */
+.room-status h3 {
+    margin: 1.5rem 0 1rem;
+    font-size: 1.5rem;
+    color: var(--text-dark1);
+}
+
+.room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--light-bg);
+    border-radius: 12px;
+}
+
+.room {
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.room.available {
+    background: var(--success1);
+    color: var(--white);
+}
+
+.room.selected {
+    background: var(--warning1);
+    color: var(--text-dark1);
+    transform: scale(1.05);
+}
+
+.room.booked {
+    background: var(--danger1);
+    color: var(--white);
+    cursor: not-allowed;
+}
+
+.room:hover:not(.booked) {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Status Legend */
+.status-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.available-color { background: var(--success1); }
+.selected-color { background: var(--warning1); }
+.booked-color { background: var(--danger1); }
+
+
+/* Add to your CSS */
+.payment-container {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--primary1);
+}
+
+.room-summary {
+    background: var(--light-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-item span {
+    font-size: 0.9rem;
+    color: var(--text-light1);
+}
+
+.summary-item strong {
+    font-size: 1.1rem;
+    color: var(--text-dark1);
+}
+
+.payment-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.payment-card {
+    position: relative;
+}
+
+.payment-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+.payment-card label {
+    display: block;
+    padding: 1.5rem;
+    background: var(--light-bg);
+    border-radius: 10px;
+    border: 2px solid var(--text-light1);
+    cursor: pointer;
+    transition: var(--transition);
+    height: 100%;
+}
+
+.payment-card input[type="radio"]:checked + label {
+    border-color: var(--primary1);
+    background: rgba(67, 97, 238, 0.05);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.payment-title {
+    display: block;
+    font-weight: 600;
+    color: var(--text-dark1);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.payment-details {
+    display: block;
+    font-weight: 700;
+    color: var(--primary1);
+    font-size: 1.3rem;
+    margin: 0.5rem 0;
+}
+
+.payment-badge {
+    display: inline-block;
+    background: var(--success1);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.payment-note {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-light1);
+    margin-top: 0.5rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.proceed-btn {
+    flex: 1;
+    background: linear-gradient(45deg, var(--success1), #2e7d32);
+}
+
+.outline-btn {
+    flex: 1;
+    background: transparent;
+    border: 2px solid var(--primary1);
+    color: var(--primary1);
+}
+
+.outline-btn:hover {
+    background: rgba(67, 97, 238, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .room-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 1rem;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+
+    .room-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .container h2 {
+        font-size: 1.5rem;
+    }
+
+    .room-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+
+    .btn, form > a {
+        padding: 0.5rem 1rem;
+    }
+}
