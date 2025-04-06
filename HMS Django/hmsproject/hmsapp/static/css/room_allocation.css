@@ -1,0 +1,255 @@
+:root {
+    --primary: #FF6B35;
+    --secondary: #FFF;
+    --accent: #FFA500;
+    --text-dark: #333;
+    --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 8px 25px rgba(255, 107, 53, 0.2);
+    --transition: all 0.3s ease;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    color: var(--text-dark);
+}
+
+.container {
+    width: 60%;
+    margin: 60px auto;
+    padding: 30px;
+    background: var(white);
+    border-radius: 12px;
+    box-shadow: var(--shadow-light);
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+h2 {
+    text-align: center;
+    color: var(--text-dark);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.allocation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+label {
+    margin-top: 10px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+select,
+input {
+    padding: 12px;
+    margin-top: 5px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: var(--transition);
+    background: #f9f9f9;
+}
+
+select:focus,
+input:focus {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-hover);
+    outline: none;
+    background: var(--secondary);
+}
+
+button {
+    margin-top: 20px;
+    padding: 12px 25px;
+    background: linear-gradient(45deg, var(--primary), var(--accent));
+    color: var(--secondary);
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-light);
+}
+
+button:hover {
+    background: linear-gradient(45deg, #e65e2f, #ff8c00);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+.room-status {
+    margin-top: 30px;
+}
+
+.room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Wider base for impact */
+    gap: 25px; /* More space for a luxurious feel */
+    margin-top: 30px;
+    padding: 10px;
+    background: linear-gradient(45deg, rgba(255, 107, 53, 0.05), rgba(255, 165, 0, 0.05)); /* Subtle gradient backdrop */
+    border-radius: 20px;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05); /* Inner glow */
+}
+
+.room {
+    padding: 20px;
+    border: 3px solid transparent; /* Thicker, dynamic border */
+    border-radius: 20px; /* Sleek, curvaceous corners */
+    text-align: center;
+    cursor: pointer;
+    background: #4CAF50; /* Vibrant green for available */
+    color: var(--secondary);
+    transition: var(--transition), border-color 0.2s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy animation */
+    box-shadow: var(--shadow-light);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #4CAF50, #45a049); /* Gradient for depth */
+    font-weight: 600; /* Bolder text */
+    text-transform: uppercase; /* Sexy, confident lettering */
+    letter-spacing: 1px;
+}
+
+.room::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 0;
+}
+
+.room::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.room:hover {
+    transform: translateY(-8px) rotate(2deg); /* Playful tilt */
+    box-shadow: var(--shadow-hover);
+    border-color: var(--accent); /* Sexy orange border on hover */
+}
+
+.room:hover::before {
+    opacity: 1; /* Radial glow */
+}
+
+.room:hover::after {
+    opacity: 1; /* Subtle shine */
+}
+
+.room.booked {
+    background: linear-gradient(135deg, #d9534f, #c9302c) !important; /* Rich red gradient */
+    cursor: not-allowed;
+    opacity: 0.85;
+    border-color: #b22222; /* Darker red border */
+}
+
+.room.selected {
+    background: linear-gradient(135deg, #FFD700, #FFC107) !important; /* Luxurious gold gradient */
+    color: var(--text-dark);
+    border-color: var(--accent);
+    transform: scale(1.15) rotate(-2deg); /* Bigger and sassier */
+    box-shadow: 0 12px 30px rgba(255, 165, 0, 0.3); /* Bolder shadow */
+    z-index: 2; /* Pops above others */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .room-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .room-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 15px;
+    }
+    .room {
+        padding: 15px;
+        font-size: 0.9rem;
+    }
+}
+form > a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 45px;
+    background: linear-gradient(45deg, var(--primary), var(--accent));
+    text-decoration: none;
+    color: var(--secondary);
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow-light);
+}
+
+form > a:hover {
+    background: linear-gradient(45deg, #e65e2f, #ff8c00);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        width: 85%;
+        padding: 20px;
+    }
+    .room-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 90%;
+        margin: 30px auto;
+    }
+    h2 {
+        font-size: 1.5rem;
+    }
+    button, form > a {
+        font-size: 0.9rem;
+        padding: 10px 20px;
+    }
+}
+
+::selection {
+    background: rgba(255, 107, 53, 0.3);
+}
