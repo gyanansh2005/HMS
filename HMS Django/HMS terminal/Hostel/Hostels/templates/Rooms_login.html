@@ -1,0 +1,76 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/Room_login_signup.css' %}">
+    <link rel="shortcut icon" href="{% static 'favicon.png' %}" type="image/x-icon">
+</head>
+<body>
+    
+    {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+                <div class="flash-message flash-message-{{ message.tags }}">
+                    {{ message }}
+                    <i class="ri-close-line flash-close" onclick="this.parentElement.style.display='none'"></i>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="container">
+        <div class="design">
+            <div class="pill-1 rotate-45"></div>
+            <div class="pill-2 rotate-45"></div>
+            <div class="pill-3 rotate-45"></div>
+            <div class="pill-4 rotate-45"></div>
+        </div>
+        <form class="login" action="{% url 'login' %}" method="POST">
+            {% csrf_token %}
+            <h3 class="title">User Login</h3>
+
+            <div class="text-input">
+                <i class="ri-mail-fill"></i>
+                <input type="email" 
+                       id="email" 
+                       name="email" 
+                       placeholder="Email" 
+                       required
+                       autocomplete="username">
+            </div>
+            
+            <div class="text-input">
+                <i class="ri-lock-fill"></i>
+                <input type="password" 
+                       id="password" 
+                       name="password" 
+                       placeholder="Password" 
+                       required
+                       autocomplete="current-password">
+            </div>
+
+            <input type="submit" value="Login" class="login-btn">
+            
+            <div class="forgot-password">
+                <a href="#" class="forgot">Forgot Password?</a>
+            </div>
+
+            <div class="create-account">
+                <p>Don't have an account?</p>
+                <a href="{% url 'signup' %}" class="signup-link">
+                    Create Account
+                    <i class="ri-arrow-right-fill"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+    {% endblock %}
+</body>
+</html>

@@ -1,0 +1,138 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/Rooms_profile.css' %}">
+    <title>User Profile</title>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <h1>Student Profile</h1>
+            <div class="profile-status">
+                {% if allocation %}
+                <span class="status-badge {{ allocation.status }}">{{ allocation.get_status_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <!-- Profile Section -->
+            <div class="profile-section">
+                <div class="profile-picture">
+                    <img src="{% if user.student_profile.profile_picture %}{{ user.student_profile.profile_picture.url }}{% else %}{% static 'images/default_profile.png' %}{% endif %}" 
+                         alt="Profile Picture"
+                         id="profile-image">
+                    <form id="profile-pic-form">
+                        {% csrf_token %}
+                        <input type="file" id="profile-pic-input" hidden>
+                        <button type="button" onclick="document.getElementById('profile-pic-input').click()">
+                            <i class="fas fa-camera"></i> Update Photo
+                        </button>
+                    </form>
+                </div>
+
+                <div class="profile-info">
+                    <h2>{{ user.get_full_name }}</h2>
+                    <p class="email">{{ user.email }}</p>
+                    <div class="detail-item">
+                        <span>Roll Number:</span>
+                        <p>{{ user.roll_number }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <span>Member Since:</span>
+                        <p>{{ user.date_joined|date:"M Y" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Allocation Details -->
+            {% if allocation %}
+            <div class="profile-section">
+                <h3><i class="fas fa-home"></i> Room Allocation</h3>
+                <div class="allocation-details">
+                    <div class="detail-item">
+                        <span>Hostel:</span>
+                        <p>{{ allocation.room.hostel.name }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <span>Room:</span>
+                        <p>{{ allocation.room.room_number }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <span>Type:</span>
+                        <p>{{ allocation.room.get_room_type_display }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <span>Monthly Rent:</span>
+                        <p class="price">₹{{ allocation.room.price|floatformat:"0" }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="profile-actions">
+                <a href="{% url 'edit_profile' %}" class="btn-edit">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Profile picture update
+        document.getElementById('profile-pic-input').addEventListener('change', async (e) => {
+            const formData = new FormData();
+            formData.append('profile_picture', e.target.files[0]);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            try {
+                const response = await fetch("{% url 'update_profile_pic' %}", {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('profile-image').src = result.new_url;
+                }
+            } catch (error) {
+                console.error('Profile picture update failed:', error);
+            }
+        });
+
+        // Auto-refresh allocation status
+        const allocationId = "{{ allocation.id|default:'null' }}";
+        const allocationStatus = "{{ allocation.status|default:'\"\"' }}";
+
+        if (allocationId) {
+            setInterval(async () => {
+                try {
+                    const response = await fetch(`/allocation_status/${allocationId}/`);
+                    const data = await response.json();
+                    
+                    if (data.status !== allocationStatus) {
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    console.error('Status check failed:', error);
+                }
+            }, 30000); // Check every 30 seconds
+        }
+    });
+    </script>
+</body>
+</html>
+{% endblock %}
