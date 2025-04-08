@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'Hostels'
+    'Hostels',
+   
 ]
 
 MIDDLEWARE = [
@@ -124,4 +125,16 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'Hostels.CustomUser'
-AUTHENTICATION_BACKENDS = ['Hostels.backends.EmailBackend']
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend'
+]
+AUTH_PASSWORD_VALIDATORS = []  # Empty list
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+ADMIN_INTERFACE = {
+    'THEME': 'admin_interface.themes.Dark',
+    'SHOW_COLOR_CHANGER': True,
+}

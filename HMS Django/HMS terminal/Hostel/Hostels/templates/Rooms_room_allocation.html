@@ -6,344 +6,326 @@
 <div class="container">
     <h2>Room Allocation</h2>
     
+    <!-- Filter Section -->
     <form method="get" class="filter-form">
         {% csrf_token %}
-        <div class="form-row">
-            <div class="form-group">
-                <label for="hostel">Select Hostel:</label>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="hostel"><i class="fas fa-building"></i> Hostel</label>
                 <select id="hostel" name="hostel" required>
-                    <option value="" disabled selected>Select Hostel</option>
+                    <option value="" disabled selected>Choose Hostel</option>
                     {% for hostel in hostels %}
-                    <option value="{{ hostel.id }}" 
-                        {% if selected_hostel == hostel.id|stringformat:"s" %}selected{% endif %}>
-                        {{ hostel.name }}
-                    </option>
+                    <option value="{{ hostel.id }}">{{ hostel.name }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            <div class="form-group">
-                <label for="floor">Select Floor:</label>
-                <select id="floor" name="floor" required>
-                    <option value="" disabled selected>Select Floor</option>
-                    <option value="1" {% if selected_floor == '1' %}selected{% endif %}>Floor 1</option>
-                    <option value="2" {% if selected_floor == '2' %}selected{% endif %}>Floor 2</option>
-                    <option value="3" {% if selected_floor == '3' %}selected{% endif %}>Floor 3</option>
+            <div class="filter-group">
+                <label for="floor"><i class="fas fa-layer-group"></i> Floor</label>
+                <select id="floor" name="floor" required disabled>
+                    <option value="" disabled selected>Select hostel first</option>
                 </select>
             </div>
 
-            <div class="form-group">
-                <label for="ac_type">AC Preference:</label>
+            <div class="filter-group">
+                <label for="ac_type"><i class="fas fa-snowflake"></i> AC Type</label>
                 <select id="ac_type" name="ac_type">
-                    <option value="" {% if not selected_ac_type %}selected{% endif %}>All</option>
-                    <option value="ac" {% if selected_ac_type == 'ac' %}selected{% endif %}>AC</option>
-                    <option value="non_ac" {% if selected_ac_type == 'non_ac' %}selected{% endif %}>Non-AC</option>
+                    <option value="">All Types</option>
+                    <option value="ac">AC Rooms</option>
+                    <option value="non_ac">Non-AC Rooms</option>
                 </select>
             </div>
         </div>
-        <button type="submit" class="btn">Apply Filters</button>
     </form>
 
-    {% if selected_hostel and selected_floor %}
-    <form method="post" class="allocation-form">
+    <!-- Room Display Section -->
+    <div class="room-display-container">
+        <!-- Dynamic content will be loaded here -->
+    </div>
+
+    <!-- Allocation Form -->
+    <form method="post" class="allocation-form" style="display: none;">
         {% csrf_token %}
-        <input type="hidden" name="hostel" value="{{ selected_hostel }}">
-        <input type="hidden" name="floor" value="{{ selected_floor }}">
-        <input type="hidden" name="ac_type" value="{{ selected_ac_type|default_if_none:'' }}">
+        <input type="hidden" name="hostel" id="form-hostel">
+        <input type="hidden" name="floor" id="form-floor">
+        <input type="hidden" name="ac_type" id="form-ac_type">
         
         <div class="form-group">
             <label for="student-name">Student Name:</label>
-            <input type="text" id="student-name" name="student_name" required>
+            <input type="text" id="student-name" name="student_name" 
+                   value="{{ user.get_full_name }}" required>
         </div>
-
+    
         <div class="form-group">
             <label for="student-roll-no">Student Roll Number:</label>
-            <input type="text" id="student-roll-no" name="student_roll_no" required>
+            <input type="text" id="student-roll-no" name="student_roll_no" 
+                   value="{{ user.roll_number }}" required>
         </div>
 
         <div class="form-group">
             <label for="selected-room-display">Selected Room:</label>
-            <input type="text" id="selected-room-display" readonly 
-                   value="{{ selected_room_display|default_if_none:'' }}">
-            <input type="hidden" id="selected-room-number" name="room_number" 
-                   value="{{ selected_room_number|default_if_none:'' }}">
-            <input type="hidden" id="selected-room-type" name="room_type" 
-                   value="{{ selected_room_type|default_if_none:'' }}">
+            <input type="text" id="selected-room-display" readonly>
+            <input type="hidden" id="selected-room-number" name="room_number">
+            <input type="hidden" id="selected-room-type" name="room_type">
         </div>
 
-        <button type="submit" id="allocate-btn" class="btn" 
-                {% if not selected_room_number %}disabled{% endif %}>
+        <button type="submit" id="allocate-btn" class="btn" disabled>
             Allocate Room
         </button>
-        {% if selected_room_number %}
-        <a href="{% url 'payment' %}" id="payment-link" class="btn">Proceed to Pay</a>
-        {% endif %}
     </form>
-    {% endif %}
-    
-    <div class="status-legend">
-        <div class="legend-item">
-            <div class="legend-color available-color"></div>
-            <span>Available</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color selected-color"></div>
-            <span>Selected</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color booked-color"></div>
-            <span>Booked</span>
-        </div>
-    </div>
-
-    <div class="room-status">
-        <!-- 4 Sharing Rooms -->
-        <h3>4 Sharing Availability</h3>
-        <div class="room-grid" id="four-sharing-grid">
-            {% for room in four_sharing_available %}
-            <div class="room available" 
-                 data-room-number="{{ room.number }}" 
-                 data-room-type="four"
-                 onclick="selectRoom(this, '{{ room.number }}', 'four')">
-                <strong>Room {{ room.number }}</strong>
-                <div>4 Sharing ({{ room.ac_type }})</div>
-                <small>{{ room.beds_left }} bed{{ room.beds_left|pluralize }} left</small>
-            </div>
-            {% empty %}
-            <div class="no-rooms">No available 4 Sharing rooms</div>
-            {% endfor %}
-            
-            {% for room in four_sharing_booked %}
-            <div class="room booked">
-                <strong>Room {{ room.number }}</strong>
-                <div>4 Sharing ({{ room.ac_type }})</div>
-                <small>Fully booked</small>
-            </div>
-            {% endfor %}
-        </div>
-    
-        <!-- Double Sharing Rooms -->
-        <h3>Double Sharing Availability</h3>
-        <div class="room-grid" id="double-sharing-grid">
-            {% for room in double_sharing_available %}
-            <div class="room available" 
-                 data-room-number="{{ room.number }}" 
-                 data-room-type="double"
-                 onclick="selectRoom(this, '{{ room.number }}', 'double')">
-                <strong>Room {{ room.number }}</strong>
-                <div>Double Sharing ({{ room.ac_type }})</div>
-                <small>{{ room.beds_left }} bed{{ room.beds_left|pluralize }} left</small>
-            </div>
-            {% empty %}
-            <div class="no-rooms">No available Double Sharing rooms</div>
-            {% endfor %}
-            
-            {% for room in double_sharing_booked %}
-            <div class="room booked">
-                <strong>Room {{ room.number }}</strong>
-                <div>Double Sharing ({{ room.ac_type }})</div>
-                <small>Fully booked</small>
-            </div>
-            {% endfor %}
-        </div>
-    
-        <!-- Single Seater Rooms -->
-        <h3>Single Seater Availability</h3>
-        <div class="room-grid" id="single-seater-grid">
-            {% for room in single_seater_available %}
-            <div class="room available" 
-                 data-room-number="{{ room.number }}" 
-                 data-room-type="single"
-                 onclick="selectRoom(this, '{{ room.number }}', 'single')">
-                <strong>Room {{ room.number }}</strong>
-                <div>Single Seater ({{ room.ac_type }})</div>
-                <small>{{ room.beds_left }} bed{{ room.beds_left|pluralize }} left</small>
-            </div>
-            {% empty %}
-            <div class="no-rooms">No available Single Seater rooms</div>
-            {% endfor %}
-            
-            {% for room in single_seater_booked %}
-            <div class="room booked">
-                <strong>Room {{ room.number }}</strong>
-                <div>Single Seater ({{ room.ac_type }})</div>
-                <small>Fully booked</small>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
 </div>
-<!-- Add this after your room allocation form -->
-<div id="payment-options" class="payment-container" style="display: none;">
-    <h3><i class="fas fa-credit-card"></i> Payment Options</h3>
-    
-    <div class="room-summary">
-        <div class="summary-item">
-            <span>Selected Room:</span>
-            <strong id="display-selected-room">-</strong>
-        </div>
-        <div class="summary-item">
-            <span>Room Type:</span>
-            <strong id="display-room-type">-</strong>
-        </div>
-    </div>
-
-    <div class="payment-methods">
-        <div class="payment-card">
-            <input type="radio" name="payment" id="full-payment" checked>
-            <label for="full-payment">
-                <span class="payment-title">Full Payment</span>
-                <span class="payment-details" id="full-payment-amount">-</span>
-                <span class="payment-badge">5% Discount</span>
-            </label>
-        </div>
-        <div class="payment-card">
-            <input type="radio" name="payment" id="installment">
-            <label for="installment">
-                <span class="payment-title">Installment Plan</span>
-                <span class="payment-details" id="installment-amount">-</span>
-                <span class="payment-note">(3 monthly payments)</span>
-            </label>
-        </div>
-    </div>
-
-    <div class="action-buttons">
-        <button class="btn proceed-btn" id="pay-now-btn">
-            <i class="fas fa-bolt"></i> Pay Now
-        </button>
-        <button class="btn outline-btn" id="pay-later-btn">
-            <i class="far fa-clock"></i> Pay Later
-        </button>
-    </div>
-</div>
-
-<!-- Hidden form for payment data -->
-<form id="payment-form" action="/process-payment" method="POST" target="_blank" style="display: none;">
-    <input type="hidden" name="room_id" id="payment-room-id">
-    <input type="hidden" name="amount" id="payment-amount">
-    <input type="hidden" name="payment_type" id="payment-type">
-</form>
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const hostelSelect = document.getElementById('hostel');
+    const floorSelect = document.getElementById('floor');
+    const acSelect = document.getElementById('ac_type');
+    const roomContainer = document.querySelector('.room-display-container');
+    const allocationForm = document.querySelector('.allocation-form');
 
-
-function selectRoom(element, roomNumber, roomType) {
-    // Update selected room display
-    document.querySelectorAll('.room.selected').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-    
-    document.getElementById('selected-room-number').value = roomNumber;
-    document.getElementById('selected-room-type').value = roomType;
-    document.getElementById('selected-room-display').value = 
-        `Room ${roomNumber} (${roomType.replace('four', '4-sharing').replace('double', 'Double sharing').replace('single', 'Single seater')})`;
-    
-    // Enable allocate button
-    document.getElementById('allocate-btn').disabled = false;
-    
-    // Show payment link
-    document.getElementById('payment-link').style.display = 'inline-block';
-    
-    // Submit form to persist selection
-    const form = document.querySelector('.filter-form');
-    form.action = "{% url 'room_allocation' %}";
-    form.innerHTML += `<input type="hidden" name="room_number" value="${roomNumber}">`;
-    form.innerHTML += `<input type="hidden" name="room_type" value="${roomType}">`;
-    form.submit();
-}
-
-// Add polling functionality
-let refreshInterval;
-
-function startPolling() {
-    refreshInterval = setInterval(updateRooms, 3000); // Poll every 3 seconds
-}
-
-function stopPolling() {
-    clearInterval(refreshInterval);
-}
-
-// Modify existing updateRooms function
-function updateRooms() {
-    const hostelId = hostelSelect.value;
-    const floor = floorSelect.value;
-    const acType = acTypeSelect.value;
-
-    if (!hostelId || !floor) return;
-
-    fetch(`/get_room_details/?hostel_id=${hostelId}&floor=${floor}&ac_type=${acType}`)
-        .then(res => res.json())
-        .then(data => {
-            document.querySelectorAll('.room-grid').forEach(grid => grid.innerHTML = '');
+    // Fetch floors when hostel changes
+    hostelSelect.addEventListener('change', async () => {
+        if (!hostelSelect.value) return;
+        
+        try {
+            const response = await fetch(`/hostel/${hostelSelect.value}/floors/`);
+            const data = await response.json();
             
-            data.rooms.forEach(room => {
-                const grid = document.querySelector(`.room-type[data-type="${room.type}"] .room-grid`);
-                const status = room.beds_left > 0 ? 'available' : 'booked';
-                grid.innerHTML += `
-                    <div class="room-card ${status}" data-room-id="${room.id}">
-                        <div class="room-header">
-                            <span>Room ${room.number}</span>
-                            <span class="status">${status}</span>
-                        </div>
-                        <div class="room-details">
-                            <p>${room.ac_type.toUpperCase()}</p>
-                            <p class="beds-left">${room.beds_left} beds left</p>
-                            <p>₹${room.price}/month</p>
-                        </div>
-                    </div>
-                `;
+            floorSelect.innerHTML = '<option value="" disabled selected>Select Floor</option>';
+            data.floors.forEach(floor => {
+                const option = document.createElement('option');
+                option.value = floor;
+                option.textContent = `Floor ${floor}`;
+                floorSelect.appendChild(option);
             });
-
-            document.querySelectorAll('.room-card.available').forEach(card => {
-                card.addEventListener('click', () => showRoomModal(card.dataset.roomId));
-            });
-        });
-}
-
-// Start polling when filters are selected
-hostelSelect.addEventListener('change', () => {
-    stopPolling();
-    updateRooms();
-    startPolling();
-});
-
-floorSelect.addEventListener('change', () => {
-    stopPolling();
-    updateRooms();
-    startPolling();
-});
-
-acTypeSelect.addEventListener('change', () => {
-    stopPolling();
-    updateRooms();
-    startPolling();
-});
-
-// Update booking function to handle response
-function bookRoom(roomId) {
-    fetch('/book_room/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({ room_id: roomId })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            // Update local room status immediately
-            const roomCard = document.querySelector(`.room-card[data-room-id="${data.room.id}"]`);
-            if (roomCard) {
-                roomCard.querySelector('.status').textContent = data.room.beds_left > 0 ? 'available' : 'booked';
-                roomCard.querySelector('.beds-left').textContent = `${data.room.beds_left} beds left`;
-                roomCard.classList.toggle('available', data.room.beds_left > 0);
-                roomCard.classList.toggle('booked', data.room.beds_left <= 0);
-            }
-            window.location.href = data.redirect;
-        } else {
-            alert(data.error);
+            floorSelect.disabled = false;
+        } catch (error) {
+            console.error('Error fetching floors:', error);
         }
     });
-}
+
+    // Fetch rooms when any filter changes
+    async function fetchRooms() {
+        if (!hostelSelect.value || !floorSelect.value) return;
+
+        try {
+            const params = new URLSearchParams({
+                hostel: hostelSelect.value,
+                floor: floorSelect.value,
+                ac_type: acSelect.value
+            });
+
+            document.getElementById('form-hostel').value = hostelSelect.value;
+            document.getElementById('form-floor').value = floorSelect.value;
+            document.getElementById('form-ac_type').value = acSelect.value;
+
+            const response = await fetch(`{% url 'get_available_rooms' %}?${params}`);
+            const data = await response.json();
+            updateRoomDisplay(data.rooms);
+        } catch (error) {
+            console.error('Error fetching rooms:', error);
+        }
+    }
+
+    function updateRoomDisplay(rooms) {
+        // Render all grids first
+        roomContainer.innerHTML = `
+            <div class="room-category four-sharing">
+                <h3><i class="fas fa-users"></i> 4-Sharing Rooms</h3>
+                <div class="room-grid" id="four-sharing-grid"></div>
+            </div>
+            <div class="room-category double-sharing">
+                <h3><i class="fas fa-user-friends"></i> Double Sharing</h3>
+                <div class="room-grid" id="double-sharing-grid"></div>
+            </div>
+            <div class="room-category single-seater">
+                <h3><i class="fas fa-user"></i> Single Seater</h3>
+                <div class="room-grid" id="single-seater-grid"></div>
+            </div>
+        `;
+
+        // Populate grids after HTML is in the DOM
+        populateRoomGrid('four', rooms);
+        populateRoomGrid('double', rooms);
+        populateRoomGrid('single', rooms);
+
+        // Add event listeners only after cards are rendered
+        document.querySelectorAll('.room-card').forEach(card => {
+            card.addEventListener('click', handleRoomSelection);
+        });
+    }
+
+    function populateRoomGrid(type, rooms) {
+        const gridId = {
+            'four': 'four-sharing-grid',
+            'double': 'double-sharing-grid',
+            'single': 'single-seater-grid'
+        }[type];
+        
+        const grid = document.getElementById(gridId);
+        if (!grid) {
+            console.error(`Grid ${gridId} not found in DOM`);
+            return;
+        }
+
+        const filteredRooms = rooms.filter(room => room.type === type);
+        console.log(`Populating ${type} rooms:`, filteredRooms); // Debug log
+        
+        filteredRooms.forEach(room => {
+            const roomCard = document.createElement('div');
+            roomCard.className = `room-card ${room.beds_left > 0 ? 'available' : 'booked'}`;
+            roomCard.dataset.roomId = room.id;
+            roomCard.innerHTML = `
+                <div class="room-header">
+                    <span class="room-number">${room.number}</span>
+                    <span class="ac-badge ${room.ac_type}">${room.ac_type.toUpperCase()}</span>
+                </div>
+                <div class="room-details">
+                    <div class="capacity">
+                        <i class="fas fa-bed"></i>
+                        ${type === 'single' ? '1' : type === 'double' ? '2' : '4'} beds
+                    </div>
+                    <div class="availability">
+                        ${room.beds_left} bed${room.beds_left !== 1 ? 's' : ''} left
+                    </div>
+                    <div class="price">
+                        ₹${room.price}/month
+                    </div>
+                </div>
+            `;
+            grid.appendChild(roomCard);
+        });
+
+        if (filteredRooms.length === 0) {
+            grid.innerHTML = '<div class="no-rooms">No rooms available</div>';
+        }
+    }
+
+    function handleRoomSelection(event) {
+        const roomCard = event.currentTarget;
+        if (!roomCard || roomCard.classList.contains('booked')) return;
+
+        document.querySelectorAll('.room-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+
+        roomCard.classList.add('selected');
+        allocationForm.style.display = 'block';
+
+        document.getElementById('selected-room-display').value = 
+            `Room ${roomCard.querySelector('.room-number').textContent}`;
+        document.getElementById('selected-room-number').value = 
+            roomCard.querySelector('.room-number').textContent;
+        document.getElementById('selected-room-type').value = 
+            roomCard.closest('.room-category').classList.contains('four-sharing') ? 'four' :
+            roomCard.closest('.room-category').classList.contains('double-sharing') ? 'double' : 'single';
+        
+        document.getElementById('allocate-btn').disabled = false;
+    }
+
+    // Event listeners for filters
+    [floorSelect, acSelect].forEach(select => {
+        select.addEventListener('change', fetchRooms);
+    });
+});
+
 </script>
+
+<style>
+.room-display-container {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.room-category {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.room-category h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.room-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent;
+}
+
+.room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.room-card.selected {
+    border-color: #3498db;
+    background: #f8f9fa;
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.ac-badge {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    color: white;
+}
+
+.ac-badge.ac { background: #27ae60; }
+.ac-badge.non_ac { background: #e74c3c; }
+
+.room-details div {
+    margin: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.booked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f8d7da;
+}
+
+.no-rooms {
+    text-align: center;
+    padding: 1rem;
+    color: #7f8c8d;
+}
+
+.allocation-form {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+.single-seater .room-card {
+    border-left: 4px solid var(--accent1);
+}
+.single-seater h3 i {
+    color: var(--accent1);
+}
+</style>
 {% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="hostel-explorer">
+    <div class="hostel-header text-center py-5 bg-dark text-light">
+        <h1 class="display-4">🏰 Premium Campus Residences</h1>
+        <p class="lead">Experience Next-Gen Student Living</p>
+        <div class="search-bar mt-4">
+            <input type="text" class="form-control w-50 mx-auto" placeholder="Search by feature or hostel name...">
+        </div>
+    </div>
+
+    <div class="container-fluid py-5">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for hostel in hostels %}
+            <div class="col">
+                <div class="card hostel-card shadow-lg h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="h5 mb-0">{{ hostel.name }}</h3>
+                        <small class="text-light">{{ hostel.tagline }}</small>
+                    </div>
+                    
+                    <div class="hostel-badges">
+                        <span class="badge bg-warning">🏆 Premium</span>
+                        <span class="badge bg-success">⭐ 4.8+ Rating</span>
+                    </div>
+
+                    <div id="carouselHostel{{ forloop.counter }}" class="carousel slide">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <img src="{% static 'images/hostels/'|add:hostel.image %}" class="d-block w-100" alt="{{ hostel.name }}">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="{% static 'images/hostels/lounge.jpg' %}" class="d-block w-100" alt="Lounge">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="amenities-grid mb-3">
+                            {% for feature in hostel.feature_list|slice:":4" %}
+                            <div class="amenity-item">
+                                <i class="fas fa-check-circle text-success"></i>
+                                {{ feature }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="pricing-card mb-3">
+                            <h5 class="text-muted">Starting From</h5>
+                            <div class="price-display">
+                                <span class="h3 text-primary">₹{{ hostel.rooms.first.price }}</span>
+                                <small>/month</small>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm mt-2" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#hostelModal{{ hostel.id }}">
+                                Explore Rooms
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals for Detailed View -->
+{% for hostel in hostels %}
+<div class="modal fade" id="hostelModal{{ hostel.id }}" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">{{ hostel.name }} - Complete Features</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>🏅 Exclusive Features</h5>
+                        <ul class="feature-list">
+                            {% for feature in hostel.feature_list %}
+                            <li>{{ feature }}</li>
+                            {% endfor %}
+                        </ul>
+                        <hr>
+                        <h5>📊 Current Availability</h5>
+                        <div class="availability-chart">
+                            <!-- Add availability visualization here -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>🛌 Room Types</h5>
+                        <div class="room-types">
+                            {% for room in hostel.rooms.all|slice:":3" %}
+                            <div class="room-card">
+                                <div class="room-header">
+                                    <span class="room-type">{{ room.get_room_type_display }}</span>
+                                    <span class="room-price">₹{{ room.price }}/mo</span>
+                                </div>
+                                <div class="room-meta">
+                                    <span>🏠 {{ room.beds_left }} Left</span>
+                                    <span>🔌 {{ room.ac_type|upper }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+    .hostel-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .hostel-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.1);
+    }
+
+    .amenities-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+    }
+
+    .pricing-card {
+        background: linear-gradient(145deg, #f8f9fa, #fff);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .hostel-badges {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize carousels
+        var carousels = document.querySelectorAll('.carousel');
+        carousels.forEach(function(carousel) {
+            new bootstrap.Carousel(carousel, {
+                interval: 3000,
+                wrap: true
+            });
+        });
+
+        // Add smooth scroll behavior
+        document.querySelectorAll('.hostel-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const modalId = this.querySelector('button').dataset.bsTarget;
+                const modal = new bootstrap.Modal(document.querySelector(modalId));
+                modal.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

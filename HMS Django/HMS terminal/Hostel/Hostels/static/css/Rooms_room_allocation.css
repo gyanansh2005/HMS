@@ -128,13 +128,13 @@ form > a:hover {
     color: var(--text-dark1);
 }
 
+/* Replace existing .room-grid styles with */
 .room-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--light-bg);
-    border-radius: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+    background: transparent;
 }
 
 .room {
@@ -145,7 +145,7 @@ form > a:hover {
     cursor: pointer;
 }
 
-.room.available {
+/* .room.available {
     background: var(--success1);
     color: var(--white);
 }
@@ -159,8 +159,8 @@ form > a:hover {
 .room.booked {
     background: var(--danger1);
     color: var(--white);
-    cursor: not-allowed;
-}
+    cursor: not-allowed; */
+/* } */
 
 .room:hover:not(.booked) {
     transform: translateY(-5px);
@@ -354,4 +354,45 @@ form > a:hover {
     .btn, form > a {
         padding: 0.5rem 1rem;
     }
+}
+
+
+/* Add specific styling for single seater section */
+.single-seater .room-card {
+    border-left: 4px solid var(--accent1);
+}
+
+.single-seater h3 i {
+    color: var(--accent1);
+}
+
+/* Ensure all room categories have distinct colors */
+.four-sharing h3 i { color: var(--primary1); }
+.double-sharing h3 i { color: var(--secondary1); }
+.single-seater h3 i { color: var(--accent1); }
+
+
+/* Add these new styles */
+.room-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border: 2px solid transparent;
+}
+
+.room-card.available {
+    border-color: var(--success1);
+}
+
+.room-card.booked {
+    background: #f8d7da40;
+    box-shadow: none;
+}
+
+.room-card.selected {
+    border-color: var(--primary1);
+    transform: scale(1.02);
+    box-shadow: var(--shadow-hover);
 }

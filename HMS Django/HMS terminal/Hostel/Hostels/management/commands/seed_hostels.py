@@ -1,63 +1,89 @@
-# app1/management/commands/seed_hostels.py
 from django.core.management.base import BaseCommand
 from Hostels.models import Hostel, Room
-import random
 
 class Command(BaseCommand):
-    help = 'Creates initial hostel data with rooms'
+    help = 'Creates premium hostel data with enhanced features'
 
     def handle(self, *args, **kwargs):
-        hostel_names = [
-            "Golden Oak Hostel", "Sapphire Heights", "Emerald Valley Residences",
-            "Royal Crest Hostel", "Silver Pine Lodgings", "Marigold Student House",
-            "Horizon View Hostel", "Tranquil Woods Residences", "Summit Peak Hostel",
-            "Ivory Tower Lodgings", "Crimson Maple House", "Azure Sky Hostel",
-            "Prestige Student Living", "Harmony Hall Residences", "Liberty Square Hostel",
-            "The Scholar's Den", "Green Valley Hostel", "Stellar Student Homes",
-            "Heritage Hall Residences", "Olympia Student Hostel", "Pine Crest Lodgings",
-            "The Learning Tree Hostel", "Sunrise Student Residences", "Cosmos House",
-            "Victoria Court Hostel", "Golden Gates Residences", "Athena Student House",
-            "North Star Hostel", "Elysium Student Living", "Zenith Heights Hostel"
+        hostels_data = [
+            {
+                'name': "CampusNest Elite",
+                'floors': 8,
+                'features': "Infinity Rooftop Lounge, Olympic-size Pool, Robotics Housekeeping",
+                'image': 'premium-hostel-1.jpg',
+                'tagline': "Luxury Redefined"
+            },
+            {
+                'name': "Scholar's Horizon",
+                'floors': 6,
+                'features': "AI Study Assistant, Virtual Reality Lounge, Organic Cafe",
+                'image': 'premium-hostel-2.jpg',
+                'tagline': "Smart Living"
+            },
+            {
+                'name': "Green Valley Eco",
+                'floors': 5,
+                'features': "Solar Powered, Vertical Gardens, Electric Shuttle Service",
+                'image': 'eco-hostel.jpg',
+                'tagline': "Sustainable Living"
+            },
+            {
+                'name': "TechHub Residences",
+                'floors': 7,
+                'features': "Gaming Arena, 3D Printing Lab, Coding Pods",
+                'image': 'tech-hostel.jpg',
+                'tagline': "Innovators' Paradise"
+            }
         ]
 
-        room_types = ['four', 'double', 'single']
-        ac_types = ['ac', 'non_ac']
-        amenities = {
-            'ac': ["AC", "WiFi", "Study Desk", "Attached Bathroom", "Bed Linens"],
-            'non_ac': ["Fan", "WiFi", "Study Desk", "Common Bathroom", "Bed Linens"]
-        }
+        room_types = [
+            {'code': 'suite', 'name': 'Executive Suite', 'beds': 1},
+            {'code': 'deluxe', 'name': 'Deluxe Double', 'beds': 2},
+            {'code': 'smart', 'name': 'Smart Quad', 'beds': 4}
+        ]
 
-        for name in hostel_names:
+        for hostel_data in hostels_data:
             hostel = Hostel.objects.create(
-                name=name,
-                total_floors=10
+                name=hostel_data['name'],
+                total_floors=hostel_data['floors'],
+                features=hostel_data['features']
             )
 
-            for floor in range(1, 11):
-                # Create 5 rooms of each type per AC category
-                for room_type in room_types:
-                    for ac_type in ac_types:
-                        for room_num in range(1, 6):
-                            room = Room(
-                                hostel=hostel,
-                                floor=floor,
-                                room_number=f"{floor}{room_type[:1]}{room_num}",
-                                room_type=room_type,
-                                ac_type=ac_type,
-                                total_beds=4 if room_type == 'four' else 2 if room_type == 'double' else 1,
-                                occupied_beds=0,
-                                price=self.get_price(room_type, ac_type),
-                                amenities=", ".join(amenities[ac_type])
-                            )
-                            room.save()
+            # Create unique rooms for each floor
+            for floor in range(1, hostel_data['floors'] + 1):
+                for idx, room_type in enumerate(room_types):
+                    for ac_type in ['ac', 'non_ac']:
+                        room_number = f"{floor}{room_type['code'][0].upper()}{idx + 1}"
+                        Room.objects.create(
+                            hostel=hostel,
+                            floor=floor,
+                            room_number=room_number,
+                            room_type=room_type['code'],
+                            ac_type=ac_type,
+                            total_beds=room_type['beds'],
+                            price=self.calculate_price(room_type['code'], ac_type, hostel_data['name']),
+                            amenities=self.get_amenities(room_type['code'], ac_type),
+                            occupied_beds=0
+                        )
 
-            self.stdout.write(self.style.SUCCESS(f'Created hostel: {name}'))
+            self.stdout.write(self.style.SUCCESS(f'Created premium hostel: {hostel_data["name"]}'))
 
-    def get_price(self, room_type, ac_type):
+    def calculate_price(self, room_type, ac_type, hostel_name):
         base_prices = {
-            'four': 4000,
-            'double': 6000,
-            'single': 10000
+            'suite': 15000,
+            'deluxe': 9000,
+            'smart': 6000
         }
-        ac_surcharge = 1500 if ac_type == 'ac' else 0
-        return base_prices[room_type] + ac_surcharge
+        ac_surcharge = 2000 if ac_type == 'ac' else 0
+        premium_bonus = 3000 if 'Elite' in hostel_name else 1500 if 'TechHub' in hostel_name else 0
+        return base_prices[room_type] + ac_surcharge + premium_bonus
+
+    def get_amenities(self, room_type, ac_type):
+        amenities = {
+            'suite': ["King-size bed", "Mini-bar", "Smart TV", "Jacuzzi"],
+            'deluxe': ["Queen beds", "Study desk", "Mini-fridge"],
+            'smart': ["Loft beds", "Charging stations", "Smart locks"]
+        }
+        base = amenities[room_type]
+        base.append("AC" if ac_type == 'ac' else "Premium Ventilation")
+        return ", ".join(base)
