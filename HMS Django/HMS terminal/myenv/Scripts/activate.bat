@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set "VIRTUAL_ENV=C:\Users\MSI-LP\Desktop\Hms\myenv"
+set "VIRTUAL_ENV=C:\Users\gyana\Desktop\HMSmain\HMS\HMS Django\Hms terminal\myenv"
 
 if not defined PROMPT set PROMPT=$P$G
 
