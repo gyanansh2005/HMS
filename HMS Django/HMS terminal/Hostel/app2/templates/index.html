@@ -93,6 +93,19 @@
   {% extends 'base.html' %}
   {% block content %}
 
+
+  <!-- Hero Section -->
+<section class="py-5 text-center bg-light">
+  <div class="container">
+    <h1 class="display-5 fw-bold">Welcome to HostelConnect 🏠</h1>
+    <p class="lead mt-3 mb-4">
+      Your one-stop hub for everything happening in your hostel – from events to meals, discussions, and beyond.
+    </p>
+    <a href="{% url 'signup' %}" class="btn btn-primary btn-lg">Join the Community</a>
+  </div>
+</section>
+
+
 <!-- Feature Cards Section -->
 <div class="container container-custom" id="features">
   <div class="card-custom">
