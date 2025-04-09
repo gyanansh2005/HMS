@@ -7,7 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hostel Management System{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Rooms_base.html -->
+    <!-- In Rooms_base.html, inside <head> -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/Rooms_base.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -16,7 +17,33 @@
     <!-- Navbar -->
     <div class="navbar" id="navbar">
         <div class="logo">CampusNest</div>
-        
+        <div class="nav-links">
+            <a href="{% url 'index' %}">Home</a>
+            <div class="dropdown">
+                <a href="#">Services<i class="fa-solid fa-angle-down"></i></a>
+                <div class="dropdown-content">
+                    <a href="{% url 'room_allocation' %}">Room Allocation</a>
+                    <a href="{% url 'payment' %}">Fee Payment</a>
+                    <a href="{% url 'complaint_maintenance' %}">Complaint/Maintenance</a>
+                </div>
+            </div>
+            <a href="{% url 'hostel_details' %}">Hostel Details</a>
+            <a href="{% url 'feedback' %}">Feedback</a>
+            <a href="{% url 'about' %}">About</a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'profile' %}">
+                <div class="profile-circle">
+                    {% if user.student_profile.profile_picture %}
+                        <img src="{{ user.student_profile.profile_picture.url }}" alt="Profile Picture">
+                    {% else %}
+                        <img src="{% static 'images/default_profile.png' %}" alt="Profile Picture">
+                    {% endif %}
+                </div>
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            {% endif %}
+        </div>
         <button class="nav-toggle" id="nav-toggle">
             <i class="fa-solid fa-bars"></i>
         </button>
@@ -35,7 +62,6 @@
     {% endif %}
 
     <br><br>
-
 
     {% block content %}
     {% endblock %}
@@ -110,14 +136,14 @@
             // Close menu when clicking a link (mobile)
             document.querySelectorAll('.nav-links a').forEach(link => {
                 link.addEventListener('click', () => {
-                    if (window.innerWidth <= 25) {
+                    if (window.innerWidth <= 768) {
                         navLinks.classList.remove('show');
                     }
                 });
             });
         });
 
-        // Add this dropdown toggle functionality
+        // Dropdown toggle functionality
         document.addEventListener('DOMContentLoaded', function () {
             const dropdowns = document.querySelectorAll('.dropdown');
 
@@ -126,7 +152,7 @@
                 const content = dropdown.querySelector('.dropdown-content');
 
                 link.addEventListener('click', (e) => {
-                    if (window.innerWidth <= 2000) {
+                    if (window.innerWidth <= 768) {
                         e.preventDefault();
                         content.classList.toggle('show');
                     }

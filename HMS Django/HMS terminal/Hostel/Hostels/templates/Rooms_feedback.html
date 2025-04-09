@@ -1,0 +1,54 @@
+{% extends 'Rooms_base.html' %}
+    {% load static %}
+    {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback - CampusNest</title>
+    <link rel="stylesheet" href="{% static 'css/Rooms_feedback.css' %}">
+</head>
+<body>
+    
+
+    <section class="feedback-header">
+        <div class="header-content">
+            <div class="header-logo-text">CampusNest</div>
+            <h1>Share Your Feedback</h1>
+            <p>Your thoughts help us make CampusNest a better place for everyone!</p>
+        </div>
+    </section>
+
+    <div class="feedback-container">
+        <div class="form-section">
+            <div class="form-image">
+                <div class="form-tagline">We Value Your Voice!</div>
+            </div>
+            <form method="POST" class="feedback-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="submit-btn">Submit Feedback</button>
+            </form>
+        </div>
+
+        <div class="feedback-list-section">
+            <h2>Previous Feedback</h2>
+            <div class="feedback-list">
+                {% for feedback in feedbacks %}
+                <div class="feedback-item">
+                    <h4>{{ feedback.user.get_full_name }} - {{ feedback.hostel }}</h4>
+                    <p>Environment Rating: {{ feedback.environment_rating }}</p>
+                    <p>Service Rating: {{ feedback.service_rating }}/5</p>
+                    <p>Comments: {{ feedback.comments }}</p>
+                </div>
+                {% empty %}
+                <p>No feedback submissions yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% endblock %}
+</body>
+</html>

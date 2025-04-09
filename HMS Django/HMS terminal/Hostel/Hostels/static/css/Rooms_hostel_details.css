@@ -304,6 +304,24 @@ body {
 .card.hostel-card .carousel {
     height: 100%;
 }
+.hostel-details {
+    padding: 2rem 0;
+}
+.card {
+    transition: transform 0.3s;
+    border-radius: 15px;
+    overflow: hidden;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.amenities li {
+    padding: 0.3rem 0;
+}
+.btn {
+    transition: all 0.3s;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {

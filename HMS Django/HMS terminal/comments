@@ -1,0 +1,21 @@
+static/
+└── images/
+    └── payment/
+        ├── visa.png
+        ├── mastercard.png
+        ├── amex.png
+        ├── discover.png
+        └── bank-logo.png
+
+
+
+
+        <a href="{% url 'payment' %}" class="nav-link">
+    <i class="fas fa-credit-card"></i> Make Payment
+</a>
+
+ <div class="card-logos">
+            {% for logo in card_logos %}
+            <img src="{% static 'images/payment/' %}payment_{{ logo }}.png" alt="{{ logo|title }}">
+            {% endfor %}
+        </div>

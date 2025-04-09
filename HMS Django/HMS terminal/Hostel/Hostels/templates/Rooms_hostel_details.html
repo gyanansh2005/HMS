@@ -1,175 +1,406 @@
+<!-- Rooms_hostel_details.html -->
 {% extends 'Rooms_base.html' %}
 {% load static %}
 
 {% block content %}
-<div class="hostel-explorer">
-    <div class="hostel-header text-center py-5 bg-dark text-light">
-        <h1 class="display-4">🏰 Premium Campus Residences</h1>
-        <p class="lead">Experience Next-Gen Student Living</p>
-        <div class="search-bar mt-4">
-            <input type="text" class="form-control w-50 mx-auto" placeholder="Search by feature or hostel name...">
-        </div>
+<div class="hostel-details-container">
+    <div class="hostel-header">
+        <h1>Our Premium Residences</h1>
+        <p class="header-subtitle">Discover your perfect student home</p>
     </div>
 
-    <div class="container-fluid py-5">
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {% for hostel in hostels %}
-            <div class="col">
-                <div class="card hostel-card shadow-lg h-100">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="h5 mb-0">{{ hostel.name }}</h3>
-                        <small class="text-light">{{ hostel.tagline }}</small>
-                    </div>
-                    
-                    <div class="hostel-badges">
-                        <span class="badge bg-warning">🏆 Premium</span>
-                        <span class="badge bg-success">⭐ 4.8+ Rating</span>
-                    </div>
+    <div class="hostel-grid">
+        {% for hostel in hostels %}
+        <div class="hostel-card">
+            <div class="hostel-header-card">
+                <h2 class="hostel-title">{{ hostel.name }}</h2>
+            </div>
+            <ul class="feature-list">
+                {% for feature in hostel.feature_list|slice:":3" %}
+                <li>
+                    <span class="feature-icon">⭐</span>
+                    <span class="feature-text">{{ feature }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="action-buttons">
+                <a href="#" class="btn btn-explore" data-bs-toggle="modal" 
+                   data-bs-target="#hostelModal{{ hostel.id }}">
+                    Explore More
+                </a>
+                <a href="{% url 'room_allocation' %}" class="btn btn-book">Book Now</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 
-                    <div id="carouselHostel{{ forloop.counter }}" class="carousel slide">
-                        <div class="carousel-inner">
-                            <div class="carousel-item active">
-                                <img src="{% static 'images/hostels/'|add:hostel.image %}" class="d-block w-100" alt="{{ hostel.name }}">
-                            </div>
-                            <div class="carousel-item">
-                                <img src="{% static 'images/hostels/lounge.jpg' %}" class="d-block w-100" alt="Lounge">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="amenities-grid mb-3">
-                            {% for feature in hostel.feature_list|slice:":4" %}
-                            <div class="amenity-item">
-                                <i class="fas fa-check-circle text-success"></i>
-                                {{ feature }}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="pricing-card mb-3">
-                            <h5 class="text-muted">Starting From</h5>
-                            <div class="price-display">
-                                <span class="h3 text-primary">₹{{ hostel.rooms.first.price }}</span>
-                                <small>/month</small>
-                            </div>
-                            <button class="btn btn-outline-primary btn-sm mt-2" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#hostelModal{{ hostel.id }}">
-                                Explore Rooms
-                            </button>
-                        </div>
-                    </div>
+    <!-- Modals -->
+    {% for hostel in hostels %}
+    <div class="modal fade" id="hostelModal{{ hostel.id }}" tabindex="-1" 
+         aria-labelledby="hostelModalLabel{{ hostel.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hostelModalLabel{{ hostel.id }}">{{ hostel.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-
-<!-- Modals for Detailed View -->
-{% for hostel in hostels %}
-<div class="modal fade" id="hostelModal{{ hostel.id }}" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">{{ hostel.name }} - Complete Features</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>🏅 Exclusive Features</h5>
-                        <ul class="feature-list">
+                <div class="modal-body">
+                    <div class="modal-image-container">
+                        <img src="{{ hostel.main_image.url }}" 
+                             alt="{{ hostel.name }}" class="modal-image">
+                    </div>
+                    <div class="modal-details">
+                        <h6 class="modal-section-title">Premium Features</h6>
+                        <ul class="modal-feature-list">
                             {% for feature in hostel.feature_list %}
-                            <li>{{ feature }}</li>
+                            <li>
+                                <span class="feature-icon">⭐</span>
+                                <span class="feature-text">{{ feature }}</span>
+                            </li>
                             {% endfor %}
                         </ul>
-                        <hr>
-                        <h5>📊 Current Availability</h5>
-                        <div class="availability-chart">
-                            <!-- Add availability visualization here -->
+                        <div class="modal-info">
+                            <p><strong>Floors:</strong> {{ hostel.total_floors }}</p>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <h5>🛌 Room Types</h5>
-                        <div class="room-types">
-                            {% for room in hostel.rooms.all|slice:":3" %}
-                            <div class="room-card">
-                                <div class="room-header">
-                                    <span class="room-type">{{ room.get_room_type_display }}</span>
-                                    <span class="room-price">₹{{ room.price }}/mo</span>
-                                </div>
-                                <div class="room-meta">
-                                    <span>🏠 {{ room.beds_left }} Left</span>
-                                    <span>🔌 {{ room.ac_type|upper }}</span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="{% url 'room_allocation' %}" class="btn btn-primary">Book Now</a>
                 </div>
             </div>
         </div>
     </div>
+    {% endfor %}
 </div>
-{% endfor %}
 
-<style>
-    .hostel-card {
-        transition: transform 0.3s, box-shadow 0.3s;
-        border-radius: 15px;
-        overflow: hidden;
-    }
-    
-    .hostel-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 1rem 3rem rgba(0,0,0,.1);
-    }
-
-    .amenities-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.8rem;
-    }
-
-    .pricing-card {
-        background: linear-gradient(145deg, #f8f9fa, #fff);
-        border-radius: 10px;
-        padding: 1rem;
-        text-align: center;
-        border: 1px solid rgba(0,0,0,0.1);
-    }
-
-    .hostel-badges {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-</style>
-
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" 
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" 
+        crossorigin="anonymous"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize carousels
-        var carousels = document.querySelectorAll('.carousel');
-        carousels.forEach(function(carousel) {
-            new bootstrap.Carousel(carousel, {
-                interval: 3000,
-                wrap: true
-            });
-        });
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap JS is not loaded!');
+        return;
+    }
 
-        // Add smooth scroll behavior
-        document.querySelectorAll('.hostel-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const modalId = this.querySelector('button').dataset.bsTarget;
-                const modal = new bootstrap.Modal(document.querySelector(modalId));
-                modal.show();
-            });
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(function(modal) {
+        // Ensure modals are hidden by default (Bootstrap already does this, but reinforcing)
+        modal.style.display = 'none'; // Explicitly set to none on load
+        
+        modal.addEventListener('shown.bs.modal', function () {
+            console.log(`Modal ${modal.id} opened`);
+        });
+        modal.addEventListener('hidden.bs.modal', function () {
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '';
+            modal.style.display = 'none'; // Ensure it hides after closing
+            console.log(`Modal ${modal.id} closed, scrolling restored`);
         });
     });
+});
 </script>
+{% endblock %}
+
+<style>
+.hostel-details-container {
+    padding: 4rem 2rem;
+    background: #f0f4f8;
+    min-height: 100vh;
+}
+
+.hostel-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.hostel-header h1 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.header-subtitle {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+}
+
+.hostel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.hostel-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    padding: 1.5rem;
+}
+
+.hostel-card:hover {
+    transform: translateY(-5px);
+}
+
+.hostel-header-card {
+    background: linear-gradient(90deg, #FF6B35, #FFA500);
+    color: white;
+    padding: 1rem;
+    border-radius: 10px 10px 0 0;
+    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+}
+
+.hostel-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    color: white;
+}
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+}
+
+.feature-list li {
+    display: flex;
+    align-items: center;
+    margin: 0.8rem 0;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.feature-icon {
+    margin-right: 8px;
+    color: #FF6B35;
+}
+
+.feature-text {
+    flex: 1;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    flex: 1;
+    text-align: center;
+    display: inline-block;
+}
+
+.btn-explore {
+    background: #FF6B35;
+    color: white;
+}
+
+.btn-book {
+    background: white;
+    border: 2px solid #FF6B35;
+    color: #FF6B35;
+}
+
+.btn-explore:hover {
+    background: #FFA500;
+    color: white;
+}
+
+.btn-book:hover {
+    background: #FF6B35;
+    color: white;
+}
+
+/* Modal CSS Adjustments */
+.modal-dialog {
+    max-height: calc(100vh - 60px); /* Leave space for taskbar */
+    margin-bottom: 60px; /* Ensure footer isn’t hidden by taskbar */
+}
+
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-height: 100%; /* Fit within modal-dialog */
+}
+
+.modal-header {
+    background: linear-gradient(90deg, #FF6B35, #FFA500);
+    color: white;
+    border: none;
+    padding: 1.5rem;
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    opacity: 0.8;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 2rem;
+    background: #ffffff;
+    overflow-y: auto; /* Scrollable body */
+    max-height: calc(100vh - 250px); /* Adjust for header, footer, and taskbar */
+}
+
+.modal-image-container {
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.modal-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.modal-image-container:hover .modal-image {
+    transform: scale(1.1);
+}
+
+.modal-details {
+    padding: 0;
+}
+
+.modal-section-title {
+    color: #FF6B35;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.modal-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+}
+
+.modal-feature-list li {
+    display: flex;
+    align-items: center;
+    margin: 0.8rem 0;
+    color: #2c3e50;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.modal-feature-list li:hover {
+    color: #FF6B35;
+}
+
+.modal-info {
+    margin-top: 1.5rem;
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+.modal-info p {
+    margin: 0.5rem 0;
+}
+
+.modal-footer {
+    border-top: none;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 0 0 15px 15px;
+    position: sticky;
+    bottom: 0;
+    z-index: 10; /* Ensure it stays above scrollable content */
+}
+
+/* Button Styling */
+.btn-primary {
+    background: #FF6B35;
+    border: none;
+    padding: 10px 20px;
+}
+
+.btn-primary:hover {
+    background: #FFA500;
+}
+
+.btn-secondary {
+    background: #7f8c8d;
+    border: none;
+    padding: 10px 20px;
+}
+
+.btn-secondary:hover {
+    background: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hostel-header h1 {
+        font-size: 2rem;
+    }
+    
+    .hostel-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .modal-dialog {
+        margin: 0.5rem;
+        max-height: calc(100vh - 40px); /* Adjust for smaller screens */
+        margin-bottom: 40px;
+    }
+    
+    .modal-body {
+        max-height: calc(100vh - 200px); /* Adjust for smaller header/footer */
+    }
+    
+    .modal-content {
+        margin-top: 20px;
+    }
+    
+    .modal-image-container {
+        height: 200px;
+    }
+    
+    .modal-title {
+        font-size: 1.2rem;
+    }
+}
+</style>
 {% endblock %}

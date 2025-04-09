@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'Hostels',
+    'Hostels','widget_tweaks',
     'app2'
    
 ]
@@ -51,6 +51,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'Hostels.middleware.DatabaseHealthMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'Hostel.urls'
@@ -139,3 +141,30 @@ ADMIN_INTERFACE = {
     'THEME': 'admin_interface.themes.Dark',
     'SHOW_COLOR_CHANGER': True,
 }
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'payment_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'payment_processing.log',
+        },
+    },
+    'loggers': {
+        'payment': {
+            'handlers': ['payment_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+
+# Add to settings.py
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "cdnjs.cloudflare.com")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "fonts.googleapis.com")
+CSP_FONT_SRC = ("'self'", "fonts.gstatic.com")
+CSP_IMG_SRC = ("'self'", "data:", "cdnjs.cloudflare.com")
+CSP_CONNECT_SRC = ("'self'",)

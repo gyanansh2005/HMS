@@ -103,3 +103,60 @@ class Allocation(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.room.room_number}"
+    
+    
+# models.py
+class FeePayment(models.Model):
+    transaction_id = models.CharField(
+        max_length=100, 
+        unique=True,
+        db_index=True  # Add database index
+    )
+    PAYMENT_STATUS = (
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    )
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='payments')
+    allocation = models.ForeignKey(Allocation, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateTimeField(auto_now_add=True)
+    transaction_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default='pending')
+    receipt = models.FileField(upload_to='payment_receipts/', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.amount}"
+    
+    
+    
+    
+# models.py
+class ComplaintMaintenance(models.Model):
+    REQUEST_TYPES = (
+        ('complaint', 'Complaint'),
+        ('maintenance', 'Maintenance'),
+    )
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    request_type = models.CharField(max_length=20, choices=REQUEST_TYPES)
+    room_number = models.CharField(max_length=10)
+    category = models.CharField(max_length=50)
+    details = models.TextField()
+    status = models.CharField(max_length=20, default='pending', choices=(('pending', 'Pending'), ('resolved', 'Resolved')))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.request_type}"
+
+class Feedback(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
+    environment_rating = models.CharField(max_length=20)
+    service_rating = models.IntegerField()
+    comments = models.TextField()
+    hostel = models.CharField(max_length=50)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback from {self.user.email if self.user else 'anonymous'}"

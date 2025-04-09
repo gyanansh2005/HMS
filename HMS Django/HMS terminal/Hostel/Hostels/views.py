@@ -1,18 +1,28 @@
+from venv import logger
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from .forms import SignupForm
+from django.urls import reverse
+from .forms import SignupForm, StaffSignupForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
-from .models import Hostel, Room, Allocation, StudentProfile
+from .models import CustomUser, Hostel, Room, Allocation, StudentProfile
 import json
 from django.db.models import F
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from .models import Hostel, Room, Allocation
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from .forms import ProfileUpdateForm 
+from .forms import ProfileUpdateForm
+import time
+from datetime import datetime
+from random import randint 
+from .models import FeePayment
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment
+from django.db.models import Count, Avg
 
 
 def login_view(request):
@@ -112,7 +122,7 @@ def book_room(request):
             return JsonResponse({'error': 'No beds available'}, status=400)
             
         # Create allocation
-        Allocation.objects.create(
+        allocation = Allocation.objects.create(
             user=user,
             room=room,
             status='pending'
@@ -124,13 +134,12 @@ def book_room(request):
         
         return JsonResponse({
             'success': True,
-            'redirect': '/profile/',
+            'redirect': reverse('post_allocation'),
             'room': room_to_json(room),
-            'allocation_id': Allocation.id  # Add allocation ID
+            'allocation_id': allocation.id  # Fixed: Use the created allocation instance
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
 
 
 def room_allocation(request):
@@ -173,7 +182,7 @@ def room_allocation(request):
                 messages.success(request, 
                     f"Room {room_number} allocated successfully for {student_name}!"
                 )
-                return redirect('profile')
+                return redirect('profiles')
 
         except Room.DoesNotExist:
             messages.error(request, "Invalid room selection")
@@ -231,7 +240,7 @@ def room_allocation(request):
 @require_GET
 def get_available_rooms(request):
     try:
-        rooms = Room.objects.annotate(
+        rooms = Room.objects.all().annotate(
             available_beds=F('total_beds') - F('occupied_beds')
         )
         
@@ -256,12 +265,12 @@ def get_available_rooms(request):
             'price': str(room.price)
         } for room in rooms]
 
+        print(f"Returning rooms: {room_data}")  # Debug print
         return JsonResponse({'rooms': room_data})
-        
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
     
-    
+       
     
 @require_GET
 def get_floors(request, hostel_id):
@@ -273,7 +282,7 @@ def get_floors(request, hostel_id):
         return JsonResponse({'error': 'Hostel not found'}, status=404)
 
 
-def profile(request):
+def profiles(request):
     # Get the latest allocation for the user
     allocation = request.user.allocations.select_related('room__hostel').last()
     form = ProfileUpdateForm(instance=request.user.student_profile)
@@ -301,7 +310,7 @@ def edit_profile(request):
                     'bio': form.cleaned_data['bio']
                 })
             messages.success(request, 'Your profile has been updated!')
-            return redirect('profile')
+            return redirect('profiles')  # Ensure 'profiles' URL is mapped to Rooms_profile.html in your URLs configuration
         else:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'errors': form.errors})
@@ -336,3 +345,294 @@ def update_profile_pic(request):
 def hostel_details(request):
     hostels = Hostel.objects.all()
     return render(request, 'Rooms_hostel_details.html', {'hostels': hostels})
+
+
+# Add these imports
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from .models import FeePayment
+from .forms import PaymentForm  # We'll create this next
+
+from django.views.decorators.csrf import csrf_exempt
+
+
+from .forms import CardPaymentForm  # Ensure this is imported
+
+# In views.py
+import socket
+from django.db import connections
+
+from django.db import transaction, DatabaseError
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+
+@login_required
+@transaction.atomic
+def payment_page(request):
+    try:
+        # Verify allocation exists
+        allocation = request.user.allocations.select_related('room').latest('allocation_date')
+        amount_due = allocation.room.price * 6
+
+        if request.method == 'POST':
+            form = CardPaymentForm(request.POST)
+            if not form.is_valid():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid card details',
+                    'errors': form.errors.as_json()
+                }, status=400)
+
+            # Simulate payment gateway delay
+            time.sleep(2)  # Simulate network delay (remove in production)
+
+            # Generate unique transaction ID
+            transaction_id = None
+            for _ in range(5):
+                transaction_id = f"TXN{int(time.time())}{randint(1000, 9999)}"
+                if not FeePayment.objects.filter(transaction_id=transaction_id).exists():
+                    break
+
+            # Simulate payment success/failure (for demo purposes)
+            card_number = form.cleaned_data['card_number']
+            if card_number.endswith('0000'):  # Simulate failure for specific card numbers
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Payment declined by bank'
+                }, status=400)
+
+            # Create payment record
+            try:
+                with transaction.atomic():
+                    payment = FeePayment.objects.create(
+                        user=request.user,
+                        allocation=allocation,
+                        amount=amount_due,
+                        transaction_id=transaction_id,
+                        status='completed'
+                        )
+                    allocation.status = 'confirmed'
+                    allocation.save()
+            except IntegrityError:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Duplicate transaction detected'
+                }, status=409)
+
+            return JsonResponse({
+                'status': 'success',
+                'redirect_url': reverse('payment_success', kwargs={'transaction_id': transaction_id})
+            })
+
+        return render(request, 'Rooms_payment_page.html', {
+            'amount_due': amount_due,
+            'allocation': allocation,
+            'form': CardPaymentForm()
+        })
+
+    except Allocation.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'No room allocation found. Book a room first.'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Payment System Error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Payment system temporarily unavailable'
+        }, status=500)       
+        
+@login_required
+def payment_success(request, transaction_id):
+    payment = get_object_or_404(FeePayment, transaction_id=transaction_id)
+    auth_code = f"SIM{randint(100000, 999999)}"
+    return render(request, 'Rooms_payment_success.html', {
+        'payment': payment,
+        'virtual_account': f"VA{randint(10000000, 99999999)}",
+        'payment_gateway': "SecurePay Simulation",
+        'auth_code': auth_code,  # Add this
+    })
+    
+@login_required
+def post_allocation(request):
+    # Get the latest allocation for the user
+    allocation = request.user.allocations.latest('allocation_date')
+    return render(request, 'Rooms_post_allocation.html', {
+        'allocation': allocation,
+    })
+    
+    
+# views.py
+from .models import ComplaintMaintenance, Feedback
+from .forms import ComplaintMaintenanceForm, FeedbackForm
+
+@login_required
+def complaint_maintenance(request):
+    if request.method == 'POST':
+        form = ComplaintMaintenanceForm(request.POST)
+        if form.is_valid():
+            complaint = form.save(commit=False)
+            complaint.user = request.user
+            complaint.save()
+            messages.success(request, 'Your request has been submitted!')
+            return redirect('complaint_maintenance')
+    else:
+        form = ComplaintMaintenanceForm()
+    
+    requests = ComplaintMaintenance.objects.filter(user=request.user)
+    return render(request, 'Rooms_complaint_and_maintenance.html', {
+        'form': form,
+        'requests': requests
+    })
+
+@login_required
+def feedback(request):
+    if request.method == 'POST':
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            feedback.user = request.user
+            feedback.save()
+            messages.success(request, 'Thank you for your feedback!')
+            return redirect('feedback')
+    else:
+        form = FeedbackForm()
+    
+    feedbacks = Feedback.objects.all().order_by('-submitted_at')
+    return render(request, 'Rooms_feedback.html', {
+        'form': form,
+        'feedbacks': feedbacks
+    })
+
+def terms_conditions(request):
+    return render(request, 'Rooms_terms_and_conditions.html')
+
+
+# views.py
+# views.py
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment
+from django.db.models import Count, F, Avg, Sum
+from django.contrib.auth import logout
+
+@login_required
+def dashboard(request):
+    # Restrict access to staff only
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to access the admin dashboard.")
+        return redirect('index')
+    
+    # Get active tab from GET parameter
+    active_tab = request.GET.get('tab', 'overview')
+    
+    # Calculate dynamic statistics
+    total_users = CustomUser.objects.count()
+    available_rooms = Room.objects.filter(occupied_beds__lt=F('total_beds')).count()
+    pending_requests = ComplaintMaintenance.objects.filter(status='pending').count()
+    total_feedback = Feedback.objects.count()
+    avg_service_rating = Feedback.objects.aggregate(Avg('service_rating'))['service_rating__avg'] or 0
+    total_revenue = FeePayment.objects.filter(status='completed').aggregate(Sum('amount'))['amount__sum'] or 0
+    allocation_stats = Allocation.objects.values('status').annotate(count=Count('status'))
+    
+    # Additional stats for better insights
+    occupied_rooms = Room.objects.filter(occupied_beds__gte=F('total_beds')).count()
+    recent_allocations = Allocation.objects.order_by('-allocation_date')[:5]
+    pending_payments = FeePayment.objects.filter(status='pending').count()
+
+    context = {
+        'active_tab': active_tab,
+        'total_users': total_users,
+        'available_rooms': available_rooms,
+        'pending_requests': pending_requests,
+        'total_feedback': total_feedback,
+        'avg_service_rating': round(avg_service_rating, 1),
+        'total_revenue': total_revenue,
+        'allocation_stats': allocation_stats,
+        'occupied_rooms': occupied_rooms,
+        'recent_allocations': recent_allocations,
+        'pending_payments': pending_payments,
+    }
+    
+    # Handle users tab
+    if active_tab == 'users':
+        search_query = request.GET.get('search', '')
+        users = CustomUser.objects.filter(email__icontains=search_query) if search_query else CustomUser.objects.all()
+        context.update({
+            'users': users,
+            'search_query': search_query,
+            'users_count': users.count()
+        })
+
+    return render(request, 'Rooms_dashboard.html', context)
+
+
+# views.py
+
+
+
+
+def about(request):
+    feedbacks = Feedback.objects.all().order_by('-submitted_at')
+    return render(request, 'Rooms_about.html', {'feedbacks': feedbacks})
+
+
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'Logged out successfully!')
+    return redirect('index')  # Replace 'index' with the name of your homepage URL pattern
+
+
+
+
+#! admin
+
+
+
+@login_required
+def view_requests(request):
+    # Implement requests view
+    return render(request, 'Rooms_dashboard.html', {'active_tab': 'requests'})
+
+@login_required
+def view_allocations(request):
+    # Implement allocations view
+    return render(request, 'Rooms_dashboard.html', {'active_tab': 'allocations'})
+
+@login_required
+def edit_user(request, user_id):
+    # Implement user editing
+    return redirect('admin_dashboard')
+
+@login_required
+def delete_user(request, user_id):
+    # Implement user deletion
+    return redirect('admin_dashboard')
+
+
+@login_required
+def staff_signup_view(request):
+    # Restrict access to staff users only
+    if not request.user.is_staff:
+        messages.error(request, "Permission denied.")
+        return redirect('index')
+
+    if request.method == 'POST':
+        form = StaffSignupForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Staff account created successfully!")
+            return redirect('admin_dashboard')
+    else:
+        form = StaffSignupForm()
+
+    return render(request, 'Rooms_staff_signup.html', {'form': form})
+
+
+
+
+

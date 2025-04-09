@@ -1,0 +1,111 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/Rooms_about.css' %}">
+<header class="about-header">
+    <h1>About CampusNest</h1>
+    <p class="header-tagline">Empowering Smart Living with Seamless Solutions</p>
+</header>
+
+<div class="container content-section">
+    <h2 class="section-title text-center">Our Services</h2>
+    <div class="row text-center">
+        <div class="col-md-3">
+            <div class="box service-box p-4 shadow rounded animate__animated animate__fadeInUp">
+                <img src="{% static 'images/about_user_friendly.jpg' %}" class="img-fluid rounded mb-2" alt="User Friendly">
+                <h4>User Friendly Site</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="box service-box p-4 shadow rounded animate__animated animate__fadeInUp animate__delay-1s">
+                <img src="{% static 'images/about_review.jpg' %}" class="img-fluid rounded mb-2" alt="Hostels">
+                <h4>200+ Hostels Registered</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="box service-box p-4 shadow rounded animate__animated animate__fadeInUp animate__delay-2s">
+                <img src="{% static 'images/about_registration.jpg' %}" class="img-fluid rounded mb-2" alt="Reviews">
+                <h4>150+ Reviews</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="box service-box p-4 shadow rounded animate__animated animate__fadeInUp animate__delay-3s">
+                <img src="{% static 'images/about_24_7.jpg' %}" class="img-fluid rounded mb-2" alt="Support">
+                <h4>24/7 Customer Support</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container team-section text-center">
+    <h3 class="section-title">Our Management Team</h3>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="team-member p-3 shadow rounded animate__animated animate__fadeInUp">
+                <img src="{% static 'images/about5.jpg' %}" class="rounded-circle" width="150" alt="Team Member">
+                <h5>Gyanansh Kumar</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="team-member p-3 shadow rounded animate__animated animate__fadeInUp animate__delay-1s">
+                <img src="{% static 'images/about5.jpg' %}" class="rounded-circle" width="150" alt="Team Member">
+                <h5>Keshav Bhatnagar</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="team-member p-3 shadow rounded animate__animated animate__fadeInUp animate__delay-2s">
+                <img src="{% static 'images/about5.jpg' %}" class="rounded-circle" width="150" alt="Team Member">
+                <h5>Kashish Sachdeva</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="team-member p-3 shadow rounded animate__animated animate__fadeInUp animate__delay-3s">
+                <img src="{% static 'images/about5.jpg' %}" class="rounded-circle" width="150" alt="Team Member">
+                <h5>Gursharan Singh</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container rating-section text-center">
+    <h3 class="section-title">Users Ratings & Reviews</h3>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="review-box p-3 shadow rounded">
+                <p>"Great site with amazing facilities!"</p>
+                <h5>- Lakshya</h5>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="review-box p-3 shadow rounded">
+                <p>"Excellent functionality and features!"</p>
+                <h5>- Sujay</h5>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="review-box p-3 shadow rounded">
+                <p>"Best management site experience ever!"</p>
+                <h5>- Aslesha</h5>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        {% for feedback in feedbacks %}
+        <div class="col-md-4">
+            <div class="review-box p-3 shadow rounded feedback-entry">
+                <p>"{{ feedback.comments }}"</p>
+                <h5>- {% if feedback.user %}{{ feedback.user.get_full_name }}{% else %}Anonymous{% endif %}</h5>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-md-4">
+            <div class="review-box p-3 shadow rounded no-feedback">
+                <p class="no-feedback-text">💬 Be the first to share your feedback!</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
