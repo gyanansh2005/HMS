@@ -22,7 +22,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractUser):
     username = None  # Remove username field
     email = models.EmailField(unique=True)
-    roll_number = models.CharField(max_length=20, blank=True, null=True)  # Optional field
+    roll_number = models.CharField(max_length=20, blank=True, null=True,unique=True)  # Optional field
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']  # roll_number is optional
@@ -103,6 +103,16 @@ class Allocation(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.room.room_number}"
+    
+    class Meta:
+        constraints = [
+            # Allow only one active (pending/confirmed) allocation per user
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=models.Q(status__in=['pending', 'confirmed']),
+                name='unique_active_allocation_per_user'
+            )
+        ]
     
     
 # models.py

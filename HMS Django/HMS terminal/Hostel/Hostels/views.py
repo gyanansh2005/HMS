@@ -44,7 +44,9 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             if not user.is_staff and not user.is_superuser:
-                StudentProfile.objects.get_or_create(user=user, contact_number=form.cleaned_data['contact_number'])
+                student_profile = user.student_profile  # Get the auto-created profile
+                student_profile.contact_number = form.cleaned_data['contact_number']
+                student_profile.save()
             login(request, user)
             return redirect('login')  # Replace 'home' with your redirect URL
         else:
@@ -141,10 +143,14 @@ def book_room(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
-
+@login_required
+@transaction.atomic
 def room_allocation(request):
     # Handle POST request for room allocation
     if request.method == 'POST':
+        if request.user.allocations.filter(status__in=['pending', 'confirmed']).exists():
+            messages.error(request, "You already have an active room allocation!")
+            return redirect('room_allocation')
         try:
             with transaction.atomic():
                 # Get form data with proper validation

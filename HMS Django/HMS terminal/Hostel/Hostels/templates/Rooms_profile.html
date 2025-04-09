@@ -1,4 +1,3 @@
-<!-- Rooms_profile.html -->
 {% extends 'Rooms_base.html' %}
 {% load static %}
 
@@ -16,9 +15,11 @@
             {% if student_profile %}
             <div class="profile-picture-container">
                 {% if student_profile.profile_picture %}
-                <img src="{{ student_profile.profile_picture.url }}" ...>
+                <img src="{{ student_profile.profile_picture.url }}" alt="Profile Picture" class="profile-pic"
+                    id="profile-pic-display">
                 {% else %}
-                <img src="{% static 'images/default_profile.png' %}" ...>
+                <img src="{% static 'images/default_profile.png' %}" alt="Profile Picture" class="profile-pic"
+                    id="profile-pic-display">
                 {% endif %}
 
                 <form id="profile-picture-form" method="post" enctype="multipart/form-data"
@@ -43,16 +44,12 @@
 
             <div class="about-me">
                 <h3>About Me</h3>
-                <p id="about-me-text">{{ user.student_profile.bio|default:"Tell us something about yourself..." }}</p>
+                <p id="about-me-text">{{ student_profile.bio|default:"Tell us something about yourself..." }}</p>
                 <button class="edit-btn" id="edit-bio-btn">Edit Bio</button>
-                <a class="edit-btn" href="{% url 'logout' %}" class="btn logout-btn"
-                    onclick="return confirm('Are you sure you want to logout?');" style="margin-top: 1rem;">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-
+                
                 <div class="edit-form" id="edit-bio-form" style="display: none;">
                     <textarea id="about-me-input" name="bio" rows="4"
-                        placeholder="Tell us something about yourself...">{{ user.student_profile.bio|default:"" }}</textarea>
+                        placeholder="Tell us something about yourself...">{{ student_profile.bio|default:"" }}</textarea>
                     <div class="bio-actions">
                         <button class="save-btn" id="save-bio-btn">Save</button>
                         <button class="cancel-btn" id="cancel-bio-btn">Cancel</button>
@@ -108,9 +105,9 @@
 
                 </div>
                 <div class="profile-actions">
-                    <a href="{% url 'room_allocation' %}" class="btn primary">Change Room</a>
-                    <a href="#" class="btn secondary">View History</a>
-                </div>
+                    {% if allocation.status == 'pending' %}
+                    <a class="btn primary" href="{% url 'payment' %}">Pay Now</a>
+                    {% endif %}
                 {% else %}
                 <div class="no-allocation">
                     <p>You don't have a room allocation yet.</p>
