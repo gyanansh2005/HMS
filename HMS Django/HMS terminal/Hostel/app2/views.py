@@ -18,7 +18,9 @@ def admin_form(request):
             time = request.POST.get("time")
             venue = request.POST.get("venue")
             description = request.POST.get('description')
-            form = Form(name=name, date=event_date, time=time, venue=venue,description=description)
+            organizer = request.POST.get('organizer')  # <- Fetching from the form
+
+            form = Form(name=name, date=event_date, time=time, venue=venue,description=description,organizer=organizer)
             form.save()
         
         today = date.today()

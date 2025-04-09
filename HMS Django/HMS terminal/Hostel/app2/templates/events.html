@@ -21,10 +21,11 @@
   </style>
 </head>
 <body>
+
 <!-- Hero Section (Featured Event) -->
 {% if featured_event %}
 <div class="bg-light text-dark p-4 rounded text-center mb-4 shadow fade-in">
-  <h4>🌟 Featured Event: {{ featured_event.name }}</h4>
+  <h4>🌟 Featured Organizer: {{ featured_event.organizer|default:"Organizer Unknown" }}</h4>
   <p>{{ featured_event.date }} | {{ featured_event.venue }}</p>
   <button class="btn btn-dark btn-sm" data-bs-toggle="modal"
           data-bs-target="#detailsModalFeatured">📖 View Details</button>
@@ -36,10 +37,11 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="detailsModalFeaturedLabel">{{ featured_event.name }} - Details</h5>
+        <h5 class="modal-title" id="detailsModalFeaturedLabel">{{ featured_event.organizer|default:"Organizer Unknown" }} - Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        <p><strong>🎉 Event Name:</strong> {{ featured_event.name }}</p>
         <p><strong>Date:</strong> {{ featured_event.date }}</p>
         <p><strong>Time:</strong> {{ featured_event.time }}</p>
         <p><strong>Venue:</strong> {{ featured_event.venue }}</p>
@@ -55,14 +57,12 @@
 </div>
 {% endif %}
 
-
-
 <div class="container mt-5 fade-in">
   <h2 class="text-center mb-4">📅 HostelConnect Events</h2>
 
   <!-- Search -->
   <div class="mb-4">
-    <input type="text" class="form-control" id="searchInput" placeholder="🔍 Search events by name..." onkeyup="searchEvents()">
+    <input type="text" class="form-control" id="searchInput" placeholder="🔍 Search events by organizer..." onkeyup="searchEvents()">
   </div>
 
   <!-- Upcoming Events -->
@@ -73,9 +73,10 @@
       <div class="col-md-4 mb-4 event-card">
         <div class="card h-100 border-success shadow-sm">
           <div class="card-body">
-            <h5 class="card-title">{{ event.name }}</h5>
+            <h5 class="card-title">{{ event.organizer|default:"Organizer Unknown" }}</h5>
             <span class="badge bg-info event-badge">Upcoming</span>
             <p class="card-text mt-2">
+              <strong>🎉 Event Name:</strong> {{ event.name }}<br>
               <strong>📅 Date:</strong> {{ event.date }}<br>
               <strong>⏰ Time:</strong> {{ event.time }}<br>
               <strong>📍 Venue:</strong> {{ event.venue }}
@@ -92,14 +93,14 @@
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="detailsModalLabel{{ event.id }}">{{ event.name }} - Details</h5>
+              <h5 class="modal-title" id="detailsModalLabel{{ event.id }}">{{ event.organizer|default:"Organizer Unknown" }} - Details</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+              <p><strong>🎉 Event Name:</strong> {{ event.name }}</p>
               <p><strong>Date:</strong> {{ event.date }}</p>
               <p><strong>Time:</strong> {{ event.time }}</p>
               <p><strong>Venue:</strong> {{ event.venue }}</p>
-              <p><strong>Organizer:</strong> {{ event.organizer|default:"Not specified" }}</p>
               <p><strong>Description:</strong><br> {{ event.description|default:"No description provided." }}</p>
               <p><strong>📩 Contact:</strong> organizer@email.com</p>
               <button class="btn btn-outline-success btn-sm mt-2">📆 Add to Calendar</button>
@@ -124,9 +125,10 @@
       <div class="col-md-4 mb-4 event-card">
         <div class="card h-100 border-secondary shadow-sm bg-light">
           <div class="card-body">
-            <h5 class="card-title">{{ event.name }}</h5>
+            <h5 class="card-title">{{ event.organizer|default:"Organizer Unknown" }}</h5>
             <span class="badge bg-secondary event-badge">Past</span>
             <p class="card-text mt-2">
+              <strong>🎉 Event Name:</strong> {{ event.name }}<br>
               <strong>Date:</strong> {{ event.date }}<br>
               <strong>Time:</strong> {{ event.time }}<br>
               <strong>Venue:</strong> {{ event.venue }}
@@ -143,14 +145,14 @@
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="detailsModalPastLabel{{ event.id }}">{{ event.name }} - Details</h5>
+              <h5 class="modal-title" id="detailsModalPastLabel{{ event.id }}">{{ event.organizer|default:"Organizer Unknown" }} - Details</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+              <p><strong>🎉 Event Name:</strong> {{ event.name }}</p>
               <p><strong>Date:</strong> {{ event.date }}</p>
               <p><strong>Time:</strong> {{ event.time }}</p>
               <p><strong>Venue:</strong> {{ event.venue }}</p>
-              <p><strong>Organizer:</strong> {{ event.organizer|default:"Not specified" }}</p>
               <p><strong>Description:</strong><br> {{ event.description|default:"No description provided." }}</p>
             </div>
             <div class="modal-footer">

@@ -7,7 +7,9 @@ class Form(models.Model):
     date = models.CharField(help_text="Event date")
     time = models.CharField(help_text="Event time")
     venue = models.CharField(max_length=200, help_text="Event venue")
-    description = models.TextField(help_text="Event description", blank=True, null=True)  # ✅ New field
+    description = models.TextField(help_text="Event description", blank=True, null=True)
+    organizer = models.CharField(max_length=100, blank=True, null=True)  # Make sure this line exists
+
 
     def __str__(self):
         return self.name
