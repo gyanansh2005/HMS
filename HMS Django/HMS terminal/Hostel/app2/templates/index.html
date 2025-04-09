@@ -90,26 +90,8 @@
 </head>
 <body>
 
-<!-- Bootstrap Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">HostelConnect</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-            aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item mx-2"><a class="nav-link active" href="#">Home</a></li>
-        <li class="nav-item mx-2"><a class="nav-link" href="#">Events</a></li>
-        <li class="nav-item mx-2"><a class="nav-link" href="#">Lost & Found</a></li>
-        <li class="nav-item mx-2"><a class="nav-link" href="#">Mess Menu</a></li>
-        <li class="nav-item mx-2"><a class="nav-link" href="#">Discussions</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
+  {% extends 'base.html' %}
+  {% block content %}
 
 <!-- Feature Cards Section -->
 <div class="container container-custom" id="features">
@@ -146,7 +128,7 @@
                 Time: {{ event.time }}<br>
                 Venue: {{ event.venue }}
               </p>
-              <a href="#" class="btn btn-outline-primary btn-sm">RSVP</a>
+              <a href="{% url 'events' %}" class="btn btn-outline-primary btn-sm">More Details</a>
             </div>
           </div>
         </div>
@@ -185,10 +167,7 @@
   <a href="#" class="btn btn-primary mt-3">Send Feedback</a>
 </section>
 
-<!-- Footer -->
-<footer>
-  © 2025 HostelConnect • Made with 💙 by Gyanansh Kumar
-</footer>
+{% endblock %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
