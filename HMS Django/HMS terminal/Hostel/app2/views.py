@@ -3,7 +3,7 @@ from app2.models import Form
 from datetime import date
 
 # Create your views here.
-def index(request):
+def app2index(request):
     show=Form.objects.all()
     return render(request,'index.html',{'show':show})
 

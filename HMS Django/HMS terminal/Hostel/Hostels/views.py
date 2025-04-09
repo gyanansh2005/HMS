@@ -284,11 +284,16 @@ def get_floors(request, hostel_id):
 
 def profiles(request):
     # Get the latest allocation for the user
+    student_profile = None
+    if not request.user.is_staff and not request.user.is_superuser:
+        student_profile, created = StudentProfile.objects.get_or_create(user=request.user)
     allocation = request.user.allocations.select_related('room__hostel').last()
-    form = ProfileUpdateForm(instance=request.user.student_profile)
+    form = ProfileUpdateForm(instance=student_profile) if student_profile else None
+    
     return render(request, 'Rooms_profile.html', {
         'form': form,
-        'allocation': allocation  # Add this line
+        'allocation': allocation,
+        'student_profile': student_profile
     })
 
 # views.py (edit_profile view)

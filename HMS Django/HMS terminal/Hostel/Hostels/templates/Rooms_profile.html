@@ -13,15 +13,14 @@
 
     <div class="profile-content">
         <aside class="profile-sidebar">
+            {% if student_profile %}
             <div class="profile-picture-container">
-                {% if user.student_profile.profile_picture %}
-                <img src="{{ user.student_profile.profile_picture.url }}" alt="Profile Picture" class="profile-pic"
-                    id="profile-pic-display">
+                {% if student_profile.profile_picture %}
+                <img src="{{ student_profile.profile_picture.url }}" ...>
                 {% else %}
-                <img src="{% static 'images/default_profile.png' %}" alt="Profile Picture" class="profile-pic"
-                    id="profile-pic-display">
+                <img src="{% static 'images/default_profile.png' %}" ...>
                 {% endif %}
-                
+
                 <form id="profile-picture-form" method="post" enctype="multipart/form-data"
                     action="{% url 'edit_profile' %}">
                     {% csrf_token %}
@@ -32,7 +31,7 @@
                         <i class="fas fa-camera"></i> Change Photo
                     </button>
                 </form>
-                
+
                 <div id="image-preview" style="display: none; margin-top: 1rem;">
                     <img id="preview-image"
                         style="max-width: 100%; border-radius: 50%; border: 4px solid var(--primary);">
@@ -46,7 +45,8 @@
                 <h3>About Me</h3>
                 <p id="about-me-text">{{ user.student_profile.bio|default:"Tell us something about yourself..." }}</p>
                 <button class="edit-btn" id="edit-bio-btn">Edit Bio</button>
-                <a class="edit-btn" href="{% url 'logout' %}" class="btn logout-btn" onclick="return confirm('Are you sure you want to logout?');" style="margin-top: 1rem;">
+                <a class="edit-btn" href="{% url 'logout' %}" class="btn logout-btn"
+                    onclick="return confirm('Are you sure you want to logout?');" style="margin-top: 1rem;">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
 
@@ -59,6 +59,8 @@
                     </div>
                 </div>
             </div>
+
+            {% endif %}
         </aside>
 
         <main class="profile-main">
@@ -128,10 +130,12 @@
                         <span>Roll Number:</span>
                         <strong>{{ user.roll_number }}</strong>
                     </div>
+                    {% if student_profile %}
                     <div class="detail-item">
                         <span>Contact Number:</span>
-                        <strong>{{ user.student_profile.contact_number }}</strong>
+                        <strong>{{ student_profile.contact_number }}</strong>
                     </div>
+                    {% endif %}
                     <div class="detail-item">
                         <span>Email:</span>
                         <strong>{{ user.email }}</strong>
@@ -142,8 +146,15 @@
                     </div>
                 </div>
                 <div class="profile-actions">
-                    <button class="btn primary" id="edit-details-btn">Edit Details</button>
+                
+                
+                
+                    <a class="edit-btn" href="{% url 'logout' %}" class="btn logout-btn"
+                    onclick="return confirm('Are you sure you want to logout?');" style="margin-top: 1rem;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
                 </div>
+                
             </div>
 
             <div class="profile-section card edit-section" id="edit-section" style="display: none;">
