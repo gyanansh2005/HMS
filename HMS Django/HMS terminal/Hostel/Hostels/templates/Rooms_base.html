@@ -16,7 +16,12 @@
 <body>
     <!-- Navbar -->
     <div class="navbar" id="navbar">
-        <div class="logo">CampusNest</div>
+        <div class="dropdown logo">
+            <a href="#" class="logo-link">CampusNest <i class="fa-solid fa-angle-down"></i></a>
+            <div class="dropdown-content">
+                <a href="{% url 'app2index' %}">CampusConnect</a>
+            </div>
+        </div>
         <div class="nav-links">
             <a href="{% url 'index' %}">Home</a>
             <div class="dropdown">
