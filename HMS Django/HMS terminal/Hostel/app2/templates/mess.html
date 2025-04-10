@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Mess Timings -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Mess Timings</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for meal, timing in mess_timings.items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{{ meal }}</strong>
+                            <span>{{ timing }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Menu -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Today's Menu</h4>
+                </div>
+                <div class="card-body">
+                    {% if today_menu %}
+                        {% for menu in today_menu %}
+                            <div class="mb-3">
+                                <h5>{{ menu.meal_type }}</h5>
+                                <p class="mb-0">{{ menu.menu|linebreaks }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No menu available for today.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Menu -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Weekly Menu</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Breakfast</th>
+                                    <th>Lunch</th>
+                                    <th>Dinner</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in days %}
+                                <tr>
+                                    <td><strong>{{ day }}</strong></td>
+                                    {% for meal in meals %}
+                                    <td>
+                                        {% for menu in menu_items %}
+                                            {% if menu.day == day and menu.meal_type == meal %}
+                                                {{ menu.menu|linebreaks }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

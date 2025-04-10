@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Update Menu Item</h3>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label>Day:</label>
+            <input type="text" name="day" value="{{ menu_item.day }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Meal Type:</label>
+            <input type="text" name="meal_type" value="{{ menu_item.meal_type }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Menu:</label>
+            <textarea name="menu" class="form-control" rows="4" required>{{ menu_item.menu }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+</div>
+{% endblock %}
