@@ -19,7 +19,7 @@
                     </a>
                 </li>
                 <li class="{% if active_tab == 'users' %}active{% endif %}">
-                    <a href="{% url 'admin_dashboard' %}?tab=users">
+                    <a href="{% url 'view_users' %}">
                         <i class="fas fa-users"></i>
                         <span>Users</span>
                     </a>
@@ -99,7 +99,7 @@
 
             <!-- Main Content Grid -->
             <div class="content-grid">
-                <!-- Recent Activities -->
+                <!-- Allocation Statistics -->
                 <div class="chart-card">
                     <div class="card-header">
                         <h3>Allocation Statistics</h3>
@@ -118,7 +118,7 @@
                     <div class="quick-stat rating-card">
                         <h4>Service Rating</h4>
                         <div class="rating-value">
-                            {{ stats.avg_service_rating|floatformat:1 }}<small>/5.0</small>
+                            {{ stats.avg_service_rating }}<small>/5.0</small>
                         </div>
                         <div class="rating-stars">
                             {% for i in "54321" %}
@@ -130,9 +130,7 @@
                             {% endfor %}
                         </div>
                         <div class="rating-progress">
-                            {% with stats.avg_service_rating|floatformat:1 as rating_width %}
-                            <div class="progress-bar" style="width: {{ rating_width|floatformat:1 }}%"></div>
-                            {% endwith %}
+                            <div class="progress-bar" style="width: {{ stats.rating_progress_width }}%"></div>
                         </div>
                     </div>
 
@@ -142,14 +140,14 @@
                             <div class="progress-item">
                                 <span class="progress-label">Pending</span>
                                 <div class="progress-bar">
-                                    <div class="progress-fill pending" style="width: {{ stats.pending_allocations }}%"></div>
+                                    <div class="progress-fill pending" style="width: {{ stats.pending_allocations|default:0 }}%"></div>
                                 </div>
                                 <span class="progress-value">{{ stats.pending_allocations }}</span>
                             </div>
                             <div class="progress-item">
                                 <span class="progress-label">Confirmed</span>
                                 <div class="progress-bar">
-                                    <div class="progress-fill confirmed" style="width: {{ stats.confirmed_allocations }}%"></div>
+                                    <div class="progress-fill confirmed" style="width: {{ stats.confirmed_allocations|default:0 }}%"></div>
                                 </div>
                                 <span class="progress-value">{{ stats.confirmed_allocations }}</span>
                             </div>
@@ -163,7 +161,7 @@
                 <div class="activity-card">
                     <div class="card-header">
                         <h3>Recent Complaints</h3>
-                        <a href="#" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+                        <a href="{% url 'view_requests' %}" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
                     </div>
                     <div class="activity-list">
                         {% for complaint in recent_complaints %}
@@ -244,6 +242,7 @@
                     </thead>
                     <tbody>
                         {% for user in users %}
+                        {% if not user.is_staff %}
                         <tr>
                             <td>
                                 <div class="user-cell">
@@ -262,7 +261,7 @@
                             </td>
                             <td>{{ user.student_profile.contact_number|default:"-" }}</td>
                             <td>
-                                <span class="role-badge {% if user.is_staff %}admin{% else %}user{% endif %}">
+                                <span class="role-badge user">
                                     {% if user.is_staff %}Staff{% else %}Student{% endif %}
                                 </span>
                             </td>
@@ -283,6 +282,7 @@
                                 </div>
                             </td>
                         </tr>
+                        {% endif %}
                         {% empty %}
                         <tr>
                             <td colspan="5" class="empty-state">
@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: ['Pending', 'Confirmed'],
             datasets: [{
-                data: [{{ stats.pending_allocations }}, {{ stats.confirmed_allocations }}],
+                data: [{{ stats.pending_allocations|default:0 }}, {{ stats.confirmed_allocations|default:0 }}],
                 backgroundColor: ['#ff6384', '#36a2eb'],
                 borderWidth: 0
             }]
@@ -442,6 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
 
 <style>
 :root {

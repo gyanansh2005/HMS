@@ -7,70 +7,119 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Login - Hostel Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/Room_login_signup.css' %}">
     <link rel="shortcut icon" href="{% static 'favicon.png' %}" type="image/x-icon">
 </head>
 <body>
-    
-    {% if messages %}
-        <div class="flash-messages">
-            {% for message in messages %}
-                <div class="flash-message flash-message-{{ message.tags }}">
-                    {{ message }}
-                    <i class="ri-close-line flash-close" onclick="this.parentElement.style.display='none'"></i>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
     <div class="container">
         <div class="design">
+            <div class="welcome-message">
+                <h2>Hostel Management System</h2>
+                <div class="login-type">
+                    <div class="type-indicator {% if request.GET.role == 'staff' %}staff{% else %}student{% endif %}"></div>
+                    <div class="type-buttons">
+                        <button type="button" class="{% if request.GET.role != 'staff' %}active{% endif %}" 
+                                onclick="window.location.href='{% url 'login' %}'">
+                            Student Login
+                        </button>
+                        <button type="button" class="{% if request.GET.role == 'staff' %}active{% endif %}" 
+                                onclick="window.location.href='{% url 'login' %}?role=staff'">
+                            Staff Login
+                        </button>
+                    </div>
+                </div>
+                <p class="system-info">Select your login type</p>
+            </div>
             <div class="pill-1 rotate-45"></div>
             <div class="pill-2 rotate-45"></div>
-            <div class="pill-3 rotate-45"></div>
-            <div class="pill-4 rotate-45"></div>
         </div>
+
+        {% if messages %}
+        <div class="alert-messages">
+            {% for message in messages %}
+            <div class="alert {% if message.tags %}{{ message.tags }}{% endif %}">
+                {{ message }}
+                <i class="ri-close-line close-btn"></i>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <form class="login" action="{% url 'login' %}" method="POST">
             {% csrf_token %}
-            <h3 class="title">User Login</h3>
+            <input type="hidden" name="role" value="{{ request.GET.role|default:'student' }}">
+            
+            <h3 class="title">
+                <i class="ri-shield-user-line"></i> 
+                {{ request.GET.role|default:"Student"|title }} Login
+            </h3>
 
-            <div class="text-input">
-                <i class="ri-mail-fill"></i>
+            <div class="input-group">
+                <label for="email"><i class="ri-mail-fill"></i> Email Address</label>
                 <input type="email" 
                        id="email" 
                        name="email" 
-                       placeholder="Email" 
-                       required
-                       autocomplete="username">
+                       placeholder="your.email@example.com"
+                       required>
             </div>
             
-            <div class="text-input">
-                <i class="ri-lock-fill"></i>
+            <div class="input-group">
+                <label for="password"><i class="ri-lock-password-fill"></i> Password</label>
                 <input type="password" 
                        id="password" 
                        name="password" 
-                       placeholder="Password" 
+                       placeholder="••••••••" 
                        required
-                       autocomplete="current-password">
+                       minlength="8">
+                <i class="ri-eye-off-line password-toggle"></i>
             </div>
 
-            <input type="submit" value="Login" class="login-btn">
-            
-            <div class="forgot-password">
-                <a href="#" class="forgot">Forgot Password?</a>
+            <div class="options">
+                <label class="remember-me">
+                    <input type="checkbox" name="remember">
+                    <span>Remember me</span>
+                </label>
+                <a href="{% url 'password_reset' %}" class="forgot-password">Forgot Password?</a>
             </div>
 
-            <div class="create-account">
-                <p>Don't have an account?</p>
-                <a href="{% url 'signup' %}" class="signup-link">
-                    Create Account
-                    <i class="ri-arrow-right-fill"></i>
-                </a>
+            <button type="submit" class="login-btn">
+                <i class="ri-login-box-line"></i> Continue to Portal
+            </button>
+
+            <div class="role-based-links">
+                {% if request.GET.role == 'staff' %}
+                    <p>Authorized personnel only. 
+                       <a href="mailto:admin@hostelms.com">Request access</a>
+                    </p>
+                {% else %}
+                    <p>New student? <a href="{% url 'signup' %}">Create account</a></p>
+                    <p>Need help? <a href="mailto:support@hostelms.com">Contact Support</a></p>
+                {% endif %}
             </div>
         </form>
     </div>
-    {% endblock %}
+
+    <script>
+        // Password toggle visibility
+        document.querySelectorAll('.password-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const passwordInput = toggle.previousElementSibling;
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                toggle.classList.toggle('ri-eye-line');
+                toggle.classList.toggle('ri-eye-off-line');
+            });
+        });
+
+        // Close alert messages
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.parentElement.remove();
+            });
+        });
+    </script>
 </body>
 </html>
+{% endblock %}
