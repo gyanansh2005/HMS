@@ -22,6 +22,12 @@
                     placeholder="Enter event name" required>
             </div>
 
+
+            <div class="mb-3">
+                <label for="organizer" class="form-label">Organizer</label>
+                <input type="text" class="form-control" id="organizer" name="organizer" value="{{ event.organizer }}"
+                    placeholder="Enter organizer's name">
+            </div>
             <div class="mb-3">
                 <label for="eventDate" class="form-label">Date</label>
                 <input type="date" class="form-control" id="eventDate" name="date" value="{{ data.date }}" required>
@@ -40,9 +46,10 @@
 
             <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="4">{{ data.description }}</textarea>
-              </div>
-              
+                <textarea class="form-control" id="description" name="description"
+                    rows="4">{{ data.description }}</textarea>
+            </div>
+
 
             <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                 <button type="submit" class="btn btn-success btn-lg me-2">✅ Update</button>

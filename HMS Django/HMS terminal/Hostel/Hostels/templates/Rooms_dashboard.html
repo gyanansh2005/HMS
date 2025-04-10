@@ -36,6 +36,14 @@
                         <span>Allocations</span>
                     </a>
                 </li>
+                <li class="{% if active_tab == 'events' %}active{% endif %}">
+                    <a href="{% url 'admin_form' %}">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Events</span>
+                    </a>
+                </li>
+                
+                </li>
                 <li>
                     <a href="{% url 'logout' %}">
                         <i class="fas fa-sign-out-alt"></i>

@@ -51,6 +51,8 @@ def update(request, id):
         data.time = request.POST.get("time")
         data.venue = request.POST.get("venue")
         data.description = request.POST.get('description')
+        data.organizer = request.POST.get('organizer')
+
 
         data.save()
         return redirect('admin_form')  
