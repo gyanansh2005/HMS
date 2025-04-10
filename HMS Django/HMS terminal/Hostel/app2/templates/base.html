@@ -11,7 +11,15 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-          <a class="navbar-brand" href="#">HostelConnect</a>
+          <div class="dropdown">
+            <a class="navbar-brand dropdown-toggle" href="#" id="hostelConnectDropdown" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              HostelConnect
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="hostelConnectDropdown">
+              <li><a class="dropdown-item" href="{% url 'index' %}">Back to CampusNest</a></li>
+            </ul>
+          </div>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                   data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
                   aria-label="Toggle navigation">

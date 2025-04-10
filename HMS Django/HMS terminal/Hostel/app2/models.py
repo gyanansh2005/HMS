@@ -13,3 +13,15 @@ class Form(models.Model):
 
     def __str__(self):
         return self.name
+
+from django.db import models
+
+class Form(models.Model):
+    name = models.CharField(max_length=255)
+    date = models.DateField()
+    time = models.TimeField()
+    venue = models.CharField(max_length=255)
+    organizer = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name

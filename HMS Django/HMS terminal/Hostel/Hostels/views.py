@@ -16,13 +16,14 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from .forms import ProfileUpdateForm
 import time
-from datetime import datetime
+from datetime import datetime , date
 from random import randint 
 from .models import FeePayment
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg,F, Sum
+from app2.models import Form
 
 
 def login_view(request):
@@ -549,36 +550,36 @@ from django.contrib import messages
 from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment
 from django.db.models import Count, F, Avg, Sum
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment
+from django.db.models import Count, F, Avg, Sum
+from app2.models import Form
+from .forms import EventForm  # Ensure this is imported
+from datetime import date
+
 @login_required
 def dashboard(request):
-    # Restrict access to staff only
     if not request.user.is_staff:
         messages.error(request, "You don't have permission to access the admin dashboard.")
         return redirect('index')
     
-    # Get active tab from GET parameter
     active_tab = request.GET.get('tab', 'overview')
     
-    # Calculate dynamic statistics
-    total_users = CustomUser.objects.filter(is_staff=False).count()  # Exclude staff/superusers
-    available_rooms = Room.objects.exclude(total_beds__lte=F('occupied_beds')).count()  # Rooms with available beds
+    # Common statistics
+    total_users = CustomUser.objects.filter(is_staff=False).count()
+    available_rooms = Room.objects.exclude(total_beds__lte=F('occupied_beds')).count()
     pending_requests = ComplaintMaintenance.objects.filter(status='pending').count()
-    total_feedback = Feedback.objects.count()
-    avg_service_rating = Feedback.objects.aggregate(Avg('service_rating'))['service_rating__avg'] or 0
     total_revenue = FeePayment.objects.filter(status='completed').aggregate(Sum('amount'))['amount__sum'] or 0
-    
-    # Calculate allocation statistics
+    avg_service_rating = Feedback.objects.aggregate(Avg('service_rating'))['service_rating__avg'] or 0
     allocation_stats = Allocation.objects.values('status').annotate(count=Count('status'))
     pending_allocations = next((item['count'] for item in allocation_stats if item['status'] == 'pending'), 0)
     confirmed_allocations = next((item['count'] for item in allocation_stats if item['status'] == 'confirmed'), 0)
-    
-    # Calculate progress bar width for rating (0-100% based on 5 stars)
+    upcoming_events = Form.objects.filter(date__gte=date.today()).count()
+    occupancy_rate = Room.objects.aggregate(total_beds=Sum('total_beds'), occupied=Sum('occupied_beds'))
+    occupancy_percentage = (occupancy_rate['occupied'] / occupancy_rate['total_beds'] * 100) if occupancy_rate['total_beds'] else 0
     rating_progress_width = round((avg_service_rating / 5) * 100) if avg_service_rating else 0
-    
-    # Additional stats for better insights
-    occupied_rooms = Room.objects.filter(occupied_beds__gte=F('total_beds')).count()
-    recent_allocations = Allocation.objects.select_related('room__hostel').order_by('-allocation_date')[:5]
-    pending_payments = FeePayment.objects.filter(status='pending').count()
     recent_complaints = ComplaintMaintenance.objects.order_by('-created_at')[:5]
     recent_payments = FeePayment.objects.order_by('-payment_date')[:5]
 
@@ -588,29 +589,67 @@ def dashboard(request):
             'total_users': total_users,
             'available_rooms': available_rooms,
             'pending_requests': pending_requests,
-            'total_feedback': total_feedback,
-            'avg_service_rating': round(avg_service_rating, 1),
             'total_revenue': total_revenue,
+            'avg_service_rating': round(avg_service_rating, 1),
             'pending_allocations': pending_allocations,
             'confirmed_allocations': confirmed_allocations,
-            'occupied_rooms': occupied_rooms,
-            'pending_payments': pending_payments,
-            'rating_progress_width': rating_progress_width,  # Added calculated width
+            'upcoming_events': upcoming_events,
+            'occupancy_percentage': round(occupancy_percentage, 1),
+            'rating_progress_width': rating_progress_width,
         },
-        'recent_allocations': recent_allocations,
         'recent_complaints': recent_complaints,
         'recent_payments': recent_payments,
     }
     
-    # Handle users tab
     if active_tab == 'users':
         search_query = request.GET.get('search', '')
         users = CustomUser.objects.filter(is_staff=False)
         if search_query:
             users = users.filter(email__icontains=search_query)
         context.update({'users': users, 'search_query': search_query})
+        
+    elif active_tab == 'requests':
+        status_filter = request.GET.get('status')
+        search_query = request.GET.get('search', '')
+        requests = ComplaintMaintenance.objects.all()
+        if status_filter:
+            requests = requests.filter(status=status_filter)
+        if search_query:
+            requests = requests.filter(details__icontains=search_query)
+        context.update({'requests': requests, 'status_filter': status_filter, 'search_query': search_query})
+        
+    elif active_tab == 'allocations':
+        status_filter = request.GET.get('status')
+        search_query = request.GET.get('search', '')
+        allocations = Allocation.objects.select_related('room__hostel')
+        if status_filter:
+            allocations = allocations.filter(status=status_filter)
+        if search_query:
+            allocations = allocations.filter(room__room_number__icontains=search_query)
+        context.update({'allocations': allocations, 'status_filter': status_filter, 'search_query': search_query})
+    
+    elif active_tab == 'events':
+        events = Form.objects.all().order_by('date')
+        context['events'] = events
+    
+    elif active_tab == 'add_event':
+        if request.method == 'POST':
+            form = EventForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Event added successfully!')
+                return redirect('/dashboard/?tab=events')
+            else:
+                messages.error(request, 'Error adding event. Please check the form.')
+        else:
+            form = EventForm()
+        context['form'] = form
 
     return render(request, 'Rooms_dashboard.html', context)
+
+# Remove the separate admin_form view if it exists
+# Keep update_event and delete_event as separate views if needed  
+        
 # views.py
 
 
@@ -758,6 +797,39 @@ def view_users(request):
         'search_query': search_query,
     }
     return render(request, 'Rooms_dashboard.html', context)
+
+
+
+
+
+@login_required
+def update_event(request, event_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to edit events.")
+        return redirect('index')
+    
+    event = get_object_or_404(Form, id=event_id)
+    if request.method == 'POST':
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Event updated successfully!')
+            return redirect('/dashboard/?tab=events')
+    else:
+        form = EventForm(instance=event)
+    
+    return render(request, 'Rooms_admin_form.html', {'form': form, 'update': True})
+
+@login_required
+def delete_event(request, event_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete events.")
+        return redirect('index')
+    
+    event = get_object_or_404(Form, id=event_id)
+    event.delete()
+    messages.success(request, 'Event deleted successfully!')
+    return redirect('/dashboard/?tab=events')
 
 
 

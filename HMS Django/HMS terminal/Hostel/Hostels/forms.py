@@ -64,3 +64,15 @@ class StaffSignupForm(UserCreationForm):
         if commit:
             user.save()
         return user
+    
+from django import forms
+from app2.models import Form
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Form
+        fields = ['name', 'date', 'time', 'venue', 'organizer']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'time': forms.TimeInput(attrs={'type': 'time'}),
+        }

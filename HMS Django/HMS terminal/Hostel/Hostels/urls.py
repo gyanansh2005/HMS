@@ -37,4 +37,6 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
     path('hosteldetails/', views.hostel_details, name='hostel_details'),
     path('users/', views.view_users, name='view_users'),  # New URL pattern
+    path('events/update/<int:event_id>/', views.update_event, name='update'),  # Placeholder
+    path('events/delete/<int:event_id>/', views.delete_event, name='delete'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
