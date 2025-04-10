@@ -71,7 +71,7 @@ from app2.models import Form
 class EventForm(forms.ModelForm):
     class Meta:
         model = Form
-        fields = ['name', 'date', 'time', 'venue', 'organizer']
+        fields = ['name', 'date', 'time', 'venue', 'organizer' ,'description']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
             'time': forms.TimeInput(attrs={'type': 'time'}),
