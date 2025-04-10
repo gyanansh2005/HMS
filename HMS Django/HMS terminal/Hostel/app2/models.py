@@ -11,6 +11,7 @@ class Form(models.Model):
     date = models.DateField()
     time = models.TimeField()
     venue = models.CharField(max_length=255)
+    description = models.TextField(help_text="Event description", blank=True, null=True)
     organizer = models.CharField(max_length=255)
     description = models.TextField(help_text="Event description", blank=True, null=True)
 
