@@ -3,6 +3,7 @@ from django.contrib.auth import views as auth_views
 from . import views
 from django.conf.urls.static import static
 from django.conf import settings
+from app2.models import MessMenu, TodayMenu
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -36,7 +37,14 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
     path('hosteldetails/', views.hostel_details, name='hostel_details'),
-    path('users/', views.view_users, name='view_users'),  # New URL pattern
-    path('events/update/<int:event_id>/', views.update_event, name='update'),  # Placeholder
+    path('users/', views.view_users, name='view_users'),
+    path('events/update/<int:event_id>/', views.update_event, name='update'),
     path('events/delete/<int:event_id>/', views.delete_event, name='delete'),
+    
+    path('mess/set_today/<int:menu_id>/', views.set_today_menu, name='set_today_menu'),
+    path('mess/update/<int:menu_id>/', views.update_mess_menu, name='update_mess_menu'),
+    path('mess/delete/<int:menu_id>/', views.delete_mess_menu, name='delete_mess_menu'),
+     path('mess/delete/<int:menu_id>/', views.delete_mess_menu, name='delete_mess_menu'),
+    path('notification/delete/<int:msg_id>/', views.delete_notification, name='delete_notification'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

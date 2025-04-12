@@ -42,6 +42,18 @@
                         <span>Events</span>
                     </a>
                 </li>
+                <li class="{% if active_tab == 'mess' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}?tab=mess">
+                        <i class="fas fa-utensils"></i>
+                        <span>Menu</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'notifications' %}active{% endif %}" 
+                       href="?tab=notifications">
+                        💬 Notifications
+                    </a>
+                </li>
                 <li>
                     <a href="{% url 'logout' %}">
                         <i class="fas fa-sign-out-alt"></i>
@@ -55,8 +67,19 @@
     <div class="main-content">
         <div class="header">
             <div class="header-left">
+
                 <h1>Admin Dashboard</h1>
-                <div class="breadcrumb">Overview / Statistics</div>
+
+                <div class="breadcrumb">
+                    {% if active_tab == 'overview' %}Overview / Statistics
+                    {% elif active_tab == 'users' %}Users / Management
+                    {% elif active_tab == 'requests' %}Requests / Management
+                    {% elif active_tab == 'allocations' %}Allocations / Management
+                    {% elif active_tab == 'events' %}Events / Management
+                    {% elif active_tab == 'add_event' %}Events / Add Event
+                    {% elif active_tab == 'mess' %}Mess Menu / Management
+                    {% endif %}
+                </div>
             </div>
             <div class="user-info">
                 <div class="user-avatar">
@@ -70,492 +93,699 @@
         </div>
 
         {% if active_tab == 'overview' %}
-            <div class="dashboard-grid">
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card bg-gradient-primary">
-                        <div class="stat-content">
-                            <h3>Total Users</h3>
-                            <p class="stat-number">{{ stats.total_users }}</p>
-                        </div>
-                        <i class="fas fa-users stat-icon"></i>
+        <div class="dashboard-grid">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card bg-gradient-primary">
+                    <div class="stat-content">
+                        <h3>Total Users</h3>
+                        <p class="stat-number">{{ stats.total_users }}</p>
                     </div>
-                    <div class="stat-card bg-gradient-success">
-                        <div class="stat-content">
-                            <h3>Available Rooms</h3>
-                            <p class="stat-number">{{ stats.available_rooms }}</p>
-                        </div>
-                        <i class="fas fa-bed stat-icon"></i>
+                    <i class="fas fa-users stat-icon"></i>
+                </div>
+                <div class="stat-card bg-gradient-success">
+                    <div class="stat-content">
+                        <h3>Available Rooms</h3>
+                        <p class="stat-number">{{ stats.available_rooms }}</p>
                     </div>
-                    <div class="stat-card bg-gradient-warning">
-                        <div class="stat-content">
-                            <h3>Pending Requests</h3>
-                            <p class="stat-number">{{ stats.pending_requests }}</p>
-                        </div>
-                        <i class="fas fa-exclamation-circle stat-icon"></i>
+                    <i class="fas fa-bed stat-icon"></i>
+                </div>
+                <div class="stat-card bg-gradient-warning">
+                    <div class="stat-content">
+                        <h3>Pending Requests</h3>
+                        <p class="stat-number">{{ stats.pending_requests }}</p>
                     </div>
-                    <div class="stat-card bg-gradient-info">
-                        <div class="stat-content">
-                            <h3>Total Revenue</h3>
-                            <p class="stat-number">₹{{ stats.total_revenue|floatformat:2 }}</p>
+                    <i class="fas fa-exclamation-circle stat-icon"></i>
+                </div>
+                <div class="stat-card bg-gradient-info">
+                    <div class="stat-content">
+                        <h3>Total Revenue</h3>
+                        <p class="stat-number">₹{{ stats.total_revenue|floatformat:2 }}</p>
+                    </div>
+                    <i class="fas fa-rupee-sign stat-icon"></i>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="action-card">
+                    <h4>Quick Allocate</h4>
+                    <a href="{% url 'room_allocation' %}" class="btn-action">
+                        <i class="fas fa-home"></i> Allocate Room
+                    </a>
+                </div>
+                <div class="action-card">
+                    <h4>New Complaint</h4>
+                    <a href="{% url 'complaint_maintenance' %}" class="btn-action">
+                        <i class="fas fa-tools"></i> File Complaint
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="content-grid">
+                <!-- Allocation Statistics -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Allocation Statistics</h3>
+                        <div class="chart-legend">
+                            <span class="legend-item pending"><i class="fas fa-circle"></i> Pending</span>
+                            <span class="legend-item confirmed"><i class="fas fa-circle"></i> Confirmed</span>
                         </div>
-                        <i class="fas fa-rupee-sign stat-icon"></i>
+                    </div>
+                    <div class="allocation-chart">
+                        <canvas id="allocationChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <div class="action-card">
-                        <h4>Quick Allocate</h4>
-                        <a href="{% url 'room_allocation' %}" class="btn-action">
-                            <i class="fas fa-home"></i> Allocate Room
-                        </a>
-                    </div>
-                    <div class="action-card">
-                        <h4>New Complaint</h4>
-                        <a href="{% url 'complaint_maintenance' %}" class="btn-action">
-                            <i class="fas fa-tools"></i> File Complaint
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Main Content Grid -->
-                <div class="content-grid">
-                    <!-- Allocation Statistics -->
-                    <div class="chart-card">
-                        <div class="card-header">
-                            <h3>Allocation Statistics</h3>
-                            <div class="chart-legend">
-                                <span class="legend-item pending"><i class="fas fa-circle"></i> Pending</span>
-                                <span class="legend-item confirmed"><i class="fas fa-circle"></i> Confirmed</span>
-                            </div>
+                <!-- Quick Stats -->
+                <div class="quick-stats-grid">
+                    <div class="quick-stat rating-card">
+                        <h4>Service Rating</h4>
+                        <div class="rating-value">
+                            {{ stats.avg_service_rating }}<small>/5.0</small>
                         </div>
-                        <div class="allocation-chart">
-                            <canvas id="allocationChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Quick Stats -->
-                    <div class="quick-stats-grid">
-                        <div class="quick-stat rating-card">
-                            <h4>Service Rating</h4>
-                            <div class="rating-value">
-                                {{ stats.avg_service_rating }}<small>/5.0</small>
-                            </div>
-                            <div class="rating-stars">
-                                {% for i in "54321" %}
-                                    {% if stats.avg_service_rating >= forloop.counter %}
-                                        <i class="fas fa-star"></i>
-                                    {% else %}
-                                        <i class="far fa-star"></i>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            <div class="rating-progress">
-                                <div class="progress-bar" style="width: {{ stats.rating_progress_width }}%"></div>
-                            </div>
-                        </div>
-                        <div class="stat-card bg-gradient-purple">
-                            <div class="stat-content">
-                                <h3>Upcoming Events</h3>
-                                <p class="stat-number">{{ stats.upcoming_events }}</p>
-                            </div>
-                            <i class="fas fa-calendar-alt stat-icon"></i>
-                        </div>
-                        <div class="stat-card bg-gradient-dark">
-                            <div class="stat-content">
-                                <h3>Occupancy Rate</h3>
-                                <p class="stat-number">{{ stats.occupancy_percentage }}%</p>
-                            </div>
-                            <i class="fas fa-percentage stat-icon"></i>
-                        </div>
-                        <div class="quick-stat allocations-card">
-                            <h4>Allocations</h4>
-                            <div class="allocation-progress">
-                                <div class="progress-item">
-                                    <span class="progress-label">Pending</span>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill pending" style="width: {{ stats.pending_allocations|default:0 }}%"></div>
-                                    </div>
-                                    <span class="progress-value">{{ stats.pending_allocations }}</span>
-                                </div>
-                                <div class="progress-item">
-                                    <span class="progress-label">Confirmed</span>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill confirmed" style="width: {{ stats.confirmed_allocations|default:0 }}%"></div>
-                                    </div>
-                                    <span class="progress-value">{{ stats.confirmed_allocations }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activities -->
-                <div class="recent-activities">
-                    <div class="activity-card">
-                        <div class="card-header">
-                            <h3>Recent Complaints</h3>
-                            <a href="{% url 'view_requests' %}" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                        <div class="activity-list">
-                            {% for complaint in recent_complaints %}
-                                <div class="activity-item">
-                                    <div class="activity-icon {{ complaint.request_type }}">
-                                        <i class="fas fa-{{ complaint.request_type }}"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-title">{{ complaint.request_type|capfirst }}</div>
-                                        <div class="activity-details">{{ complaint.details|truncatewords:8 }}</div>
-                                        <div class="activity-time">{{ complaint.created_at|timesince }} ago</div>
-                                    </div>
-                                </div>
-                            {% empty %}
-                                <div class="empty-state">
-                                    <i class="fas fa-check-circle"></i>
-                                    <p>No recent complaints</p>
-                                </div>
+                        <div class="rating-stars">
+                            {% for i in "54321" %}
+                            {% if stats.avg_service_rating >= forloop.counter %}
+                            <i class="fas fa-star"></i>
+                            {% else %}
+                            <i class="far fa-star"></i>
+                            {% endif %}
                             {% endfor %}
                         </div>
-                    </div>
-                    <div class="activity-card">
-                        <div class="card-header">
-                            <h3>Recent Payments</h3>
-                            <a href="#" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+                        <div class="rating-progress">
+                            <div class="progress-bar" style="width: {{ stats.rating_progress_width }}%"></div>
                         </div>
-                        <div class="activity-list">
-                            {% for payment in recent_payments %}
-                                <div class="activity-item">
-                                    <div class="activity-icon payment">
-                                        <i class="fas fa-rupee-sign"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-title">Payment {{ payment.status }}</div>
-                                        <div class="activity-details">₹{{ payment.amount }} • {{ payment.user.email }}</div>
-                                        <div class="activity-time">{{ payment.payment_date|timesince }} ago</div>
-                                    </div>
+                    </div>
+                    <div class="stat-card bg-gradient-purple">
+                        <div class="stat-content">
+                            <h3>Upcoming Events</h3>
+                            <p class="stat-number">{{ stats.upcoming_events }}</p>
+                        </div>
+                        <i class="fas fa-calendar-alt stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-gradient-dark">
+                        <div class="stat-content">
+                            <h3>Occupancy Rate</h3>
+                            <p class="stat-number">{{ stats.occupancy_percentage }}%</p>
+                        </div>
+                        <i class="fas fa-percentage stat-icon"></i>
+                    </div>
+                    <div class="quick-stat allocations-card">
+                        <h4>Allocations</h4>
+                        <div class="allocation-progress">
+                            <div class="progress-item">
+                                <span class="progress-label">Pending</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill pending"
+                                        style="width: {{ stats.pending_allocations|default:0 }}%"></div>
                                 </div>
-                            {% empty %}
-                                <div class="empty-state">
-                                    <i class="fas fa-check-circle"></i>
-                                    <p>No recent payments</p>
+                                <span class="progress-value">{{ stats.pending_allocations }}</span>
+                            </div>
+                            <div class="progress-item">
+                                <span class="progress-label">Confirmed</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill confirmed"
+                                        style="width: {{ stats.confirmed_allocations|default:0 }}%"></div>
                                 </div>
-                            {% endfor %}
+                                <span class="progress-value">{{ stats.confirmed_allocations }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Recent Activities -->
+            <div class="recent-activities">
+                <div class="activity-card">
+                    <div class="card-header">
+                        <h3>Recent Complaints</h3>
+                        <a href="{% url 'view_requests' %}" class="view-all">View All <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="activity-list">
+                        {% for complaint in recent_complaints %}
+                        <div class="activity-item">
+                            <div class="activity-icon {{ complaint.request_type }}">
+                                <i class="fas fa-{{ complaint.request_type }}"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">{{ complaint.request_type|capfirst }}</div>
+                                <div class="activity-details">{{ complaint.details|truncatewords:8 }}</div>
+                                <div class="activity-time">{{ complaint.created_at|timesince }} ago</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <p>No recent complaints</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="activity-card">
+                    <div class="card-header">
+                        <h3>Recent Payments</h3>
+                        <a href="#" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="activity-list">
+                        {% for payment in recent_payments %}
+                        <div class="activity-item">
+                            <div class="activity-icon payment">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Payment {{ payment.status }}</div>
+                                <div class="activity-details">₹{{ payment.amount }} • {{ payment.user.email }}</div>
+                                <div class="activity-time">{{ payment.payment_date|timesince }} ago</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <p>No recent payments</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
         {% elif active_tab == 'users' %}
-            <div class="users-table">
-                <div class="table-header">
-                    <h2>User Management</h2>
-                    <div class="table-actions">
-                        <select class="bulk-action" name="bulk_action">
-                            <option value="">Bulk Actions</option>
-                            <option value="activate">Activate</option>
-                            <option value="deactivate">Deactivate</option>
-                            <option value="delete">Delete</option>
-                        </select>
-                        <button class="btn-apply-bulk">Apply</button>
-                        <a href="{% url 'staff_signup' %}" class="btn-add-user">
-                            <i class="fas fa-plus"></i> Add Staff
-                        </a>
-                        <form method="GET" action="{% url 'admin_dashboard' %}" class="search-box">
-                            <input type="hidden" name="tab" value="users">
-                            <div class="search-input">
-                                <i class="fas fa-search"></i>
-                                <input type="text" name="search" placeholder="Search users..." value="{{ search_query }}">
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="select-all"></th>
-                                <th>User</th>
-                                <th>Contact</th>
-                                <th>Roll Number</th>
-                                <th>Room</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                                {% if not user.is_staff %}
-                                    <tr>
-                                        <td><input type="checkbox"></td>
-                                        <td>
-                                            <div class="user-cell">
-                                                <div class="user-avatar">
-                                                    {% if user.student_profile.profile_picture %}
-                                                        <img src="{{ user.student_profile.profile_picture.url }}" alt="{{ user.get_full_name }}">
-                                                    {% else %}
-                                                        <i class="fas fa-user-circle"></i>
-                                                    {% endif %}
-                                                </div>
-                                                <div class="user-info">
-                                                    <div class="user-name">{{ user.get_full_name }}</div>
-                                                    <div class="user-email">{{ user.email }}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ user.student_profile.contact_number|default:"-" }}</td>
-                                        <td>{{ user.student_profile.roll_number|default:"-" }}</td>
-                                        <td>{{ user.student_profile.room.room_number|default:"-" }}</td>
-                                        <td>
-                                            <span class="role-badge user">
-                                                {% if user.is_staff %}Staff{% else %}Student{% endif %}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
-                                                {% if user.is_active %}Active{% else %}Inactive{% endif %}
-                                            </span>
-                                        </td>
-                                        <td class="actions">
-                                            <div class="action-buttons">
-                                                <a href="{% url 'edit_user' user.id %}" class="edit-btn" title="Edit">
-                                                    <i class="fas fa-pencil-alt"></i>
-                                                </a>
-                                                <a href="{% url 'delete_user' user.id %}" class="delete-btn" title="Delete" onclick="return confirm('Are you sure you want to delete this user?')">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            {% empty %}
-                                <tr>
-                                    <td colspan="8" class="empty-state">
-                                        <i class="fas fa-user-slash"></i>
-                                        No users found
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="users-table">
+            <div class="table-header">
+                <h2>User Management</h2>
+                <div class="table-actions">
+                    <select class="bulk-action" name="bulk_action">
+                        <option value="">Bulk Actions</option>
+                        <option value="activate">Activate</option>
+                        <option value="deactivate">Deactivate</option>
+                        <option value="delete">Delete</option>
+                    </select>
+                    <button class="btn-apply-bulk">Apply</button>
+                    <a href="{% url 'staff_signup' %}" class="btn-add-user">
+                        <i class="fas fa-plus"></i> Add Staff
+                    </a>
+                    <form method="GET" action="{% url 'admin_dashboard' %}" class="search-box">
+                        <input type="hidden" name="tab" value="users">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Search users..." value="{{ search_query }}">
+                        </div>
+                    </form>
                 </div>
             </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all"></th>
+                            <th>User</th>
+                            <th>Contact</th>
+                            <th>Roll Number</th>
+                            <th>Room</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        {% if not user.is_staff %}
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar">
+                                        {% if user.student_profile.profile_picture %}
+                                        <img src="{{ user.student_profile.profile_picture.url }}"
+                                            alt="{{ user.get_full_name }}">
+                                        {% else %}
+                                        <i class="fas fa-user-circle"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="user-info">
+                                        <div class="user-name">{{ user.get_full_name }}</div>
+                                        <div class="user-email">{{ user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user.student_profile.contact_number|default:"-" }}</td>
+                            <td>{{ user.student_profile.roll_number|default:"-" }}</td>
+                            <td>{{ user.student_profile.room.room_number|default:"-" }}</td>
+                            <td>
+                                <span class="role-badge user">
+                                    {% if user.is_staff %}Staff{% else %}Student{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
+                                    {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td class="actions">
+                                <div class="action-buttons">
+                                    <a href="{% url 'edit_user' user.id %}" class="edit-btn" title="Edit">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </a>
+                                    <a href="{% url 'delete_user' user.id %}" class="delete-btn" title="Delete"
+                                        onclick="return confirm('Are you sure you want to delete this user?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <i class="fas fa-user-slash"></i>
+                                No users found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         {% elif active_tab == 'requests' %}
-            <div class="requests-table">
-                <div class="table-header">
-                    <h2>Requests Management</h2>
-                    <div class="table-actions">
-                        <select class="status-filter" onchange="location = this.value;">
-                            <option value="{% url 'view_requests' %}" {% if not status_filter %}selected{% endif %}>All</option>
-                            <option value="{% url 'view_requests' %}?status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-                            <option value="{% url 'view_requests' %}?status=resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
-                        </select>
-                        <form method="GET" action="{% url 'view_requests' %}" class="search-box">
-                            <div class="search-input">
-                                <i class="fas fa-search"></i>
-                                <input type="text" name="search" placeholder="Search requests..." value="{{ search_query }}">
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Type</th>
-                                <th>Room</th>
-                                <th>Category</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for request in requests %}
-                                <tr>
-                                    <td>{{ request.user.email }}</td>
-                                    <td>{{ request.request_type|capfirst }}</td>
-                                    <td>{{ request.room_number }}</td>
-                                    <td>{{ request.category }}</td>
-                                    <td>
-                                        <span class="status-badge {% if request.status == 'pending' %}pending{% else %}resolved{% endif %}">
-                                            {{ request.status|capfirst }}
-                                        </span>
-                                    </td>
-                                    <td>{{ request.created_at|date:"M d, Y" }}</td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="6" class="empty-state">
-                                        <i class="fas fa-tools"></i>
-                                        No requests found
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="requests-table">
+            <div class="table-header">
+                <h2>Requests Management</h2>
+                <div class="table-actions">
+                    <select class="status-filter" onchange="location = this.value;">
+                        <option value="{% url 'view_allocations' %}" {% if not status_filter %}selected{% endif %}>All
+                        </option>
+                        <option value = "{% url 'view_allocations' %}?status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value = "{% url 'view_allocations' %}?status=confirmed" {% if status_filter == 'confirmed'%}selected{% endif %}>Confirmed</option>
+                        <option value="{% url 'view_allocations' %}?status=rejected" {% if status_filter == 'rejected'%}selected{% endif %}>Rejected</option>
+                    </select>
+                    <form method="GET" action="{% url 'view_requests' %}" class="search-box">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Search requests..."
+                                value="{{ search_query }}">
+                        </div>
+                    </form>
                 </div>
             </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Type</th>
+                            <th>Room</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in requests %}
+                        <tr>
+                            <td>{{ request.user.email }}</td>
+                            <td>{{ request.request_type|capfirst }}</td>
+                            <td>{{ request.room_number }}</td>
+                            <td>{{ request.category }}</td>
+                            <td>
+                                <span
+                                    class="status-badge {% if request.status == 'pending' %}pending{% else %}resolved{% endif %}">
+                                    {{ request.status|capfirst }}
+                                </span>
+                            </td>
+                            <td>{{ request.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-tools"></i>
+                                No requests found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         {% elif active_tab == 'allocations' %}
-            <div class="allocations-table">
-                <div class="table-header">
-                    <h2>Room Allocations</h2>
-                    <div class="table-actions">
-                        <select class="status-filter" onchange="location = this.value;">
-                            <option value="{% url 'view_allocations' %}" {% if not status_filter %}selected{% endif %}>All</option>
-                            <option value="{% url 'view_allocations' %}?status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-                            <option value="{% url 'view_allocations' %}?status=confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
-                            <option value="{% url 'view_allocations' %}?status=rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
-                        </select>
-                        <form method="GET" action="{% url 'view_allocations' %}" class="search-box">
-                            <div class="search-input">
-                                <i class="fas fa-search"></i>
-                                <input type="text" name="search" placeholder="Search allocations..." value="{{ search_query }}">
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Hostel</th>
-                                <th>Room</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for allocation in allocations %}
-                                <tr>
-                                    <td>{{ allocation.user.email }}</td>
-                                    <td>{{ allocation.room.hostel.name }}</td>
-                                    <td>{{ allocation.room.room_number }}</td>
-                                    <td>
-                                        <span class="status-badge {{ allocation.status }}">
-                                            {{ allocation.status|capfirst }}
-                                        </span>
-                                    </td>
-                                    <td>{{ allocation.allocation_date|date:"M d, Y" }}</td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="5" class="empty-state">
-                                        <i class="fas fa-home"></i>
-                                        No allocations found
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="allocations-table">
+            <div class="table-header">
+                <h2>Room Allocations</h2>
+                <div class="table-actions">
+                    <select class="status-filter" onchange="location = this.value;">
+                        <option value="{% url 'view_allocations' %}" {% if not status_filter %}selected{% endif %}>All
+                        </option>
+                        <option value="{% url 'view_allocations' %}?status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="{% url 'view_allocations' %}?status=confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                        <option value="{% url 'view_allocations' %}?status=rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                    <form method="GET" action="{% url 'view_allocations' %}" class="search-box">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Search allocations..."
+                                value="{{ search_query }}">
+                        </div>
+                    </form>
                 </div>
             </div>
-            {% elif active_tab == 'events' %}
-            <div class="events-section">
-                <div class="table-header">
-                    <h2>Event Management</h2>
-                    <div class="table-actions">
-                        <a href="{% url 'admin_dashboard' %}?tab=add_event" class="btn-add-user">
-                            <i class="fas fa-plus"></i> Add Event
-                        </a>
-                    </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Hostel</th>
+                            <th>Room</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for allocation in allocations %}
+                        <tr>
+                            <td>{{ allocation.user.email }}</td>
+                            <td>{{ allocation.room.hostel.name }}</td>
+                            <td>{{ allocation.room.room_number }}</td>
+                            <td>
+                                <span class="status-badge {{ allocation.status }}">
+                                    {{ allocation.status|capfirst }}
+                                </span>
+                            </td>
+                            <td>{{ allocation.allocation_date|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-state">
+                                <i class="fas fa-home"></i>
+                                No allocations found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% elif active_tab == 'events' %}
+        <div class="events-section">
+            <div class="table-header">
+                <h2>Event Management</h2>
+                <div class="table-actions">
+                    <a href="{% url 'admin_dashboard' %}?tab=add_event" class="btn-add-user">
+                        <i class="fas fa-plus"></i> Add Event
+                    </a>
                 </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Venue</th>
-                                <th>Organizer</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for event in events %}
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Venue</th>
+                            <th>Organizer</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                        <tr>
+                            <td>{{ event.name }}</td>
+                            <td>{{ event.date }}</td>
+                            <td>{{ event.time }}</td>
+                            <td>{{ event.venue }}</td>
+                            <td>{{ event.organizer }}</td>
+                            <td class="actions">
+                                <a href="{% url 'update' event.id %}" class="edit-btn" title="Edit">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                <a href="{% url 'delete' event.id %}" class="delete-btn" title="Delete"
+                                    onclick="return confirm('Are you sure you want to delete this event?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-calendar-alt"></i>
+                                No events scheduled
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% elif active_tab == 'add_event' %}
+        <div class="events-section">
+            <div class="table-header">
+                <h2>Add New Event</h2>
+                <div class="table-actions">
+                    <a href="{% url 'admin_dashboard' %}?tab=events" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Events
+                    </a>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <form method="POST" class="event-form">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Add Event</button>
+                </form>
+            </div>
+        </div>
+        {% elif active_tab == 'mess' %}
+        <div class="mess-section">
+            <div class="table-header">
+                <h2>Mess Menu Management</h2>
+                <div class="table-actions">
+                    <form method="GET" action="{% url 'admin_dashboard' %}?tab=mess" class="search-box">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Search menu, day, or meal..."
+                                value="{{ search_query }}">
+                        </div>
+                    </form>
+                    <select class="filter-select" onchange="location = this.value;">
+                        <option value="{% url 'admin_dashboard' %}?tab=mess" {% if not day_filter %}selected{% endif %}>     All Days</option>
+                        {% for day in days %}
+                        <option value="{% url 'admin_dashboard' %}?tab=mess&day={{ day|lower }}" {% if day_filter == day|lower %}selected{% endif %}>{{ day }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Today's Menu Section -->
+            {% if today_menu %}
+            <div class="today-menu-card">
+                <h3>Today's Menu</h3>
+                <div class="menu-item">
+                    <span class="meal-type {{ today_menu.meal_type|lower }}">{{ today_menu.meal_type }}</span>
+                    <p>{{ today_menu.menu }}</p>
+                    <small>Day: {{ today_menu.day }}</small>
+                </div>
+            </div>
+            {% else %}
+            <div class="today-menu-card empty">
+                <h3>Today's Menu</h3>
+                <div class="empty-state">
+                    <i class="fas fa-utensils"></i>
+                    <p>No menu set for today.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Weekly Menu Tabs -->
+            <div class="menu-tabs">
+                <div class="tab-header">
+                    {% for day in days %}
+                    <button class="tab-btn {% if day_filter == day|lower %}active{% endif %}"onclick =  '    location.href=  "{% url "admin_dashboard" %}?tab=mess&day={{ day|lower }}"    '>{{ day }} </button>
+                    {% endfor %}
+                    <button class="tab-btn {% if not day_filter %}active{% endif %}"
+                        onclick='location.href=  "{% url "admin_dashboard" % }?tab=mess " '>All</button>
+                </div>
+                
+                <div class="tab-content">
+                    <div class="table-container">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>{{ event.name }}</td>
-                                    <td>{{ event.date }}</td>
-                                    <td>{{ event.time }}</td>
-                                    <td>{{ event.venue }}</td>
-                                    <td>{{ event.organizer }}</td>
+                                    <th>Day</th>
+                                    <th>Meal Type</th>
+                                    <th>Menu</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for menu in menus %}
+                                <tr>
+                                    <td>{{ menu.day }}</td> <!-- Fixed from menu.days to menu.day -->
+                                    <td><span class="meal-type {{ menu.meal_type|lower }}">{{ menu.meal_type }}</span>
+                                    </td>
+                                    <td>{{ menu.menu }}</td>
                                     <td class="actions">
-                                        <a href="{% url 'update' event.id %}" class="edit-btn" title="Edit">
+                                        <a href="{% url 'set_today_menu' menu.id %}" class="action-btn"
+                                            title="Set as Today's Menu">
+                                            <i class="fas fa-calendar-check"></i>
+                                        </a>
+                                        <a href="{% url 'update_mess_menu' menu.id %}" class="edit-btn" title="Edit">
                                             <i class="fas fa-pencil-alt"></i>
                                         </a>
-                                        <a href="{% url 'delete' event.id %}" class="delete-btn" title="Delete" onclick="return confirm('Are you sure you want to delete this event?')">
+                                        <a href="{% url 'delete_mess_menu' menu.id %}" class="delete-btn" title="Delete"
+                                            onclick="return confirm('Are you sure you want to delete this menu?')">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>
                                     </td>
                                 </tr>
-                            {% empty %}
+                                {% empty %}
                                 <tr>
-                                    <td colspan="6" class="empty-state">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        No events scheduled
+                                    <td colspan="4" class="empty-state">
+                                        <i class="fas fa-utensils"></i> No menu items found
                                     </td>
                                 </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% elif active_tab == 'add_event' %}
-            <div class="events-section">
-                <div class="table-header">
-                    <h2>Add New Event</h2>
-                    <div class="table-actions">
-                        <a href="{% url 'admin_dashboard' %}?tab=events" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Back to Events
-                        </a>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="form-container">
-                    <form method="POST" class="event-form">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary">Add Event</button>
-                    </form>
-                </div>
             </div>
+
+            <!-- Add Menu Form -->
+            <div class="form-container">
+                <h3>Add New Menu Item</h3>
+                <form method="POST" class="mess-form" id="messForm">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Add Menu</button>
+                </form>
+            </div>
+        </div>
+
+        {% elif active_tab == 'notifications' %}
+<div class="chat-interface mt-4">
+    <div class="d-flex justify-content-between mb-3">
+        <h4>Manage Notifications</h4>
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('messageForm').scrollIntoView()">
+            <i class="fas fa-plus"></i> New Notification
+        </button>
+    </div>
+    
+    <div class="chat-messages card mb-3" style="height: 400px; overflow-y: auto;">
+        {% for msg in chat_messages %}
+        <div class="message p-2 position-relative">
+            <div class="d-inline-block p-2 rounded {% if msg.is_notification %}bg-warning{% else %}bg-light{% endif %}">
+                {% if request.user.is_staff %}
+                <div class="message-actions position-absolute top-0 end-0 mt-1 me-2">
+                    <a href="?tab=notifications&edit={{ msg.id }}#messageForm" 
+                       class="btn btn-sm btn-link text-dark">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="?tab=notifications&delete={{ msg.id }}" 
+                       class="btn btn-sm btn-link text-danger"
+                       onclick="return confirm('Delete this message permanently?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+                {% endif %}
+                <small class="text-muted">
+                    {{ msg.user.email }} - {{ msg.timestamp|timesince }} ago
+                    {% if msg.is_notification %}
+                    <span class="badge bg-danger">System Notification</span>
+                    {% endif %}
+                </small>
+                <div>{{ msg.message }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <form method="POST" id="messageForm" class="chat-form card p-3">
+        {% csrf_token %}
+        {% if editing_message_id %}
+        <input type="hidden" name="edit_id" value="{{ editing_message_id }}">
         {% endif %}
+        <div class="mb-3">
+            {{ discussion_form.message }}
+        </div>
+        {% if discussion_form.is_notification %}
+        <div class="form-check mb-3">
+            {{ discussion_form.is_notification }}
+            <label class="form-check-label" for="{{ discussion_form.is_notification.id_for_label }}">
+                Mark as System Notification
+            </label>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">
+            {% if editing_message_id %}Update{% else %}Send{% endif %} Message
+        </button>
+        {% if editing_message_id %}
+        <a href="?tab=notifications" class="btn btn-secondary">Cancel</a>
+        {% endif %}
+    </form>
+</div>
+{% endif %}
     </div>
 </div>
 
+
 <!-- Scripts unchanged -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('allocationChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Pending', 'Confirmed'],
-                datasets: [{
-                    data: [{{ stats.pending_allocations|default:0 }}, {{ stats.confirmed_allocations|default:0 }}],
-                    backgroundColor: ['#ff6384', '#36a2eb'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 12,
-                            padding: 20
-                        }
-                    }
-                }
+        // Chart for overview tab (only if canvas exists)
+        if (document.getElementById('allocationChart')) {
+            const ctx = document.getElementById('allocationChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Confirmed'],
+                    datasets: [{
+                data: [{{ stats.pending_allocations|default:"0" }}, {{ stats.confirmed_allocations|default:"0" }}],
+                backgroundColor: ['#ff6384', '#36a2eb'],
+                borderWidth: 0
+            }
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } }
+            }
+        }
+    });
+}
+
+    // Form validation for mess tab (only if form exists)
+    const form = document.getElementById('messForm');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const day = document.getElementById('id_day').value;
+            const mealType = document.getElementById('id_meal_type').value;
+            const menu = document.getElementById('id_menu').value.trim();
+
+            if (!day || !mealType || !menu) {
+                e.preventDefault();
+                alert('Please fill in all fields.');
             }
         });
-    });
-</script>
+    }
+});
 
+setInterval(() => {
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newMessages = doc.querySelector('.chat-messages').innerHTML;
+            document.querySelector('.chat-messages').innerHTML = newMessages;
+        });
+}, 5000);
+
+</script>
 
 
 
@@ -571,6 +801,7 @@
         --sidebar-width: 280px;
         --transition-speed: 0.3s;
     }
+
     .form-container {
         padding: 1.5rem;
     }
@@ -1051,6 +1282,102 @@
         opacity: 0.8;
     }
 
+    .mess-section {
+        padding: 1.5rem;
+    }
+
+    .today-menu-card {
+        background: linear-gradient(45deg, #06d6a0, #09bc8a);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .today-menu-card.empty {
+        background: #f8f9fa;
+        color: #64748b;
+    }
+
+    .menu-item {
+        margin-bottom: 1rem;
+    }
+
+    .meal-type {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .meal-type.breakfast {
+        background: rgba(54, 162, 235, 0.1);
+        color: #36a2eb;
+    }
+
+    .meal-type.lunch {
+        background: rgba(255, 209, 102, 0.1);
+        color: #ffd166;
+    }
+
+    .meal-type.dinner {
+        background: rgba(113, 88, 183, 0.1);
+        color: #7209b7;
+    }
+
+    .menu-tabs {
+        margin-bottom: 2rem;
+    }
+
+    .tab-header {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        overflow-x: auto;
+    }
+
+    .tab-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: #e2e8f0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+    }
+
+    .tab-btn.active,
+    .tab-btn:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .mess-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        max-width: 600px;
+    }
+
+    .mess-form select,
+    .mess-form textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+
+    .mess-form textarea {
+        min-height: 100px;
+    }
+
+    .filter-select {
+        padding: 0.5rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
     @media (max-width: 768px) {
         .sidebar {
             width: 100%;
@@ -1070,5 +1397,19 @@
             grid-template-columns: 1fr;
         }
     }
+    .chat-messages::-webkit-scrollbar {
+    width: 5px;
+}
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #888;
+}
+.chat-input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    padding: 1rem;
+}
 </style>
 {% endblock %}

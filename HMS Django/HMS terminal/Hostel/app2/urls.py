@@ -8,7 +8,13 @@ urlpatterns = [
     path('events/', views.events, name='events'),
     path('base/', views.base, name='base'),
     path('update/', views.update, name='update'),
+
     path('delete-event/<int:id>/', views.delete, name='delete'),
     path('update-event/<int:id>/', views.update, name='update'),
+    path('mess/', views.mess, name='mess'),
+    path('discussion/', views.discussion_center, name='discussion_center'),
+
+
+
 
 ]

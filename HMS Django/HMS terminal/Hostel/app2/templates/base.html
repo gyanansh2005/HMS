@@ -30,8 +30,8 @@
               <li class="nav-item mx-2"><a class="nav-link active" href="{% url 'app2index' %}">Home</a></li>
               <li class="nav-item mx-2"><a class="nav-link" href="{% url 'events' %}">Events</a></li>
               <li class="nav-item mx-2"><a class="nav-link" href="#">Lost & Found</a></li>
-              <li class="nav-item mx-2"><a class="nav-link" href="#">Mess Menu</a></li>
-              <li class="nav-item mx-2"><a class="nav-link" href="#">Discussions</a></li>
+              <li class="nav-item mx-2"><a class="nav-link" href="{% url 'mess' %}"">Mess Menu</a></li>
+              <li class="nav-item mx-2"><a class="nav-link" href="{% url 'discussion_center' %}">Discussions</a></li>
             </ul>
           </div>
         </div>
@@ -42,7 +42,7 @@
       {% endblock %}
 
       <footer>
-        © 2025 HostelConnect • Made with 💙 by Gyanansh Kumar
+        © 2025 HostelConnect •
       </footer>
 </body>
 </html>

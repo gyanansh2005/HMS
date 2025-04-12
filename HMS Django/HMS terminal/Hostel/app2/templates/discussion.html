@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Discussion Center 💬</h2>
+    
+    <div class="chat-interface">
+        <div class="chat-messages card mb-3" style="height: 60vh; overflow-y: auto;">
+            {% for msg in chat_messages %}
+            <div class="message {% if msg.user == request.user %}text-end{% endif %} p-2">
+                <div class="d-inline-block p-2 rounded {% if msg.is_notification %}bg-warning{% else %}bg-light{% endif %}">
+                    <small class="text-muted">
+                        {{ msg.user.email }} - {{ msg.timestamp|timesince }} ago
+                    </small><br>
+                    {{ msg.message }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <form method="POST" class="chat-form">
+            {% csrf_token %}
+            <div class="input-group mb-3">
+                {{ form.message }}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Auto-refresh messages every 3 seconds
+setInterval(() => {
+    fetch(window.location.href)
+    .then(response => response.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newMessages = doc.querySelector('.chat-messages').innerHTML;
+        document.querySelector('.chat-messages').innerHTML = newMessages;
+    });
+}, 3000);
+</script>
+{% endblock %}

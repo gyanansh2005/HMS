@@ -138,7 +138,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 ADMIN_INTERFACE = {
-    'THEME': 'admin_interface.themes.Dark',
+    'THEME': 'admin_interface.themes.Light',
     'SHOW_COLOR_CHANGER': True,
 }
 LOGGING = {
@@ -168,3 +168,6 @@ CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "fonts.googleapis.com")
 CSP_FONT_SRC = ("'self'", "fonts.gstatic.com")
 CSP_IMG_SRC = ("'self'", "data:", "cdnjs.cloudflare.com")
 CSP_CONNECT_SRC = ("'self'",)
+
+
+LOGIN_URL = '/login/'  # Redirect to login page if not authenticated

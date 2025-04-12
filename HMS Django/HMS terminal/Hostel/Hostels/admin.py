@@ -5,6 +5,8 @@ from .models import CustomUser, Hostel, Room, Allocation, StudentProfile
 from django.utils.html import format_html
 
 # Custom User Admin
+admin.site.site_header = "CampusNest Administration"
+admin.site.index_title = "Welcome to CampusNest Admin Portal"
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_active')
@@ -16,7 +18,26 @@ class CustomUserAdmin(UserAdmin):
         ('Personal Info', {'fields': ('first_name', 'last_name', 'roll_number')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
     )
+    
+    
+@admin.register(StudentProfile)
+class StudentProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'contact_number', 'profile_picture_preview')
+    search_fields = ('user__email', 'contact_number')
+    
+    def profile_picture_preview(self, obj):
+        if obj.profile_picture:
+            return format_html('<img src="{}" style="max-height: 50px; max-width: 50px;" />', obj.profile_picture.url)
+        return "-"
+    profile_picture_preview.short_description = 'Profile Picture'
 
+# Unregister default User and register CustomUser
+# admin.site.unregister(CustomUser)
+admin.site.register(CustomUser, CustomUserAdmin)
+
+
+
+admin.site.site_title = "Hostel Management System"
 # Hostel Admin with Image Preview
 @admin.register(Hostel)
 class HostelAdmin(admin.ModelAdmin):
@@ -56,22 +77,8 @@ class AllocationAdmin(admin.ModelAdmin):
     approve_allocations.short_description = "Approve selected allocations"
 
 # Student Profile Admin
-@admin.register(StudentProfile)
-class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'contact_number', 'profile_picture_preview')
-    search_fields = ('user__email', 'contact_number')
-    
-    def profile_picture_preview(self, obj):
-        if obj.profile_picture:
-            return format_html('<img src="{}" style="max-height: 50px; max-width: 50px;" />', obj.profile_picture.url)
-        return "-"
-    profile_picture_preview.short_description = 'Profile Picture'
 
-# Unregister default User and register CustomUser
-# admin.site.unregister(CustomUser)
-admin.site.register(CustomUser, CustomUserAdmin)
 
 # Admin Site Customization
-admin.site.site_header = "CampusNest Administration"
-admin.site.site_title = "Hostel Management System"
-admin.site.index_title = "Welcome to CampusNest Admin Portal"
+
+

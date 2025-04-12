@@ -3,28 +3,20 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.urls import reverse
-from .forms import SignupForm, StaffSignupForm
+from .forms import SignupForm, StaffSignupForm, ProfileUpdateForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
-from .models import CustomUser, Hostel, Room, Allocation, StudentProfile
+from .models import CustomUser, Hostel, Room, Allocation, StudentProfile, FeePayment, ComplaintMaintenance, Feedback
+from app2.models import DiscussionMessage, Form, MessMenu, TodayMenu, MessRules
+from app2.forms import MessMenuForm, MessRulesForm
+from django.db.models import F, Count, Avg, Sum
+from django.db import IntegrityError, transaction, models
+from django.contrib.auth.decorators import login_required
 import json
-from django.db.models import F
-from django.db import IntegrityError, transaction
-from .models import Hostel, Room, Allocation
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from .forms import ProfileUpdateForm
 import time
-from datetime import datetime , date
-from random import randint 
-from .models import FeePayment
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment
-from django.db.models import Count, Avg,F, Sum
-from app2.models import Form
-
+from datetime import date
+from random import randint
 
 def login_view(request):
     if request.method == 'POST':
@@ -559,6 +551,17 @@ from app2.models import Form
 from .forms import EventForm  # Ensure this is imported
 from datetime import date
 
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages  # Ensure this import is present
+from django.db.models import Count, F, Avg, Sum
+from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment
+from app2.models import Form, DiscussionMessage, MessMenu, TodayMenu
+from app2.forms import  DiscussionForm, MessMenuForm
+from datetime import date
+
 @login_required
 def dashboard(request):
     if not request.user.is_staff:
@@ -600,8 +603,50 @@ def dashboard(request):
         'recent_complaints': recent_complaints,
         'recent_payments': recent_payments,
     }
+
+    if active_tab == 'mess':
+        search_query = request.GET.get('search', '')
+        day_filter = request.GET.get('day', '').capitalize()
+        menus = MessMenu.objects.all()
+        today_menu = TodayMenu.objects.all()[:1]
+        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+        if search_query:
+            menus = menus.filter(
+                models.Q(menu__icontains=search_query) |
+                models.Q(day__icontains=search_query) |
+                models.Q(meal_type__icontains=search_query)
+            )
+
+        if day_filter:
+            menus = menus.filter(day=day_filter)
+
+        if not menus.exists() and day_filter:
+            menus = MessMenu.objects.all()
+            messages.info(request, f"No menus found for {day_filter}. Showing all menus.")
+
+        if request.method == 'POST':
+            form = MessMenuForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Menu item added successfully!')
+                return redirect('/dashboard/?tab=mess')
+            else:
+                messages.error(request, 'Error adding menu item. Please check the form.')
+        else:
+            form = MessMenuForm()
+
+        context.update({
+            'day': days,
+            'day_filter': day_filter,
+            'menus': menus,
+            'today_menu': today_menu,
+            'search_query': search_query,
+            'days': days,
+            'form': form,
+        })
     
-    if active_tab == 'users':
+    elif active_tab == 'users':
         search_query = request.GET.get('search', '')
         users = CustomUser.objects.filter(is_staff=False)
         if search_query:
@@ -644,14 +689,61 @@ def dashboard(request):
         else:
             form = EventForm()
         context['form'] = form
+        
+    elif active_tab == 'notifications':
+        message_id = request.GET.get('edit')
+        delete_id = request.GET.get('delete')
+        
+        # Handle delete
+        if delete_id and request.user.is_staff:
+            try:
+                DiscussionMessage.objects.get(id=delete_id).delete()
+                messages.success(request, "Message deleted successfully")
+                return redirect('/dashboard/?tab=notifications')
+            except DiscussionMessage.DoesNotExist:
+                messages.error(request, "Message not found")
+                return redirect('/dashboard/?tab=notifications')
+        
+        # Handle POST for creating or editing messages
+        if request.method == 'POST':
+            if 'edit_id' in request.POST:
+                try:
+                    instance = DiscussionMessage.objects.get(id=request.POST['edit_id'])
+                    form = DiscussionForm(request.POST, instance=instance, user=request.user)
+                except DiscussionMessage.DoesNotExist:
+                    messages.error(request, "Message not found")
+                    return redirect('/dashboard/?tab=notifications')
+            else:
+                form = DiscussionForm(request.POST, user=request.user)
+            
+            if form.is_valid():
+                obj = form.save(commit=False)
+                if not obj.pk:  # Only set user for new messages
+                    obj.user = request.user
+                obj.save()
+                messages.success(request, "Message saved successfully")
+                return redirect('/dashboard/?tab=notifications')
+            else:
+                messages.error(request, "Error saving message")
+        else:
+            if message_id:
+                try:
+                    message = DiscussionMessage.objects.get(id=message_id)
+                    form = DiscussionForm(instance=message, user=request.user)
+                except DiscussionMessage.DoesNotExist:
+                    messages.error(request, "Message not found")
+                    form = DiscussionForm(user=request.user)
+            else:
+                form = DiscussionForm(user=request.user)
+    
+        chat_messages = DiscussionMessage.objects.all().order_by('-timestamp')[:50]
+        context.update({
+            'chat_messages': chat_messages,
+            'discussion_form': form,
+            'editing_message_id': message_id
+        })
 
     return render(request, 'Rooms_dashboard.html', context)
-
-# Remove the separate admin_form view if it exists
-# Keep update_event and delete_event as separate views if needed  
-        
-# views.py
-
 
 
 
@@ -831,6 +923,67 @@ def delete_event(request, event_id):
     messages.success(request, 'Event deleted successfully!')
     return redirect('/dashboard/?tab=events')
 
+
+
+from django.shortcuts import get_object_or_404
+from app2.models import MessMenu, TodayMenu
+from app2.forms import MessMenuForm
+
+@login_required
+def set_today_menu(request, menu_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to modify menus.")
+        return redirect('index')
+    
+    menu = get_object_or_404(MessMenu, id=menu_id)
+    TodayMenu.objects.create(
+        day=menu.day,
+        meal_type=menu.meal_type,
+        menu=menu.menu
+    )
+    messages.success(request, f"{menu.meal_type} set as today's menu!")
+    return redirect('/dashboard/?tab=mess')
+
+@login_required
+def update_mess_menu(request, menu_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to modify menus.")
+        return redirect('index')
+    
+    menu = get_object_or_404(MessMenu, id=menu_id)
+    if request.method == 'POST':
+        form = MessMenuForm(request.POST, instance=menu)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Menu updated successfully!')
+            return redirect('/dashboard/?tab=mess')
+    else:
+        form = MessMenuForm(instance=menu)
+    
+    return render(request, 'Rooms_admin_form.html', {'form': form, 'update': True})
+
+@login_required
+def delete_mess_menu(request, menu_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete menus.")
+        return redirect('index')
+    
+    menu = get_object_or_404(MessMenu, id=menu_id)
+    menu.delete()
+    messages.success(request, 'Menu deleted successfully!')
+    return redirect('/dashboard/?tab=mess')
+
+
+
+
+
+def delete_notification(request, msg_id):
+    message = get_object_or_404(DiscussionMessage, id=msg_id)
+    if request.method == "POST":
+        message.delete()
+        messages.success(request, "Notification deleted successfully.")
+        return redirect('dashboard')
+    return render(request, 'confirm_delete_notification.html', {'message': message})
 
 
 
