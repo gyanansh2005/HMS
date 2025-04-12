@@ -277,7 +277,7 @@ def get_available_rooms(request):
         return JsonResponse({'error': str(e)}, status=400)
     
        
-    
+@login_required   
 @require_GET
 def get_floors(request, hostel_id):
     try:
@@ -287,7 +287,7 @@ def get_floors(request, hostel_id):
     except Hostel.DoesNotExist:
         return JsonResponse({'error': 'Hostel not found'}, status=404)
 
-
+@login_required
 def profiles(request):
     # Get the latest allocation for the user
     student_profile = None
