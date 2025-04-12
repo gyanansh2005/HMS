@@ -58,3 +58,31 @@ class DiscussionForm(forms.ModelForm):
             del self.fields['is_notification']
         
         
+from django import forms
+from .models import LostItem, FoundItem, ClaimRequest
+
+class LostItemForm(forms.ModelForm):
+    class Meta:
+        model = LostItem
+        fields = ['title', 'description', 'category', 'date_lost', 'location', 'contact_info']
+        widgets = {
+            'date_lost': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }
+
+class FoundItemForm(forms.ModelForm):
+    class Meta:
+        model = FoundItem
+        fields = ['title', 'description', 'category', 'date_found', 'location', 'contact_info']
+        widgets = {
+            'date_found': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }
+
+class ClaimRequestForm(forms.ModelForm):
+    class Meta:
+        model = ClaimRequest
+        fields = ['message']
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Please provide details to prove this item belongs to you...'}),
+        }

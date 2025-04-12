@@ -48,6 +48,12 @@
                         <span>Menu</span>
                     </a>
                 </li>
+                <li class="{% if active_tab == 'manage_claims' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}?tab=manage_claims">
+                        <i class="fas fa-utensils"></i>
+                        <span>Lost&Found</span>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link {% if active_tab == 'notifications' %}active{% endif %}" 
                        href="?tab=notifications">

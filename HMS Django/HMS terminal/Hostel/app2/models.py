@@ -70,3 +70,49 @@ class DiscussionMessage(models.Model):
 
     def __str__(self):
         return f"{self.user.email}: {self.message[:30]}"
+    
+from django.db import models
+from django.utils import timezone
+
+class Item(models.Model):
+    CATEGORY_CHOICES = [
+        ('keys', 'Keys'),
+        ('phone', 'Phone'),
+        ('bottle', 'Bottle'),
+        ('wallet', 'Wallet'),
+        ('bag', 'Bag'),
+        ('documents', 'Documents'),
+        ('other', 'Other'),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    location = models.CharField(max_length=200)
+    contact_info = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_claimed = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+class LostItem(Item):
+    date_lost = models.DateField()
+
+    def __str__(self):
+        return f"Lost: {self.title}"
+
+class FoundItem(Item):
+    date_found = models.DateField()
+
+    def __str__(self):
+        return f"Found: {self.title}"
+
+class ClaimRequest(models.Model):
+    item = models.ForeignKey(FoundItem, on_delete=models.CASCADE)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Claim request for {self.item.title}"

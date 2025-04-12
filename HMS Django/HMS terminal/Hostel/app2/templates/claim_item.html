@@ -1,0 +1,42 @@
+{% extends 'base2.html' %}
+
+{% block title %}Claim Item - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="text-center">Claim Found Item</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Item Details:</h5>
+                    <p><strong>Title:</strong> {{ item.title }}</p>
+                    <p><strong>Category:</strong> {{ item.get_category_display }}</p>
+                    <p><strong>Date Found:</strong> {{ item.date_found }}</p>
+                    <p><strong>Location Found:</strong> {{ item.location }}</p>
+                    <p><strong>Description:</strong> {{ item.description }}</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Proof of Ownership</label>
+                        <p class="text-muted">Please provide details to prove this item belongs to you.</p>
+                        {{ form.message }}
+                        {% if form.message.errors %}
+                        <div class="alert alert-danger">
+                            {{ form.message.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">Submit Claim</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

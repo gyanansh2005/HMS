@@ -190,3 +190,114 @@ def delete_notification(request, msg_id):
     message = get_object_or_404(DiscussionMessage, id=msg_id)
     message.delete()
     return redirect('admin_dashboard')
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db.models import Q
+from .models import LostItem, FoundItem, ClaimRequest
+from .forms import LostItemForm, FoundItemForm, ClaimRequestForm
+
+def home(request):
+    return render(request, 'home.html')  # Adjusted path
+
+def report_lost_item(request):
+    if request.method == 'POST':
+        form = LostItemForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.user = request.user  # Assumes user still needed
+            item.save()
+            messages.success(request, 'Lost item reported successfully!')
+            return redirect('lost_items')
+    else:
+        form = LostItemForm()
+    return render(request, 'report_lost.html', {'form': form})  # Adjusted path
+
+def report_found_item(request):
+    if request.method == 'POST':
+        form = FoundItemForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.user = request.user  # Assumes user still needed
+            item.save()
+            messages.success(request, 'Found item reported successfully!')
+            return redirect('found_items')
+    else:
+        form = FoundItemForm()
+    return render(request, 'report_found.html', {'form': form})  # Adjusted path
+
+def lost_items(request):
+    items = LostItem.objects.filter(is_claimed=False)
+    query = request.GET.get('q')
+    category = request.GET.get('category')
+
+    if query:
+        items = items.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(location__icontains=query)
+        )
+
+    if category:
+        items = items.filter(category=category)
+
+    return render(request, 'lost_items.html', {
+        'items': items,
+        'query': query,
+        'category': category
+    })  # Adjusted path
+
+def found_items(request):
+    items = FoundItem.objects.filter(is_claimed=False)
+    query = request.GET.get('q')
+    category = request.GET.get('category')
+
+    if query:
+        items = items.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(location__icontains=query)
+        )
+
+    if category:
+        items = items.filter(category=category)
+
+    return render(request, 'found_items.html', {
+        'items': items,
+        'query': query,
+        'category': category
+    })  # Adjusted path
+
+def claim_item(request, item_id):
+    item = get_object_or_404(FoundItem, id=item_id)
+
+    if request.method == 'POST':
+        form = ClaimRequestForm(request.POST)
+        if form.is_valid():
+            claim = form.save(commit=False)
+            claim.item = item
+            claim.user = request.user  # Assumes user still needed
+            claim.save()
+            messages.success(request, 'Claim request submitted successfully!')
+            return redirect('found_items')
+    else:
+        form = ClaimRequestForm()
+
+    return render(request, 'claim_item.html', {
+        'form': form,
+        'item': item
+    })  # Adjusted path
+
+def manage_claims(request):
+    claims = ClaimRequest.objects.filter(is_approved=False)
+    return render(request, 'manage_claims.html', {'claims': claims})  # Adjusted path
+
+def approve_claim(request, claim_id):
+    claim = get_object_or_404(ClaimRequest, id=claim_id)
+    claim.is_approved = True
+    claim.item.is_claimed = True
+    claim.item.save()
+    claim.save()
+    messages.success(request, 'Claim approved successfully!')
+    return redirect('manage_claims')  # Adjusted path

@@ -1,0 +1,44 @@
+{% extends 'base2.html' %}
+
+{% block title %}Home - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Lost Items</h2>
+                <p class="card-text">View and search through items that have been reported as lost.</p>
+                <a href="{% url 'lost_items' %}" class="btn btn-primary">View Lost Items</a>
+                <a href="{% url 'report_lost' %}" class="btn btn-outline-primary">Report Lost Item</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Found Items</h2>
+                <p class="card-text">View and search through items that have been found.</p>
+                <a href="{% url 'found_items' %}" class="btn btn-success">View Found Items</a>
+                <a href="{% url 'report_found' %}" class="btn btn-outline-success">Report Found Item</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">How It Works</h3>
+                <ol>
+                    <li>Report lost or found items with detailed descriptions</li>
+                    <li>Search through listings to find your lost items</li>
+                    <li>Claim found items by providing proof of ownership</li>
+                    <li>Admin verifies and approves valid claims</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
