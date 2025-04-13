@@ -2,6 +2,9 @@
 {% load static %}
 {% load widget_tweaks %}
 {% block content %}
+
+
+<link rel="stylesheet" href="{% static 'css/Room_payment.css' %}">
 <div class="payment-simulator">
     <div class="payment-header">
         <div class="security-badge">
@@ -71,99 +74,7 @@
     </div>
 </div>
 
-<style>
-    .payment-simulator {
-        max-width: 800px;
-        margin: 2rem auto;
-        background: #fff;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        padding: 2rem;
-    }
 
-    .simulated-card {
-        background: linear-gradient(135deg, #4a6de5, #689dff);
-        border-radius: 15px;
-        padding: 2rem;
-        color: white;
-        margin: 2rem 0;
-        position: relative;
-        height: 220px;
-        transition: transform 0.3s ease;
-    }
-
-    .simulated-card:hover {
-        transform: perspective(1000px) rotateY(5deg);
-    }
-
-    .card-number, .expiry-input, .cvc-input {
-        font-size: 1.2rem;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 5px;
-        padding: 0.5rem;
-        color: white;
-        width: 100%;
-    }
-
-    .expiry-cvc {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-
-    .payment-button {
-        background: #00c853;
-        color: white;
-        padding: 1rem 2rem;
-        border: none;
-        border-radius: 8px;
-        font-size: 1.1rem;
-        cursor: pointer;
-        transition: transform 0.3s;
-    }
-
-    .payment-button:disabled {
-        background: #cccccc;
-        cursor: not-allowed;
-    }
-
-    .payment-loader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.95);
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-
-    .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .error-message {
-        color: #e74c3c;
-        background: #ffebee;
-        padding: 1rem;
-        border-radius: 5px;
-        margin-bottom: 1rem;
-    }
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

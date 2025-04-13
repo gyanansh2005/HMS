@@ -1,79 +1,69 @@
 {% extends 'Rooms_base.html' %}
-    {% load static %}
-    {% block content %}
+{% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block content %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaint & Maintenance</title>
-    <link rel="stylesheet" href="{% static 'css/Rooms_complaint_and_maintainance.css' %}">
-<body>
-   
-    <br><br><br>
-    <div class="container">
-        <h2>Complaint & Maintenance</h2>
+<link rel="stylesheet" href="{% static 'css/Rooms_complaint_and_maintainance.css' %}">
+<div class="container">
+    <h2>Complaint & Maintenance</h2>
 
+    <!-- Upper Container for Forms -->
+    <div id="upper_container">
         <!-- Maintenance Request Form -->
-        <div id="upper_container">
-            <div class="section">
-                <h3>Maintenance Request</h3>
-                <form method="POST" action="">
-                    <input type="hidden" name="request_type" value="maintenance">
+        <div class="section">
+            <h3>Maintenance Request</h3>
+            <form method="POST" action="{% url 'complaint_maintenance' %}">
+                {% csrf_token %}
+                <input type="hidden" name="request_type" value="maintenance">
 
-                    <label for="name">Your Name:</label>
-                    <input type="text" name="name" value="{{ current_user.name }}" required readonly>
+                <label for="name">Your Name:</label>
+                <input type="text" name="name" value="{{ user.get_full_name }}" required readonly>
 
-                    <label for="room">Room Number:</label>
-                    <input type="text" name="room_number" required>
+                <label for="room_number">Room Number:</label>
+                <input type="text" name="room_number" required>
 
-                    <label for="maintenanceType">Maintenance Type:</label>
-                    <select name="maintenance_type" required>
-                        <option value="Plumbing">Plumbing</option>
-                        <option value="Electricity">Electricity</option>
-                        <option value="Furniture">Furniture</option>
-                        <option value="Other">Other</option>
-                    </select>
+                <label for="category">Maintenance Type:</label>
+                <select name="category" required>
+                    <option value="Plumbing">Plumbing</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Furniture">Furniture</option>
+                    <option value="Other">Other</option>
+                </select>
 
-                    <label for="details">Details:</label>
-                    <textarea name="details" rows="4" required></textarea>
+                <label for="details">Details:</label>
+                <textarea name="details" rows="4" required></textarea>
 
-                    <button type="submit">Submit Maintenance Request</button>
-                </form>
-            </div>
-
-            <!-- Complaint Form -->
-            <div class="section">
-                <h3>Complaint Submission</h3>
-                <form method="POST" action="{% url 'complaint_maintenance' %}">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit">Submit Request</button>
-                </form>
-            </div>
-
-
-
+                <button type="submit">Submit Maintenance Request</button>
+            </form>
         </div>
 
-
-
-        <!-- Submitted Requests Display -->
-        <div class="requests-list">
-            {% for req in requests %}
-            <div class="request-card">
-                <h4>{{ req.get_request_type_display }} - {{ req.category }}</h4>
-                <p>Status: {{ req.status|title }}</p>
-                <p>{{ req.details }}</p>
-                <small>{{ req.created_at }}</small>
-            </div>
-            {% endfor %}
+        <!-- Complaint Form -->
+        <div class="section">
+            <h3>Complaint Submission</h3>
+            <form method="POST" action="{% url 'complaint_maintenance' %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Submit Complaint</button>
+            </form>
         </div>
-        
     </div>
-    {%endblock%}
-</body>
 
-</html>
+    <!-- Submitted Requests Display -->
+    <div class="requests-list">
+        {% for req in requests %}
+        <div class="request-card">
+            <h4>{{ req.get_request_type_display }} - {{ req.category }}</h4>
+            <p>
+                <span class="status status-{{ req.status|lower }}" aria-label="Status: {{ req.status|title }}">
+                    {{ req.status|title }}
+                </span>
+            </p>
+            <p>{{ req.details }}</p>
+            <small>{{ req.created_at|date:"F d, Y H:i" }}</small>
+        </div>
+        {% empty %}
+        <p>No requests submitted yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

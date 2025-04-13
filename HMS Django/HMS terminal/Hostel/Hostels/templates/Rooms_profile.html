@@ -8,12 +8,28 @@
     <header class="profile-header">
         <h1>Your Profile</h1>
         <p class="header-tagline">Manage Your CampusNest Experience</p>
+        <!-- Notification Bell -->
+        <div class="notification-bell">
+            {% if allocation and allocation.status == 'pending' %}
+            <i class="fas fa-bell"></i>
+            <span class="notification-count">1</span>
+            {% endif %}
+        </div>
     </header>
+
+    <!-- Profile Completion Progress -->
+    <div class="profile-progress">
+        <p>Profile Completion: <span id="progress-percent">{{ profile_completion }}%</span></p>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ profile_completion|default:0 }}%";></div>
+        </div>
+    </div>
 
     <div class="profile-content">
         <aside class="profile-sidebar">
             {% if student_profile %}
             <div class="profile-picture-container">
+                <div class="profile-pic-bg"></div>
                 {% if student_profile.profile_picture %}
                 <img src="{{ student_profile.profile_picture.url }}" alt="Profile Picture" class="profile-pic"
                     id="profile-pic-display">
@@ -27,9 +43,9 @@
                     {% csrf_token %}
                     <input type="file" id="profile-picture-upload" name="profile_picture" accept="image/*"
                         style="display: none;" onchange="previewImage(event)">
-                    <button type="button" class="btn edit"
+                    <button style="background-color: aliceblue;"  type="button" class="btn edit"
                         onclick="document.getElementById('profile-picture-upload').click()">
-                        <i class="fas fa-camera"></i> Change Photo
+
                     </button>
                 </form>
 
@@ -57,6 +73,21 @@
                 </div>
             </div>
 
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+                <h3>Quick Stats</h3>
+                <div class="stats-grid">
+                    
+                    <div class="stat-item">
+                        <i class="fas fa-tools"></i>
+                        <p>Complaints: <strong>{{ stats.complaints|default:0 }}</strong></p>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-money-bill"></i>
+                        <p>Payments: <strong>{{ stats.payments|default:0 }}</strong></p>
+                    </div>
+                </div>
+            </div>
             {% endif %}
         </aside>
 
@@ -102,12 +133,12 @@
                         </strong>
                     </div>
                     {% endif %}
-
                 </div>
                 <div class="profile-actions">
                     {% if allocation.status == 'pending' %}
                     <a class="btn primary" href="{% url 'payment' %}">Pay Now</a>
                     {% endif %}
+                </div>
                 {% else %}
                 <div class="no-allocation">
                     <p>You don't have a room allocation yet.</p>
@@ -143,15 +174,12 @@
                     </div>
                 </div>
                 <div class="profile-actions">
-                
-                
-                
-                    <a class="edit-btn" href="{% url 'logout' %}" class="btn logout-btn"
-                    onclick="return confirm('Are you sure you want to logout?');" style="margin-top: 1rem;">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
+                    <button class="edit-btn" id="edit-details-btn">Edit Details</button>
+                    <a class="btn logout-btn" href="{% url 'logout' %}"
+                        onclick="return confirm('Are you sure you want to logout?');">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
                 </div>
-                
             </div>
 
             <div class="profile-section card edit-section" id="edit-section" style="display: none;">
@@ -169,10 +197,10 @@
                     </div>
                     {% endfor %}
                     <div class="profile-actions">
-                        <button type="submit" class="btn primary">Save Changes</button>
+                        
+                        <button type="submit" class="btn primary"><a href="{% url 'profiles' %}">Save Changes</a></button>
                         <button type="button" class="btn secondary" id="cancel-edit-btn">Cancel</button>
                     </div>
-
                 </form>
             </div>
         </main>
@@ -220,7 +248,8 @@
                         aboutMeText.style.display = 'block';
                         editBioBtn.style.display = 'block';
                         editBioForm.style.display = 'none';
-                        messages.success('Bio updated successfully!');
+                        // Assuming messages.success is defined elsewhere
+                        alert('Bio updated successfully!');
                     } else {
                         alert('Failed to update bio. Please try again.');
                     }
@@ -229,19 +258,14 @@
         });
 
         // Profile picture upload with preview
-        const profilePicUpload = document.getElementById('profile-picture-upload');
-        const profilePicDisplay = document.getElementById('profile-pic-display');
-        const imagePreview = document.getElementById('image-preview');
-        const previewImage = document.getElementById('preview-image');
-
         function previewImage(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    previewImage.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                }
+                    document.getElementById('preview-image').src = e.target.result;
+                    document.getElementById('image-preview').style.display = 'block';
+                };
                 reader.readAsDataURL(file);
                 const form = document.getElementById('profile-picture-form');
                 const formData = new FormData(form);
@@ -255,8 +279,9 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success && data.profile_picture_url) {
-                            profilePicDisplay.src = data.profile_picture_url;
-                            imagePreview.style.display = 'none';
+                            document.getElementById('profile-pic-display').src = data.profile_picture_url;
+                            document.getElementById('image-preview').style.display = 'none';
+                            alert('Profile picture updated successfully!');
                         }
                     });
             }
@@ -279,7 +304,6 @@
             profileEditForm.reset();
         });
 
-        // Handle form submission with AJAX
         profileEditForm.addEventListener('submit', function (e) {
             e.preventDefault();
             const formData = new FormData(this);
@@ -295,11 +319,10 @@
                     if (data.success) {
                         editSection.style.display = 'none';
                         editDetailsBtn.style.display = 'block';
-                        messages.success('Profile updated successfully!');
-                        location.reload(); // Refresh to reflect changes
+                        alert('Profile updated successfully!');
+                        location.reload();
                     } else {
                         alert('Failed to update profile. Please check the errors.');
-                        // Display errors in form
                         const errors = data.errors;
                         for (let field in errors) {
                             const errorSpan = document.querySelector(`#id_${field} + .error`);

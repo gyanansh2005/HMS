@@ -290,17 +290,35 @@ def get_floors(request, hostel_id):
 @login_required
 def profiles(request):
     # Get the latest allocation for the user
-    student_profile = None
+    student_profile = getattr(request.user, 'student_profile', None)
+    allocation = request.user.allocations.first() if hasattr(request.user, 'allocations') else None
+    profile_completion = calculate_profile_completion(request.user, student_profile)
+    stats = {
+        'bookings': request.user.allocations.count(),
+        'complaints': request.user.complaintmaintenance_set.count(),  # Fixed
+        'payments': request.user.payments.count(),
+    }
     if not request.user.is_staff and not request.user.is_superuser:
         student_profile, created = StudentProfile.objects.get_or_create(user=request.user)
-    allocation = request.user.allocations.select_related('room__hostel').last()
-    form = ProfileUpdateForm(instance=student_profile) if student_profile else None
+        allocation = request.user.allocations.select_related('room__hostel').last()
+        form = ProfileUpdateForm(instance=student_profile) if student_profile else None
     
     return render(request, 'Rooms_profile.html', {
         'form': form,
+        'student_profile': student_profile,
         'allocation': allocation,
-        'student_profile': student_profile
+        'profile_completion': profile_completion,
+        'stats': stats,
     })
+def calculate_profile_completion(user, profile):
+    fields = [
+        user.get_full_name(),
+        profile.bio if profile else None,
+        profile.contact_number if profile else None,
+        profile.profile_picture if profile else None,
+    ]
+    filled = sum(1 for field in fields if field)
+    return (filled / len(fields)) * 100
 
 # views.py (edit_profile view)
 @login_required

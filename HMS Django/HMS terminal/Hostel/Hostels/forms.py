@@ -43,10 +43,24 @@ class ComplaintMaintenanceForm(forms.ModelForm):
         model = ComplaintMaintenance
         fields = ['request_type', 'room_number', 'category', 'details']
 
+from django import forms
+from .models import Feedback
+
 class FeedbackForm(forms.ModelForm):
+    ENVIRONMENT_RATINGS = [
+        ('poor', 'Poor'),
+        ('average', 'Average'),
+        ('good', 'Good'),
+    ]
+    environment_rating = forms.ChoiceField(choices=ENVIRONMENT_RATINGS)
+    service_rating = forms.ChoiceField(choices=[(i, str(i)) for i in range(1, 6)])
+
     class Meta:
         model = Feedback
-        fields = ['environment_rating', 'service_rating', 'comments', 'hostel']
+        fields = ['hostel', 'environment_rating', 'service_rating', 'comments']
+        widgets = {
+            'comments': forms.Textarea(attrs={'rows': 4}),
+        }
         
 
 from django import forms

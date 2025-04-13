@@ -36,7 +36,7 @@
             <a href="{% url 'feedback' %}">Feedback</a>
             <a href="{% url 'about' %}">About</a>
             {% if user.is_authenticated %}
-            <a href="{% url 'profile' %}">
+            <a href="{% url 'profiles' %}">
                 <div class="profile-circle">
                     {% if user.student_profile.profile_picture %}
                         <img src="{{ user.student_profile.profile_picture.url }}" alt="Profile Picture">
