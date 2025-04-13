@@ -270,12 +270,50 @@
         cursor: pointer;
       }
     }
+    .dropdown-menu {
+  position: absolute;
+  top: 100%;
+  display: none;
+  background-color: #1e293b; /* Slate-800 */
+  border-radius: 6px;
+  min-width: 160px;
+  padding: 8px 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease-in-out;
+  z-index: 999;
+}
+
+.dropdown-menu li {
+  list-style: none;
+}
+
+.dropdown-menu li a {
+  display: block;
+  padding: 10px 20px;
+  color: #e2e8f0; /* Light text on dark bg */
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-menu li a:hover {
+  background-color: #334155; /* Slightly lighter on hover */
+  color: #ffffff;
+}
+
   </style>
 </head>
 <body>
   <nav>
     <div class="nav-bar">
-      <span class="logo navLogo"><a href="#">HostelConnect</a></span>
+      <div class="logo navLogo dropdown">
+        <a href="#" class="dropdown-toggle" onclick="toggleLogoDropdown(event)">CampusConnect</a>
+        <ul class="dropdown-menu" id="logoDropdown">
+          <li><a href="{% url 'index' %}">CampusNest</a></li>
+        </ul>
+      </div>
+      
       <div class="menu">
        
         <ul class="nav-links">
@@ -350,6 +388,19 @@
   </footer>
 
   <script>
+      function toggleLogoDropdown(event) {
+    event.preventDefault();
+    const dropdown = document.getElementById("logoDropdown");
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  }
+
+  // Optional: hide dropdown on clicking outside
+  document.addEventListener("click", function (e) {
+    const dropdown = document.getElementById("logoDropdown");
+    if (!e.target.closest('.dropdown')) {
+      dropdown.style.display = "none";
+    }
+  });
     const body = document.querySelector("body"),
           nav = document.querySelector("nav"),
           modeToggle = document.querySelector(".dark-light"),
@@ -389,6 +440,7 @@
         document.querySelector(".nav-links").classList.remove("active");
       }
     });
+    
   </script>
 </body>
 </html>
