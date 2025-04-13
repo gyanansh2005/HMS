@@ -1,222 +1,362 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block content %}
-<div class="mess-container">
-    <header class="mess-header">
-        <h1>Mess Information</h1>
-        <p>Explore the weekly menu and mess rules for a seamless dining experience.</p>
-    </header>
-
-    <!-- Today's Menu -->
-    <section class="today-menu">
-        <h2>Today's Menu</h2>
-        {% if today_menu %}
-        <div class="menu-card">
-            <span class="meal-type {{ today_menu.meal_type|lower }}">{{ today_menu.meal_type }}</span>
-            <p>{{ today_menu.menu }}</p>
-            <small>Day: {{ today_menu.day }}</small>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-utensils"></i>
-            <p>No menu set for today.</p>
-        </div>
-        {% endif %}
-    </section>
-
-    <!-- Weekly Menu -->
-    <section class="weekly-menu">
-        <h2>Weekly Menu</h2>
-        <div class="menu-tabs">
-            <div class="tab-header">
-                <a href="{% url 'mess' %}" class="tab-btn {% if not day_filter %}active{% endif %}">All</a>
-                {% for day in days %}
-                <a href="{% url 'mess' %}?day={{ day|lower }}"
-                    class="tab-btn {% if day_filter == day|lower %}active{% endif %}">{{ day }}</a>
-                {% endfor %}
-            </div>
-            <div class="tab-content">
-                {% if menus %}
-                {% for menu in menus %}
-                <div class="menu-card">
-                    <span class="meal-type {{ menu.meal_type|lower }}">{{ menu.meal_type }}</span>
-                    <h3>{{ menu.day }}</h3>
-                    <p>{{ menu.menu }}</p>
-                </div>
-                {% empty %}
-                <div class="empty-state">
-                    <i class="fas fa-utensils"></i>
-                    <p>No menu items found.</p>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-utensils"></i>
-                    <p>No menu items found.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-
-    <!-- Mess Rules -->
-    <section class="mess-rules">
-        <h2>Mess Rules</h2>
-        {% if rules %}
-        <ul class="rules-list">
-            {% for rule in rules %}
-            <li><i class="fas fa-check-circle"></i> {{ rule.rule }}</li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-info-circle"></i>
-            <p>No rules defined.</p>
-        </div>
-        {% endif %}
-    </section>
-</div>
-
 <style>
-    :root {
-        --primary-color: #4361ee;
-        --success-color: #06d6a0;
-        --light-color: #f8f9fa;
-    }
+  :root {
+    --primary: #1E3A8A;
+    --secondary: #3B82F6;
+    --accent: #FBBF24;
+    --background: #F9FAFB;
+    --text: #111827;
+    --text-light: #FFFFFF;
+  }
 
-    .mess-container {
-        max-width: 1200px;
-        margin: 2rem auto;
-        padding: 0 1rem;
-    }
+  .mess-container {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+  }
 
-    .mess-header {
-        text-align: center;
-        margin-bottom: 3rem;
-    }
+  /* Header */
+  .mess-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
 
+  .mess-header h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+  }
+
+  .mess-header p {
+    font-size: 1.1rem;
+    color: var(--text);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Today's Menu */
+  .today-menu {
+    margin-bottom: 60px;
+  }
+
+  .today-menu h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .menu-card.today {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--text-light);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    position: relative;
+  }
+
+  .menu-card.today .meal-type {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: var(--text);
+    padding: 6px 15px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .menu-card.today p {
+    font-size: 1.2rem;
+    margin: 15px 0;
+  }
+
+  .menu-card.today small {
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+
+  /* Weekly Menu */
+  .weekly-menu {
+    margin-bottom: 60px;
+  }
+
+  .weekly-menu h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .menu-tabs .tab-header {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 10px 20px;
+    background: var(--text-light);
+    border-radius: 50px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background 0.3s ease, color 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .tab-btn:hover {
+    background: var(--primary);
+    color: var(--text-light);
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: var(--text);
+  }
+
+  .tab-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+
+  .menu-card {
+    background: var(--text-light);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .menu-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .menu-card .meal-type {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+
+  .meal-type.breakfast {
+    background: #34D399;
+    color: var(--text);
+  }
+
+  .meal-type.lunch {
+    background: #FBBF24;
+    color: var(--text);
+  }
+
+  .meal-type.dinner {
+    background: #F87171;
+    color: var(--text);
+  }
+
+  .menu-card h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  .menu-card p {
+    font-size: 1rem;
+    color: var(--text);
+  }
+
+  /* Mess Rules */
+  .mess-rules {
+    margin-bottom: 60px;
+  }
+
+  .mess-rules h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .rules-list {
+    list-style: none;
+    padding: 0;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .rules-list li {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: var(--text-light);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease;
+  }
+
+  .rules-list li:hover {
+    background: #F0F4FF;
+  }
+
+  .rules-list li i {
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin-right: 10px;
+  }
+
+  .rules-list li {
+    font-size: 1rem;
+    color: var(--text);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    background: var(--text-light);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+  }
+
+  .empty-state i {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+  }
+
+  .empty-state p {
+    font-size: 1.1rem;
+    color: var(--text);
+  }
+
+  /* Animations */
+  .slide-in {
+    animation: slideIn 0.6s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
     .mess-header h1 {
-        font-size: 2.5rem;
-        color: var(--primary-color);
+      font-size: 2rem;
     }
 
-    .mess-header p {
-        color: #64748b;
-    }
-
-    .today-menu, .weekly-menu, .mess-rules {
-        margin-bottom: 3rem;
-    }
-
-    h2 {
-        font-size: 1.8rem;
-        color: var(--primary-color);
-        margin-bottom: 1.5rem;
-    }
-
-    .menu-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        transition: transform 0.3s;
-    }
-
-    .menu-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .meal-type {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .meal-type.breakfast {
-        background: rgba(54, 162, 235, 0.1);
-        color: #36a2eb;
-    }
-
-    .meal-type.lunch {
-        background: rgba(255, 209, 102, 0.1);
-        color: #ffd166;
-    }
-
-    .meal-type.dinner {
-        background: rgba(113, 88, 183, 0.1);
-        color: #7209b7;
-    }
-
-    .menu-tabs {
-        margin-bottom: 2rem;
+    .today-menu h2, .weekly-menu h2, .mess-rules h2 {
+      font-size: 1.8rem;
     }
 
     .tab-header {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-        overflow-x: auto;
+      flex-direction: column;
+      align-items: center;
     }
 
     .tab-btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        background: #e2e8f0;
-        border-radius: 8px;
-        text-decoration: none;
-        color: #333;
-        transition: all 0.3s;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 10px;
     }
 
-    .tab-btn.active, .tab-btn:hover {
-        background: var(--primary-color);
-        color: white;
+    .menu-card.today {
+      padding: 20px;
     }
-
-    .tab-content {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1rem;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 2rem;
-        color: #64748b;
-    }
-
-    .empty-state i {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-        color: var(--primary-color);
-    }
-
-    .rules-list {
-        list-style: none;
-        padding: 0;
-    }
-
-    .rules-list li {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0;
-        font-size: 1rem;
-        color: #333;
-    }
-
-    .rules-list i {
-        color: var(--success-color);
-    }
-
-    @media (max-width: 768px) {
-        .tab-content {
-            grid-template-columns: 1fr;
-        }
-    }
+  }
 </style>
+
+<div class="mess-container">
+  <header class="mess-header slide-in">
+    <h1>Mess Information</h1>
+    <p>Explore the weekly menu and mess rules for a seamless dining experience.</p>
+  </header>
+
+  <!-- Today's Menu -->
+  <section class="today-menu slide-in">
+    <h2>Today's Menu</h2>
+    {% if today_menu %}
+    <div class="menu-card today">
+      <span class="meal-type {{ today_menu.meal_type|lower }}">{{ today_menu.meal_type }}</span>
+      <p>{{ today_menu.menu }}</p>
+      <small>Day: {{ today_menu.day }}</small>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-utensils"></i>
+      <p>No menu set for today.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Weekly Menu -->
+  <section class="weekly-menu slide-in">
+    <h2>Weekly Menu</h2>
+    <div class="menu-tabs">
+      <div class="tab-header">
+        <a href="{% url 'mess' %}" class="tab-btn {% if not day_filter %}active{% endif %}">All</a>
+        {% for day in days %}
+        <a href="{% url 'mess' %}?day={{ day|lower }}" class="tab-btn {% if day_filter == day|lower %}active{% endif %}">{{ day }}</a>
+        {% endfor %}
+      </div>
+      <div class="tab-content">
+        {% if menus %}
+        {% for menu in menus %}
+        <div class="menu-card slide-in">
+          <span class="meal-type {{ menu.meal_type|lower }}">{{ menu.meal_type }}</span>
+          <h3>{{ menu.day }}</h3>
+          <p>{{ menu.menu }}</p>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+          <i class="fas fa-utensils"></i>
+          <p>No menu items found.</p>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-utensils"></i>
+          <p>No menu items found.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Mess Rules -->
+  <section class="mess-rules slide-in">
+    <h2>Mess Rules</h2>
+    {% if rules %}
+    <ul class="rules-list">
+      {% for rule in rules %}
+      <li><i class="fas fa-check-circle"></i> {{ rule.rule }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-info-circle"></i>
+      <p>No rules defined.</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

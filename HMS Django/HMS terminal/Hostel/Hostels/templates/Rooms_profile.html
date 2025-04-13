@@ -19,43 +19,31 @@
 
     <!-- Profile Completion Progress -->
     <div class="profile-progress">
-        <p>Profile Completion: <span id="progress-percent">{{ profile_completion }}%</span></p>
+        <p>Profile Completion: <span id="progress-percent">{{ profile_completion|floatformat:0 }}%</span></p>
         <div class="progress-bar">
-            <div class="progress-fill" style="width: {{ profile_completion|default:0 }}%";></div>
+            <div class="progress-fill" style="width: {{ profile_completion|floatformat:0 }}%;"></div>
         </div>
     </div>
 
     <div class="profile-content">
         <aside class="profile-sidebar">
-            {% if student_profile %}
             <div class="profile-picture-container">
                 <div class="profile-pic-bg"></div>
-                {% if student_profile.profile_picture %}
-                <img src="{{ student_profile.profile_picture.url }}" alt="Profile Picture" class="profile-pic"
-                    id="profile-pic-display">
-                {% else %}
-                <img src="{% static 'images/default_profile.png' %}" alt="Profile Picture" class="profile-pic"
-                    id="profile-pic-display">
-                {% endif %}
+                <img src="{% if student_profile.profile_picture %}{{ student_profile.profile_picture.url }}{% else %}{% static 'images/default_profile.png' %}{% endif %}" 
+                     alt="Profile Picture" class="profile-pic" id="profile-pic-display">
 
-                <form id="profile-picture-form" method="post" enctype="multipart/form-data"
-                    action="{% url 'edit_profile' %}">
+                <form id="profile-picture-form" method="post" enctype="multipart/form-data" action="{% url 'update_profile_pic' %}">
                     {% csrf_token %}
-                    <input type="file" id="profile-picture-upload" name="profile_picture" accept="image/*"
-                        style="display: none;" onchange="previewImage(event)">
-                    <button style="background-color: aliceblue;"  type="button" class="btn edit"
-                        onclick="document.getElementById('profile-picture-upload').click()">
-
-                    </button>
+                    <input type="file" id="profile-picture-upload" name="profile_picture" accept="image/*" style="display: none;" onchange="previewImage(event)">
+                    <button type="button" class="btn edit" onclick="document.getElementById('profile-picture-upload').click()">Change Picture</button>
                 </form>
 
                 <div id="image-preview" style="display: none; margin-top: 1rem;">
-                    <img id="preview-image"
-                        style="max-width: 100%; border-radius: 50%; border: 4px solid var(--primary);">
+                    <img id="preview-image" style="max-width: 100%; border-radius: 50%; border: 4px solid var(--primary);">
                 </div>
             </div>
 
-            <h2>{{ user.get_full_name|default:user.username }}</h2>
+            <h2>{{ user.get_full_name|default:user.email }}</h2>
             <p class="user-email">{{ user.email }}</p>
 
             <div class="about-me">
@@ -64,8 +52,7 @@
                 <button class="edit-btn" id="edit-bio-btn">Edit Bio</button>
                 
                 <div class="edit-form" id="edit-bio-form" style="display: none;">
-                    <textarea id="about-me-input" name="bio" rows="4"
-                        placeholder="Tell us something about yourself...">{{ student_profile.bio|default:"" }}</textarea>
+                    <textarea id="about-me-input" name="bio" rows="4" placeholder="Tell us something about yourself...">{{ student_profile.bio|default:"" }}</textarea>
                     <div class="bio-actions">
                         <button class="save-btn" id="save-bio-btn">Save</button>
                         <button class="cancel-btn" id="cancel-bio-btn">Cancel</button>
@@ -77,7 +64,6 @@
             <div class="quick-stats">
                 <h3>Quick Stats</h3>
                 <div class="stats-grid">
-                    
                     <div class="stat-item">
                         <i class="fas fa-tools"></i>
                         <p>Complaints: <strong>{{ stats.complaints|default:0 }}</strong></p>
@@ -88,7 +74,6 @@
                     </div>
                 </div>
             </div>
-            {% endif %}
         </aside>
 
         <main class="profile-main">
@@ -152,18 +137,16 @@
                 <div class="details-grid">
                     <div class="detail-item">
                         <span>Full Name:</span>
-                        <strong>{{ user.get_full_name }}</strong>
+                        <strong>{{ user.get_full_name|default:"Not set" }}</strong>
                     </div>
                     <div class="detail-item">
                         <span>Roll Number:</span>
-                        <strong>{{ user.roll_number }}</strong>
+                        <strong>{{ user.roll_number|default:"Not set" }}</strong>
                     </div>
-                    {% if student_profile %}
                     <div class="detail-item">
                         <span>Contact Number:</span>
-                        <strong>{{ student_profile.contact_number }}</strong>
+                        <strong>{{ student_profile.contact_number|default:"Not set" }}</strong>
                     </div>
-                    {% endif %}
                     <div class="detail-item">
                         <span>Email:</span>
                         <strong>{{ user.email }}</strong>
@@ -175,8 +158,8 @@
                 </div>
                 <div class="profile-actions">
                     <button class="edit-btn" id="edit-details-btn">Edit Details</button>
-                    <a class="btn logout-btn" href="{% url 'logout' %}"
-                        onclick="return confirm('Are you sure you want to logout?');">
+                    <a class="btn logout-btn" href="{% url 'logout' %}" 
+                       onclick="return confirm('Are you sure you want to logout?');">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                 </div>
@@ -184,8 +167,7 @@
 
             <div class="profile-section card edit-section" id="edit-section" style="display: none;">
                 <h2><i class="fas fa-edit"></i> Edit Personal Details</h2>
-                <form method="post" action="{% url 'edit_profile' %}" enctype="multipart/form-data"
-                    id="profile-edit-form">
+                <form method="post" action="{% url 'edit_profile' %}" enctype="multipart/form-data" id="profile-edit-form">
                     {% csrf_token %}
                     {% for field in form %}
                     <div class="form-group">
@@ -197,8 +179,7 @@
                     </div>
                     {% endfor %}
                     <div class="profile-actions">
-                        
-                        <button type="submit" class="btn primary"><a href="{% url 'profiles' %}">Save Changes</a></button>
+                        <button type="submit" class="btn primary">Save Changes</button>
                         <button type="button" class="btn secondary" id="cancel-edit-btn">Cancel</button>
                     </div>
                 </form>
@@ -208,129 +189,156 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Bio editing functionality
-        const editBioBtn = document.getElementById('edit-bio-btn');
-        const saveBioBtn = document.getElementById('save-bio-btn');
-        const cancelBioBtn = document.getElementById('cancel-bio-btn');
-        const editBioForm = document.getElementById('edit-bio-form');
-        const aboutMeText = document.getElementById('about-me-text');
-        const aboutMeInput = document.getElementById('about-me-input');
+document.addEventListener('DOMContentLoaded', function () {
+    // Bio editing functionality
+    const editBioBtn = document.getElementById('edit-bio-btn');
+    const saveBioBtn = document.getElementById('save-bio-btn');
+    const cancelBioBtn = document.getElementById('cancel-bio-btn');
+    const editBioForm = document.getElementById('edit-bio-form');
+    const aboutMeText = document.getElementById('about-me-text');
+    const aboutMeInput = document.getElementById('about-me-input');
 
+    if (editBioBtn) {
         editBioBtn.addEventListener('click', function () {
             aboutMeText.style.display = 'none';
             editBioBtn.style.display = 'none';
             editBioForm.style.display = 'block';
             aboutMeInput.focus();
         });
+    }
 
+    if (cancelBioBtn) {
         cancelBioBtn.addEventListener('click', function () {
             aboutMeText.style.display = 'block';
             editBioBtn.style.display = 'block';
             editBioForm.style.display = 'none';
             aboutMeInput.value = aboutMeText.textContent;
         });
+    }
 
+    if (saveBioBtn) {
         saveBioBtn.addEventListener('click', function () {
             const newBio = aboutMeInput.value.trim();
             fetch("{% url 'edit_profile' %}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: `bio=${encodeURIComponent(newBio)}`
+                body: `bio=${encodeURIComponent(newBio)}&csrfmiddlewaretoken={{ csrf_token }}`
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        aboutMeText.textContent = newBio || "Tell us something about yourself...";
-                        aboutMeText.style.display = 'block';
-                        editBioBtn.style.display = 'block';
-                        editBioForm.style.display = 'none';
-                        // Assuming messages.success is defined elsewhere
-                        alert('Bio updated successfully!');
-                    } else {
-                        alert('Failed to update bio. Please try again.');
-                    }
-                })
-                .catch(error => alert('An error occurred: ' + error));
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    aboutMeText.textContent = newBio || "Tell us something about yourself...";
+                    aboutMeText.style.display = 'block';
+                    editBioBtn.style.display = 'block';
+                    editBioForm.style.display = 'none';
+                    alert('Bio updated successfully!');
+                } else {
+                    alert('Failed to update bio: ' + (data.errors ? JSON.stringify(data.errors) : 'Unknown error'));
+                }
+            })
+            .catch(error => alert('An error occurred: ' + error));
         });
+    }
 
-        // Profile picture upload with preview
-        function previewImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('preview-image').src = e.target.result;
-                    document.getElementById('image-preview').style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-                const form = document.getElementById('profile-picture-form');
-                const formData = new FormData(form);
-                fetch("{% url 'edit_profile' %}", {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && data.profile_picture_url) {
-                            document.getElementById('profile-pic-display').src = data.profile_picture_url;
-                            document.getElementById('image-preview').style.display = 'none';
-                            alert('Profile picture updated successfully!');
-                        }
-                    });
-            }
+    // Profile picture upload with preview
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('preview-image').src = e.target.result;
+                document.getElementById('image-preview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            const formData = new FormData();
+            formData.append('profile_picture', file);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch("{% url 'update_profile_pic' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.new_url) {
+                    document.getElementById('profile-pic-display').src = data.new_url;
+                    document.getElementById('image-preview').style.display = 'none';
+                    alert('Profile picture updated successfully!');
+                } else {
+                    alert('Failed to update profile picture: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => alert('An error occurred: ' + error));
         }
+    }
 
-        // Edit personal details functionality
-        const editDetailsBtn = document.getElementById('edit-details-btn');
-        const cancelEditBtn = document.getElementById('cancel-edit-btn');
-        const editSection = document.getElementById('edit-section');
-        const profileEditForm = document.getElementById('profile-edit-form');
+    // Edit personal details functionality
+    const editDetailsBtn = document.getElementById('edit-details-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const editSection = document.getElementById('edit-section');
+    const profileEditForm = document.getElementById('profile-edit-form');
 
+   
+    if (editDetailsBtn) {
         editDetailsBtn.addEventListener('click', function () {
             editSection.style.display = 'block';
             this.style.display = 'none';
         });
+    }
 
+    if (cancelEditBtn) {
         cancelEditBtn.addEventListener('click', function () {
             editSection.style.display = 'none';
             editDetailsBtn.style.display = 'block';
             profileEditForm.reset();
         });
+    }
 
+    if (profileEditForm) {
         profileEditForm.addEventListener('submit', function (e) {
             e.preventDefault();
             const formData = new FormData(this);
+
             fetch("{% url 'edit_profile' %}", {
                 method: 'POST',
                 body: formData,
                 headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': '{{ csrf_token }}'
                 }
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        editSection.style.display = 'none';
-                        editDetailsBtn.style.display = 'block';
-                        alert('Profile updated successfully!');
-                        location.reload();
-                    } else {
-                        alert('Failed to update profile. Please check the errors.');
-                        const errors = data.errors;
-                        for (let field in errors) {
-                            const errorSpan = document.querySelector(`#id_${field} + .error`);
-                            if (errorSpan) errorSpan.textContent = errors[field][0];
-                        }
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    editSection.style.display = 'none';
+                    editDetailsBtn.style.display = 'block';
+                    alert('Profile updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to update profile: ' + JSON.stringify(data.errors || 'Unknown error'));
+                    // Optionally, display errors in the form
+                    for (let field in data.errors) {
+                        const errorSpan = document.querySelector(`#id_${field} + .error`);
+                        if (errorSpan) errorSpan.textContent = data.errors[field][0].message;
                     }
-                });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+            });
         });
-    });
+    }
+});
 </script>
 {% endblock %}

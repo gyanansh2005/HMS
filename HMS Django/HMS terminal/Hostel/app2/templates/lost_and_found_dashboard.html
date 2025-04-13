@@ -1,0 +1,640 @@
+{% extends 'base.html' %}
+{% block title %}Lost & Found Dashboard - HostelConnect{% endblock %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1E3A8A;
+    --secondary: #3B82F6;
+    --accent: #FBBF24;
+    --background: #F9FAFB;
+    --text: #111827;
+    --text-light: #FFFFFF;
+    --success: #10B981;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+  }
+
+  /* Header */
+  .dashboard-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .dashboard-header h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+  }
+
+  .dashboard-header p {
+    font-size: 1.1rem;
+    color: var(--text);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Tabs */
+  .tab-header {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 12px 25px;
+    background: var(--text-light);
+    border-radius: 50px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .tab-btn:hover {
+    background: var(--primary);
+    color: var(--text-light);
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: var(--text);
+  }
+
+  .tab-content {
+    display: none;
+    animation: slideIn 0.6s ease-out;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Search Form */
+  .search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    align-items: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .search-form input {
+    padding: 12px 20px 12px 40px;
+    border: none;
+    border-radius: 50px;
+    background: var(--text-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    flex: 1;
+  }
+
+  .search-form input:focus {
+    outline: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .search-form select {
+    padding: 12px;
+    border: none;
+    border-radius: 50px;
+    background: var(--text-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+  }
+
+  .search-form button {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 50px;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .search-form button.search-lost {
+    background: var(--secondary);
+  }
+
+  .search-form button.search-found {
+    background: var(--success);
+  }
+
+  .search-form button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .search-form::before {
+    content: '\f002';
+    font-family: 'FontAwesome';
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: var(--primary);
+    font-size: 1rem;
+  }
+
+  /* Item Cards */
+  .item-card {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: var(--text-light);
+  }
+
+  .item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .item-card.lost .card-header {
+    background: var(--secondary);
+    color: var(--text-light);
+  }
+
+  .item-card.found .card-header {
+    background: var(--success);
+    color: var(--text-light);
+  }
+
+  .item-card .card-header {
+    padding: 15px;
+  }
+
+  .item-card .card-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  .item-card .card-body {
+    padding: 20px;
+  }
+
+  .item-card .card-text {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .item-card .card-text strong {
+    color: var(--primary);
+  }
+
+  .item-card .btn {
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    background: var(--accent);
+    border: none;
+    color: var(--text);
+    transition: background 0.3s ease;
+  }
+
+  .item-card .btn:hover {
+    background: #F59E0B;
+  }
+
+  .item-card .badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #6B7280;
+    color: var(--text-light);
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+  }
+
+  /* Forms */
+  .report-form {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--text-light);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+  }
+
+  .report-form h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem;
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+
+  .form-control, .form-select {
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #F8FAFC;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+  }
+
+  .form-control:focus, .form-select:focus {
+    outline: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .form-text {
+    font-size: 0.9rem;
+    color: var(--text);
+    opacity: 0.7;
+  }
+
+  .alert-danger {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 5px;
+  }
+
+  .report-form .btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 50px;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+  }
+
+  .report-form .btn-lost {
+    background: var(--secondary);
+  }
+
+  .report-form .btn-found {
+    background: var(--success);
+  }
+
+  .report-form .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    background: var(--text-light);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+  }
+
+  .empty-state i {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+  }
+
+  .empty-state p {
+    font-size: 1.1rem;
+    color: var(--text);
+  }
+
+  /* Featured Section */
+  .featured-section {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--text-light);
+    padding: 40px 20px;
+    border-radius: 15px;
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .featured-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://source.unsplash.com/random/1920x1080?campus') no-repeat center/cover;
+    opacity: 0.2;
+    z-index: 0;
+  }
+
+  .featured-section h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 20px;
+  }
+
+  .featured-section .carousel-item .item-card {
+    margin: 0 10px;
+  }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .slide-in {
+    animation: slideIn 0.6s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-header h1 {
+      font-size: 2rem;
+    }
+
+    .tab-header {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .tab-btn {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .search-form {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .search-form input, .search-form select, .search-form button {
+      width: 100%;
+    }
+
+    .report-form {
+      padding: 20px;
+    }
+
+    .featured-section h2 {
+      font-size: 1.8rem;
+    }
+  }
+</style>
+
+<div class="container fade-in">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <h1>Lost & Found Dashboard 🔍</h1>
+    <p>Find lost items, report found items, or let us know about something you’ve misplaced.</p>
+  </header>
+
+  <!-- Featured Section -->
+  <section class="featured-section fade-in">
+    <h2>Recently Added Items</h2>
+    <div id="featuredCarousel" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-inner">
+        {% for item in recent_items|slice:":3" %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+          <div class="item-card {{ item.type }} d-flex justify-content-center">
+            <div class="card-header">
+              <h5 class="card-title">{{ item.title }}</h5>
+            </div>
+            <div class="card-body">
+              <p class="card-text"><strong><i class='bx bx-category'></i> Category:</strong> {{ item.get_category_display }}</p>
+              <p class="card-text"><strong><i class='bx bx-calendar'></i> Date:</strong>
+                {% if item.type == 'lost' %}
+                  {{ item.date_lost }}
+                {% elif item.type == 'found' %}
+                  {{ item.date_found }}
+                {% endif %}
+              </p>
+              <p class="card-text"><strong><i class='bx bx-info-circle'></i> Description:</strong> {{ item.description|truncatewords:10 }}</p>
+              {% if item.type == 'found' and not item.is_claimed %}
+              <a href="{% url 'claim_item' item.id %}" class="btn"><i class='bx bx-check-circle'></i> Claim</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="carousel-item active">
+          <div class="empty-state">
+            <p>No recent items available.</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Tabs -->
+  <div class="tab-header">
+    <a href="#lost-items" class="tab-btn active" data-tab="lost-items">Lost Items</a>
+    <a href="#found-items" class="tab-btn" data-tab="found-items">Found Items</a>
+    <a href="#report-lost" class="tab-btn" data-tab="report-lost">Report Lost</a>
+    <a href="#report-found" class="tab-btn" data-tab="report-found">Report Found</a>
+  </div>
+
+  <!-- Tab Content -->
+  <div id="lost-items" class="tab-content active slide-in">
+    <form method="get" class="search-form" style="position: relative;">
+      <input type="text" name="q_lost" class="form-control" placeholder="Search lost items..." value="{{ query_lost }}">
+      <select name="category_lost" class="form-select">
+        <option value="">All Categories</option>
+        {% for value, label in lost_form.fields.category.choices %}
+          <option value="{{ value }}" {% if category_lost == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn search-lost">Search</button>
+    </form>
+    <div class="row">
+      {% for item in lost_items %}
+      <div class="col-md-6 mb-4 fade-in">
+        <div class="item-card lost">
+          <div class="card-header">
+            <h5 class="card-title">{{ item.title }}</h5>
+          </div>
+          <div class="card-body">
+            <p class="card-text"><strong><i class='bx bx-category'></i> Category:</strong> {{ item.get_category_display }}</p>
+            <p class="card-text"><strong><i class='bx bx-calendar'></i> Date Lost:</strong> {{ item.date_lost }}</p>
+            <p class="card-text"><strong><i class='bx bx-map'></i> Location:</strong> {{ item.location }}</p>
+            <p class="card-text"><strong><i class='bx bx-info-circle'></i> Description:</strong> {{ item.description }}</p>
+            <p class="card-text"><strong><i class='bx bx-envelope'></i> Contact:</strong> {{ item.contact_info }}</p>
+            <p class="card-text"><small class="text-muted">Reported by {{ item.user.username }} on {{ item.created_at }}</small></p>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="empty-state fade-in">
+          <i class='bx bx-search-alt'></i>
+          <p>No lost items match your search criteria.</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div id="found-items" class="tab-content slide-in">
+    <form method="get" class="search-form" style="position: relative;">
+      <input type="text" name="q_found" class="form-control" placeholder="Search found items..." value="{{ query_found }}">
+      <select name="category_found" class="form-select">
+        <option value="">All Categories</option>
+        {% for value, label in found_form.fields.category.choices %}
+          <option value="{{ value }}" {% if category_found == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn search-found">Search</button>
+    </form>
+    <div class="row">
+      {% for item in found_items %}
+      <div class="col-md-6 mb-4 fade-in">
+        <div class="item-card found">
+          <div class="card-header">
+            <h5 class="card-title">{{ item.title }}</h5>
+            {% if item.is_claimed %}
+            <span class="badge">Claimed</span>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <p class="card-text"><strong><i class='bx bx-category'></i> Category:</strong> {{ item.get_category_display }}</p>
+            <p class="card-text"><strong><i class='bx bx-calendar'></i> Date Found:</strong> {{ item.date_found }}</p>
+            <p class="card-text"><strong><i class='bx bx-map'></i> Location Found:</strong> {{ item.location }}</p>
+            <p class="card-text"><strong><i class='bx bx-info-circle'></i> Description:</strong> {{ item.description }}</p>
+            <p class="card-text"><strong><i class='bx bx-envelope'></i> Contact:</strong> {{ item.contact_info }}</p>
+            <p class="card-text"><small class="text-muted">Reported by {{ item.user.username }} on {{ item.created_at }}</small></p>
+            {% if not item.is_claimed %}
+            <a href="{% url 'claim_item' item.id %}" class="btn"><i class='bx bx-check-circle'></i> Claim This Item</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="empty-state fade-in">
+          <i class='bx bx-search-alt'></i>
+          <p>No found items match your search criteria.</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div id="report-lost" class="tab-content slide-in">
+    <div class="report-form">
+      <h3>Report Lost Item</h3>
+      <form method="post" action="{% url 'lost_and_found_dashboard' %}">
+        {% csrf_token %}
+        <input type="hidden" name="report_lost" value="1">
+        {% for field in lost_form %}
+        <div class="mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+          {% endif %}
+          {% if field.errors %}
+          <div class="alert alert-danger">
+            {{ field.errors }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <div class="d-grid">
+          <button type="submit" class="btn btn-lost">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <div id="report-found" class="tab-content slide-in">
+    <div class="report-form">
+      <h3>Report Found Item</h3>
+      <form method="post" action="{% url 'lost_and_found_dashboard' %}">
+        {% csrf_token %}
+        <input type="hidden" name="report_found" value="1">
+        {% for field in found_form %}
+        <div class="mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+          {% endif %}
+          {% if field.errors %}
+          <div class="alert alert-danger">
+            {{ field.errors }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <div class="d-grid">
+          <button type="submit" class="btn btn-found">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Tab Switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tabId = btn.getAttribute('data-tab');
+
+      // Update active tab
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update active content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    });
+  });
+
+  // Client-side Search
+  function searchItems(section, inputId) {
+    const input = document.getElementById(inputId).value.toLowerCase();
+    const cards = document.querySelectorAll(`#${section} .item-card`);
+    cards.forEach(card => {
+      const title = card.querySelector('.card-title').innerText.toLowerCase();
+      card.parentElement.style.display = title.includes(input) ? '' : 'none';
+    });
+  }
+
+  // Attach search listeners
+  document.getElementById('search-lost').addEventListener('input', () => searchItems('lost-items', 'search-lost'));
+  document.getElementById('search-found').addEventListener('input', () => searchItems('found-items', 'search-found'));
+</script>
+{% endblock %}

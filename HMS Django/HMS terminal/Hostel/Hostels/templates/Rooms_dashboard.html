@@ -50,8 +50,8 @@
                 </li>
                 <li class="{% if active_tab == 'manage_claims' %}active{% endif %}">
                     <a href="{% url 'admin_dashboard' %}?tab=manage_claims">
-                        <i class="fas fa-utensils"></i>
-                        <span>Lost&Found</span>
+                      <i class="fas fa-utensils"></i>
+                      <span>Lost&Found</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -670,7 +670,7 @@
         </div>
 
         {% elif active_tab == 'notifications' %}
-<div class="chat-interface mt-4">
+        <div class="chat-interface mt-4">
     <div class="d-flex justify-content-between mb-3">
         <h4>Manage Notifications</h4>
         <button class="btn btn-sm btn-primary" onclick="document.getElementById('messageForm').scrollIntoView()">
@@ -730,39 +730,99 @@
         <a href="?tab=notifications" class="btn btn-secondary">Cancel</a>
         {% endif %}
     </form>
-</div>
+        </div>
+        {% elif active_tab == 'manage_claims' %}
+        <div class="claims-section">
+        <div class="table-header">
+        <h2>Manage Claims</h2>
+        <div class="table-actions">
+        <form method="GET" action="{% url 'admin_dashboard' %}?tab=manage_claims" class="search-box">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" name="search" placeholder="Search claims..." value="{{ search_query }}">
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="table-container">
+    {% if claims %}
+    {% for claim in claims %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Claim for: {{ claim.item.title }}</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Item Details:</h6>
+            <p><strong>Category:</strong> {{ claim.get_category_display }}</p>
+            <p><strong>Date Found:</strong> {{ claim.item.date_found }}</p>
+            <p><strong>Location Found:</strong> {{ claim.item.location }}</p>
+            <p><strong>Description:</strong> {{ claim.item.description }}</p>
+          </div>
+          <div class="col-md-6">
+            <h6>Claim Details:</h6>
+            <p><strong>Claim Date:</strong> {{ claim.created_at }}</p>
+            <p><strong>Proof/Explanation:</strong></p>
+            <p>{{ claim.message }}</p>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="{% url 'approve_claim' claim.id %}" class="btn btn-success">Approve Claim</a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info">
+      No pending claims to manage.
+    </div>
+    {% endfor %}
+  </div>
+        </div>
 {% endif %}
+{% endif %}
+             
+
     </div>
 </div>
 
 
 <!-- Scripts unchanged -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Chart for overview tab (only if canvas exists)
         if (document.getElementById('allocationChart')) {
             const ctx = document.getElementById('allocationChart').getContext('2d');
+            if (ctx) {
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Pending', 'Confirmed'],
                     datasets: [{
-                data: [{{ stats.pending_allocations|default:"0" }}, {{ stats.confirmed_allocations|default:"0" }}],
-                backgroundColor: ['#ff6384', '#36a2eb'],
-                borderWidth: 0
+            data: [{% if stats.pending_allocations %}{{ stats.pending_allocations }}{% else %}0{% endif %}, {% if stats.confirmed_allocations %}{{ stats.confirmed_allocations }}{% else %}0{% endif %}],
+            backgroundColor: ['#ff6384', '#36a2eb'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { 
+                position: 'bottom', 
+                labels: { 
+                    boxWidth: 12, 
+                    padding: 20 
+                } 
             }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } }
-            }
+        tooltips: {
+            enabled: true,
+            bodyFontSize: 14
         }
-    });
-}
+    }
+});
 
     // Form validation for mess tab (only if form exists)
     const form = document.getElementById('messForm');
@@ -782,12 +842,22 @@
 
 setInterval(() => {
     fetch(window.location.href)
-        .then(response => response.text())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
         .then(html => {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const newMessages = doc.querySelector('.chat-messages').innerHTML;
-            document.querySelector('.chat-messages').innerHTML = newMessages;
+            const newMessages = doc.querySelector('.chat-messages')?.innerHTML;
+            if (newMessages) {
+                document.querySelector('.chat-messages').innerHTML = newMessages;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching chat messages:', error);
         });
 }, 5000);
 
@@ -1282,6 +1352,16 @@ setInterval(() => {
         color: var(--danger-color);
         background: rgba(239, 71, 111, 0.1);
     }
+    .allocation-chart {
+    position: relative;
+    height: 400px;
+    padding: 20px;
+}
+
+    #allocationChart {
+    max-height: 350px;
+    width: 100% !important;
+    }
 
     .edit-btn:hover,
     .delete-btn:hover {
@@ -1384,6 +1464,7 @@ setInterval(() => {
         border: 1px solid #e2e8f0;
     }
 
+
     @media (max-width: 768px) {
         .sidebar {
             width: 100%;
@@ -1418,4 +1499,7 @@ setInterval(() => {
     padding: 1rem;
 }
 </style>
+
+
 {% endblock %}
+

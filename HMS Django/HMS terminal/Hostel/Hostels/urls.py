@@ -4,6 +4,7 @@ from . import views
 from django.conf.urls.static import static
 from django.conf import settings
 from app2.models import MessMenu, TodayMenu
+from app2 import views as app2_views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -46,5 +47,8 @@ urlpatterns = [
     path('mess/delete/<int:menu_id>/', views.delete_mess_menu, name='delete_mess_menu'),
      path('mess/delete/<int:menu_id>/', views.delete_mess_menu, name='delete_mess_menu'),
     path('notification/delete/<int:msg_id>/', views.delete_notification, name='delete_notification'),
+    
+    path('claims/manage/', app2_views.manage_claims, name='manage_claims'),
+    path('claims/approve/<int:claim_id>/', app2_views.approve_claim, name='approve_claim'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

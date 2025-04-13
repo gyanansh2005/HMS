@@ -1,5 +1,5 @@
 from django import forms
-from .models import MessMenu, MessRules
+from .models import MessMenu, MessRules, DiscussionMessage, LostItem, FoundItem, ClaimRequest
 
 class MessMenuForm(forms.ModelForm):
     class Meta:
@@ -20,7 +20,7 @@ class MessMenuForm(forms.ModelForm):
                 ('Lunch', 'Lunch'),
                 ('Dinner', 'Dinner'),
             ]),
-            'menu': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Enter menu details...'}),
+            'menu': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Enter menu details...', 'class': 'form-control'}),
         }
 
 class MessRulesForm(forms.ModelForm):
@@ -28,14 +28,9 @@ class MessRulesForm(forms.ModelForm):
         model = MessRules
         fields = ['rule', 'order']
         widgets = {
-            'rule': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Enter mess rule...'}),
-            'order': forms.NumberInput(attrs={'min': 0}),
+            'rule': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Enter mess rule...', 'class': 'form-control'}),
+            'order': forms.NumberInput(attrs={'min': 0, 'class': 'form-control'}),
         }
-        
-        
-# app2/forms.py
-from django import forms
-from .models import DiscussionMessage
 
 class DiscussionForm(forms.ModelForm):
     class Meta:
@@ -56,18 +51,18 @@ class DiscussionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if not user or not user.is_staff:
             del self.fields['is_notification']
-        
-        
-from django import forms
-from .models import LostItem, FoundItem, ClaimRequest
 
 class LostItemForm(forms.ModelForm):
     class Meta:
         model = LostItem
         fields = ['title', 'description', 'category', 'date_lost', 'location', 'contact_info']
         widgets = {
-            'date_lost': forms.DateInput(attrs={'type': 'date'}),
-            'description': forms.Textarea(attrs={'rows': 4}),
+            'title': forms.TextInput(attrs={'placeholder': 'e.g., Lost Wallet', 'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Describe the item...', 'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'date_lost': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'placeholder': 'e.g., Library', 'class': 'form-control'}),
+            'contact_info': forms.TextInput(attrs={'placeholder': 'e.g., email@example.com', 'class': 'form-control'}),
         }
 
 class FoundItemForm(forms.ModelForm):
@@ -75,8 +70,12 @@ class FoundItemForm(forms.ModelForm):
         model = FoundItem
         fields = ['title', 'description', 'category', 'date_found', 'location', 'contact_info']
         widgets = {
-            'date_found': forms.DateInput(attrs={'type': 'date'}),
-            'description': forms.Textarea(attrs={'rows': 4}),
+            'title': forms.TextInput(attrs={'placeholder': 'e.g., Found Keys', 'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Describe the item...', 'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'date_found': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'placeholder': 'e.g., Cafeteria', 'class': 'form-control'}),
+            'contact_info': forms.TextInput(attrs={'placeholder': 'e.g., email@example.com', 'class': 'form-control'}),
         }
 
 class ClaimRequestForm(forms.ModelForm):
@@ -84,5 +83,5 @@ class ClaimRequestForm(forms.ModelForm):
         model = ClaimRequest
         fields = ['message']
         widgets = {
-            'message': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Please provide details to prove this item belongs to you...'}),
+            'message': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Please provide details to prove this item belongs to you...', 'class': 'form-control'}),
         }

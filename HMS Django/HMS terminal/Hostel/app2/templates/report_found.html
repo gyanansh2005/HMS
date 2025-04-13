@@ -1,37 +1,152 @@
-{% extends 'base2.html' %}
-
+{% extends 'base.html' %}
 {% block title %}Report Found Item - Lost & Found{% endblock %}
-
 {% block content %}
-<div class="row justify-content-center">
+<style>
+  :root {
+    --primary: #1E3A8A;
+    --secondary: #3B82F6;
+    --accent: #FBBF24;
+    --background: #F9FAFB;
+    --text: #111827;
+    --text-light: #FFFFFF;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+  }
+
+  .form-card {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background: var(--text-light);
+  }
+
+  .form-card .card-header {
+    background: #10B981;
+    color: var(--text-light);
+    padding: 20px;
+    text-align: center;
+  }
+
+  .form-card .card-header h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem;
+    margin: 0;
+  }
+
+  .form-card .card-body {
+    padding: 30px;
+  }
+
+  .form-label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+
+  .form-control, .form-select {
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #F8FAFC;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+  }
+
+  .form-control:focus, .form-select:focus {
+    outline: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .form-text {
+    font-size: 0.9rem;
+    color: var(--text);
+    opacity: 0.7;
+  }
+
+  .alert-danger {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 5px;
+  }
+
+  .btn {
+    padding: 12px 25px;
+    background: #10B981;
+    border: none;
+    border-radius: 50px;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .form-card .card-body {
+      padding: 20px;
+    }
+
+    .form-card .card-header h3 {
+      font-size: 1.8rem;
+    }
+  }
+</style>
+
+<div class="container fade-in">
+  <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="text-center">Report Found Item</h3>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.help_text %}
-                        <div class="form-text">{{ field.help_text }}</div>
-                        {% endif %}
-                        {% if field.errors %}
-                        <div class="alert alert-danger">
-                            {{ field.errors }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success">Submit Report</button>
-                    </div>
-                </form>
-            </div>
+      <div class="form-card">
+        <div class="card-header">
+          <h3>Report Found Item</h3>
         </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+bek            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+              <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% if field.errors %}
+              <div class="alert alert-danger">
+                {{ field.errors }}
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+            <div class="d-grid">
+              <button type="submit" class="btn">Submit Report</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

@@ -287,7 +287,6 @@ def get_floors(request, hostel_id):
     except Hostel.DoesNotExist:
         return JsonResponse({'error': 'Hostel not found'}, status=404)
 
-@login_required
 def profiles(request):
     # Get the latest allocation for the user
     student_profile = getattr(request.user, 'student_profile', None)
@@ -298,10 +297,7 @@ def profiles(request):
         'complaints': request.user.complaintmaintenance_set.count(),  # Fixed
         'payments': request.user.payments.count(),
     }
-    if not request.user.is_staff and not request.user.is_superuser:
-        student_profile, created = StudentProfile.objects.get_or_create(user=request.user)
-        allocation = request.user.allocations.select_related('room__hostel').last()
-        form = ProfileUpdateForm(instance=student_profile) if student_profile else None
+    form = ProfileUpdateForm(instance=student_profile)
     
     return render(request, 'Rooms_profile.html', {
         'form': form,
@@ -321,33 +317,46 @@ def calculate_profile_completion(user, profile):
     return (filled / len(fields)) * 100
 
 # views.py (edit_profile view)
+from django.http import JsonResponse
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from .forms import ProfileUpdateForm
+from .models import StudentProfile
+
 @login_required
 def edit_profile(request):
+    student_profile, created = StudentProfile.objects.get_or_create(user=request.user)
+    
     if request.method == 'POST':
         form = ProfileUpdateForm(
-            request.POST, 
-            request.FILES, 
-            instance=request.user.student_profile
+            request.POST,
+            request.FILES,
+            instance=student_profile
         )
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         if form.is_valid():
             form.save()
-            # Handle AJAX response
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            if is_ajax:
                 return JsonResponse({
                     'success': True,
                     'contact_number': form.cleaned_data['contact_number'],
                     'bio': form.cleaned_data['bio']
                 })
             messages.success(request, 'Your profile has been updated!')
-            return redirect('profiles')  # Ensure 'profiles' URL is mapped to Rooms_profile.html in your URLs configuration
+            return redirect('profiles')
         else:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'errors': form.errors})
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors.get_json_data()  # Convert form errors to JSON
+                }, status=400)
+            # For non-AJAX POST, render the form with errors
+            return render(request, 'Rooms_edit_profile.html', {'form': form})
     else:
-        form = ProfileUpdateForm(instance=request.user.student_profile)
+        form = ProfileUpdateForm(instance=student_profile)
     
     return render(request, 'Rooms_edit_profile.html', {'form': form})
-
 # views.py
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -576,7 +585,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages  # Ensure this import is present
 from django.db.models import Count, F, Avg, Sum
 from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment
-from app2.models import Form, DiscussionMessage, MessMenu, TodayMenu
+from app2.models import Form, DiscussionMessage, MessMenu, TodayMenu,ClaimRequest
 from app2.forms import  DiscussionForm, MessMenuForm
 from datetime import date
 
@@ -595,6 +604,7 @@ def dashboard(request):
     total_revenue = FeePayment.objects.filter(status='completed').aggregate(Sum('amount'))['amount__sum'] or 0
     avg_service_rating = Feedback.objects.aggregate(Avg('service_rating'))['service_rating__avg'] or 0
     allocation_stats = Allocation.objects.values('status').annotate(count=Count('status'))
+    status_counts = {item['status']: item['count'] for item in allocation_stats}
     pending_allocations = next((item['count'] for item in allocation_stats if item['status'] == 'pending'), 0)
     confirmed_allocations = next((item['count'] for item in allocation_stats if item['status'] == 'confirmed'), 0)
     upcoming_events = Form.objects.filter(date__gte=date.today()).count()
@@ -760,6 +770,9 @@ def dashboard(request):
             'discussion_form': form,
             'editing_message_id': message_id
         })
+    elif active_tab == 'manage_claims':
+        claims = ClaimRequest.objects.filter(is_approved=False)
+        context.update({'claims': claims})
 
     return render(request, 'Rooms_dashboard.html', context)
 

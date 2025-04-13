@@ -1,10 +1,13 @@
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render, redirect
-from app2.models import Form
-from datetime import date
 from django.contrib import messages
-from .models import MessMenu, MessRules, TodayMenu
-from django.db.models import Q
+from django.db.models import Q, Value, CharField
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_POST
+from datetime import date
+from itertools import chain
+from .models import Form, MessMenu, MessRules, TodayMenu, DiscussionMessage, LostItem, FoundItem, ClaimRequest
+from .forms import MessMenuForm, DiscussionForm, LostItemForm, FoundItemForm, ClaimRequestForm
 
 def app2index(request):
     show = Form.objects.all()
@@ -74,13 +77,12 @@ def events(request):
     return render(request, 'events.html', context)
 
 def mess(request):
-    today = date(2025, 4, 12)  # Current date
-    today_day = today.strftime("%A")  # "Saturday"
+    today = date.today()  # Use dynamic date
+    today_day = today.strftime("%A")
     
     # Fetch or create today's menu from MessMenu
     today_menu = TodayMenu.objects.filter(day=today_day).order_by('-created_at').first()
     if not today_menu:
-        # If no TodayMenu exists, try to set it from MessMenu
         mess_menu = MessMenu.objects.filter(day=today_day).first()
         if mess_menu:
             today_menu = TodayMenu.objects.create(
@@ -98,7 +100,6 @@ def mess(request):
     if day_filter in days:
         menus = menus.filter(day=day_filter)
     else:
-        # Default to today's menu if no filter
         menus = menus.filter(day=today_day)
 
     # Fetch mess rules
@@ -113,18 +114,8 @@ def mess(request):
     }
     return render(request, 'mess.html', context)
 
-
-from django.shortcuts import render, redirect
-from app2.models import Form
-from datetime import date
-from django.contrib import messages
-from .models import MessMenu, MessRules, TodayMenu
-from django.db.models import Q
-
-# ... (existing views remain the same)
-
 def set_today_menu(request, menu_id):
-    menu = MessMenu.objects.get(id=menu_id)
+    menu = get_object_or_404(MessMenu, id=menu_id)
     TodayMenu.objects.update_or_create(
         day=menu.day,
         defaults={'meal_type': menu.meal_type, 'menu': menu.menu}
@@ -133,7 +124,7 @@ def set_today_menu(request, menu_id):
     return redirect('mess')
 
 def update_mess_menu(request, menu_id):
-    menu = MessMenu.objects.get(id=menu_id)
+    menu = get_object_or_404(MessMenu, id=menu_id)
     if request.method == "POST":
         form = MessMenuForm(request.POST, instance=menu)
         if form.is_valid():
@@ -145,42 +136,31 @@ def update_mess_menu(request, menu_id):
     return render(request, 'update_mess_menu.html', {'form': form})
 
 def delete_mess_menu(request, menu_id):
-    menu = MessMenu.objects.get(id=menu_id)
+    menu = get_object_or_404(MessMenu, id=menu_id)
     if request.method == "POST":
         menu.delete()
         messages.success(request, "Menu deleted successfully.")
         return redirect('mess')
     return render(request, 'confirm_delete.html', {'menu': menu})
 
-
-
-
-
-# app2/views.py
-from django.shortcuts import render, redirect
-from .models import DiscussionMessage
-from .forms import DiscussionForm
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-
 @login_required
 def discussion_center(request):
     if request.method == 'POST':
-        form = DiscussionForm(request.POST)
+        form = DiscussionForm(request.POST, user=request.user)
         if form.is_valid():
             DiscussionMessage.objects.create(
                 user=request.user,
                 message=form.cleaned_data['message'],
-                is_notification=False
+                is_notification=form.cleaned_data.get('is_notification', False)
             )
             return redirect('discussion_center')
     
     messages = DiscussionMessage.objects.all().order_by('-timestamp')[:50]
     return render(request, 'discussion.html', {
         'chat_messages': messages,
-        'form': DiscussionForm()
+        'form': DiscussionForm(user=request.user)
     })
-    
+
 @require_POST
 @login_required
 def delete_notification(request, msg_id):
@@ -191,113 +171,112 @@ def delete_notification(request, msg_id):
     message.delete()
     return redirect('admin_dashboard')
 
+# Helper to check if user is staff
+def is_staff(user):
+    return user.is_staff
 
-from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.db.models import Q
-from .models import LostItem, FoundItem, ClaimRequest
-from .forms import LostItemForm, FoundItemForm, ClaimRequestForm
+from django.db.models import Q, Value, CharField
+from itertools import chain
+from .models import LostItem, FoundItem
+from .forms import LostItemForm, FoundItemForm
 
-def home(request):
-    return render(request, 'home.html')  # Adjusted path
+@login_required
+def lost_and_found_dashboard(request):
+    query_lost = request.GET.get('q_lost', '')
+    category_lost = request.GET.get('category_lost', '')
+    lost_items = LostItem.objects.all()
+    if query_lost:
+        lost_items = lost_items.filter(Q(title__icontains=query_lost) | Q(description__icontains=query_lost))
+    if category_lost:
+        lost_items = lost_items.filter(category=category_lost)
 
-def report_lost_item(request):
+    query_found = request.GET.get('q_found', '')
+    category_found = request.GET.get('category_found', '')
+    found_items = FoundItem.objects.all()
+    if query_found:
+        found_items = found_items.filter(Q(title__icontains=query_found) | Q(description__icontains=query_found))
+    if category_found:
+        found_items = found_items.filter(category=category_found)
+
+    recent_items = sorted(
+        list(chain(
+            LostItem.objects.order_by('-created_at')[:3].annotate(type=Value('lost', output_field=CharField())),
+            FoundItem.objects.order_by('-created_at')[:3].annotate(type=Value('found', output_field=CharField()))
+        )),
+        key=lambda x: x.created_at,
+        reverse=True
+    )[:3]
+
+    lost_form = LostItemForm(request.POST if 'report_lost' in request.POST else None)
+    found_form = FoundItemForm(request.POST if 'report_found' in request.POST else None)
+
     if request.method == 'POST':
-        form = LostItemForm(request.POST)
-        if form.is_valid():
-            item = form.save(commit=False)
-            item.user = request.user  # Assumes user still needed
-            item.save()
-            messages.success(request, 'Lost item reported successfully!')
-            return redirect('lost_items')
-    else:
-        form = LostItemForm()
-    return render(request, 'report_lost.html', {'form': form})  # Adjusted path
+        if 'report_lost' in request.POST and lost_form.is_valid():
+            lost_item = lost_form.save(commit=False)
+            lost_item.user = request.user
+            lost_item.save()
+            messages.success(request, 'Lost item reported successfully.')
+            return redirect('lost_and_found_dashboard')
+        elif 'report_found' in request.POST and found_form.is_valid():
+            found_item = found_form.save(commit=False)
+            found_item.user = request.user
+            found_item.save()
+            messages.success(request, 'Found item reported successfully.')
+            return redirect('lost_and_found_dashboard')
+        else:
+            if 'report_lost' in request.POST:
+                messages.error(request, 'Please correct the errors in the lost item form.')
+            elif 'report_found' in request.POST:
+                messages.error(request, 'Please correct the errors in the found item form.')
 
-def report_found_item(request):
-    if request.method == 'POST':
-        form = FoundItemForm(request.POST)
-        if form.is_valid():
-            item = form.save(commit=False)
-            item.user = request.user  # Assumes user still needed
-            item.save()
-            messages.success(request, 'Found item reported successfully!')
-            return redirect('found_items')
-    else:
-        form = FoundItemForm()
-    return render(request, 'report_found.html', {'form': form})  # Adjusted path
+    return render(request, 'lost_and_found_dashboard.html', {
+        'lost_items': lost_items,
+        'found_items': found_items,
+        'recent_items': recent_items,
+        'lost_form': lost_form,
+        'found_form': found_form,
+        'query_lost': query_lost,
+        'query_found': query_found,
+        'category_lost': category_lost,
+        'category_found': category_found,
+    })
 
-def lost_items(request):
-    items = LostItem.objects.filter(is_claimed=False)
-    query = request.GET.get('q')
-    category = request.GET.get('category')
 
-    if query:
-        items = items.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query) |
-            Q(location__icontains=query)
-        )
 
-    if category:
-        items = items.filter(category=category)
-
-    return render(request, 'lost_items.html', {
-        'items': items,
-        'query': query,
-        'category': category
-    })  # Adjusted path
-
-def found_items(request):
-    items = FoundItem.objects.filter(is_claimed=False)
-    query = request.GET.get('q')
-    category = request.GET.get('category')
-
-    if query:
-        items = items.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query) |
-            Q(location__icontains=query)
-        )
-
-    if category:
-        items = items.filter(category=category)
-
-    return render(request, 'found_items.html', {
-        'items': items,
-        'query': query,
-        'category': category
-    })  # Adjusted path
-
+@login_required
 def claim_item(request, item_id):
     item = get_object_or_404(FoundItem, id=item_id)
-
+    if item.is_claimed:
+        messages.error(request, 'This item has already been claimed.')
+        return redirect('lost_and_found_dashboard')
     if request.method == 'POST':
         form = ClaimRequestForm(request.POST)
         if form.is_valid():
             claim = form.save(commit=False)
             claim.item = item
-            claim.user = request.user  # Assumes user still needed
             claim.save()
-            messages.success(request, 'Claim request submitted successfully!')
-            return redirect('found_items')
+            messages.success(request, 'Claim submitted successfully.')
+            return redirect('lost_and_found_dashboard')
     else:
         form = ClaimRequestForm()
+    return render(request, 'claim_item.html', {'form': form, 'item': item})
 
-    return render(request, 'claim_item.html', {
-        'form': form,
-        'item': item
-    })  # Adjusted path
-
+@login_required
+@user_passes_test(is_staff)
 def manage_claims(request):
     claims = ClaimRequest.objects.filter(is_approved=False)
-    return render(request, 'manage_claims.html', {'claims': claims})  # Adjusted path
+    return render(request, 'manage_claims.html', {'claims': claims})
 
+@login_required
+@user_passes_test(is_staff)
 def approve_claim(request, claim_id):
     claim = get_object_or_404(ClaimRequest, id=claim_id)
     claim.is_approved = True
     claim.item.is_claimed = True
-    claim.item.save()
     claim.save()
-    messages.success(request, 'Claim approved successfully!')
-    return redirect('manage_claims')  # Adjusted path
+    claim.item.save()
+    messages.success(request, 'Claim approved successfully.')
+    return redirect('manage_claims')
