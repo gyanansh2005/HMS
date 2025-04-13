@@ -23,6 +23,10 @@
             </div>
         </div>
         <div class="nav-links">
+            {% if user.is_authenticated and user.is_staff %}
+            <a href="{%url 'admin_dashboard'%}">Dashboard</a>
+            {% endif %}
+           
             <a href="{% url 'index' %}">Home</a>
             <div class="dropdown">
                 <a href="#">Services<i class="fa-solid fa-angle-down"></i></a>
