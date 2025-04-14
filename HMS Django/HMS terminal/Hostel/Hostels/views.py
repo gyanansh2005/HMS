@@ -605,14 +605,19 @@ def dashboard(request):
     avg_service_rating = Feedback.objects.aggregate(Avg('service_rating'))['service_rating__avg'] or 0
     allocation_stats = Allocation.objects.values('status').annotate(count=Count('status'))
     status_counts = {item['status']: item['count'] for item in allocation_stats}
-    pending_allocations = next((item['count'] for item in allocation_stats if item['status'] == 'pending'), 0)
-    confirmed_allocations = next((item['count'] for item in allocation_stats if item['status'] == 'confirmed'), 0)
+    status_counts = {item['status']: item['count'] for item in allocation_stats}
+    pending_allocations = status_counts.get('pending', 0)
+    confirmed_allocations = status_counts.get('confirmed', 0)
+    rejected_allocations = status_counts.get('rejected', 0)
     upcoming_events = Form.objects.filter(date__gte=date.today()).count()
     occupancy_rate = Room.objects.aggregate(total_beds=Sum('total_beds'), occupied=Sum('occupied_beds'))
     occupancy_percentage = (occupancy_rate['occupied'] / occupancy_rate['total_beds'] * 100) if occupancy_rate['total_beds'] else 0
     rating_progress_width = round((avg_service_rating / 5) * 100) if avg_service_rating else 0
     recent_complaints = ComplaintMaintenance.objects.order_by('-created_at')[:5]
     recent_payments = FeePayment.objects.order_by('-payment_date')[:5]
+    
+    
+  
 
     context = {
         'active_tab': active_tab,
@@ -624,12 +629,18 @@ def dashboard(request):
             'avg_service_rating': round(avg_service_rating, 1),
             'pending_allocations': pending_allocations,
             'confirmed_allocations': confirmed_allocations,
+            'rejected_allocations': rejected_allocations,
             'upcoming_events': upcoming_events,
             'occupancy_percentage': round(occupancy_percentage, 1),
             'rating_progress_width': rating_progress_width,
         },
         'recent_complaints': recent_complaints,
         'recent_payments': recent_payments,
+    }
+    context['allocation_data'] = {
+        'pending': pending_allocations,
+        'confirmed': confirmed_allocations,
+        'rejected': rejected_allocations,
     }
 
     if active_tab == 'mess':

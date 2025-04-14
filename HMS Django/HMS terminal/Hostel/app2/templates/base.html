@@ -22,16 +22,26 @@
 }
 /* ===== Colours ===== */
 :root{
-    --body-color: #E4E9F7;
-    --nav-color: #4070F4;
-    --side-nav: #010718;
-    --text-color: #FFF;
-    --search-bar: #F2F2F2;
-    --search-text: #010718;
+  --primary: #1E3A8A;
+  --secondary: #3B82F6;
+  --background: #F9FAFB;
+  --dark-bg: #1F2937;
+  --text: #111827;
+  --text-light: #FFFFFF;
+  --accent: #FBBF24;
+  --body-color: #E4E9F7;
+  --nav-color: #4070F4;
+  --side-nav: #010718;
+  --text-color: #FFF;
+  --search-bar: #F2F2F2;
+  --search-text: #010718;
 }
 body{
+  margin-top: auto;
     height: 100vh;
-    background-color: var(--body-color);
+    background-color: var(--background);
+    color: var(--text);
+    line-height: 1.6;
 }
 body.dark{
     --body-color: #18191A;
@@ -44,10 +54,11 @@ nav{
     position: fixed;
     top: 0;
     left: 0;
-    height: 70px;
     width: 100%;
-    background-color: var(--nav-color);
-    z-index: 100;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
 
 }
 body.dark nav{
@@ -58,7 +69,6 @@ nav .nav-bar{
     height: 100%;
     max-width: 100%;
     width: 100%;
-    background-color: var(--nav-color);
     margin: 0 auto;
     padding: 0 30px;
     display: flex;
@@ -218,6 +228,206 @@ body.dark .search-field input{
 body.dark .search-field i{
     color: var(--text-color);
 }
+
+    .gnav-footer {
+  background: var(--dark-bg);
+  color: var(--text-light);
+  padding: 60px 20px 40px;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+  overflow: hidden;
+  gap: 20px;
+}
+
+.gnav-footer-row {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+}
+
+.gnav-footer-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.gnav-footer-brand h3 {
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+
+.gnav-footer-brand .brand-description {
+  font-size: 14px;
+  opacity: 0.8;
+  max-width: 200px;
+}
+
+.gnav-footer-col h4 {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 15px;
+  position: relative;
+  color: var(--text-light);
+}
+
+.gnav-footer-col h4::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: var(--accent);
+}
+
+.gnav-footer-col ul {
+  list-style: none;
+}
+
+.gnav-footer-col ul li {
+  margin-bottom: 12px;
+}
+
+.gnav-footer-col ul li a {
+  color: var(--text-light);
+  text-decoration: none;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.3s ease;
+}
+
+.gnav-footer-col ul li a:hover {
+  color: var(--accent);
+}
+
+.gnav-footer-col form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gnav-footer-col form input {
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.gnav-footer-col form input:focus {
+  border-color: var(--accent);
+}
+
+.gnav-footer-col form button {
+  padding: 12px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.gnav-footer-col form button:hover {
+  background: var(--secondary);
+  transform: translateY(-2px);
+}
+
+.gnav-footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.gnav-footer-bottom p {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.gnav-footer-social {
+  display: flex;
+  gap: 15px;
+}
+
+.gnav-footer-social a {
+  color: var(--text-light);
+  font-size: 20px;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.gnav-footer-social a:hover {
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+.messages-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 999;
+    width: 300px;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
+    color: var(--white);
+    position: relative;
+    opacity: 0.9;
+    animation: slideIn 0.5s forwards;
+}
+
+.alert-success { background: var(--success); }
+.alert-error { background: var(--danger); }
+.alert-info { background: var(--primary); }
+.alert-warning { background: var(--warning); }
+
+.close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    color: var(--white);
+    font-size: 1.2rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+
+@media (max-width: 790px) {
+  .gnav-footer {
+    padding: 40px 15px;
+  }
+
+  .gnav-footer-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .gnav-footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+
 @media (max-width: 790px) {
     nav .nav-bar .sidebarOpen{
         display: block;
@@ -299,20 +509,34 @@ body.dark .search-field i{
             </div>
         </div>
     </nav>
+    
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+            <button type="button" class="close" onclick="this.parentElement.style.display='none'">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     {% block content %}
     {% endblock %}
   </div>
   <footer class="gnav-footer">
     <div class="gnav-footer-row">
-      <div class="gnav-footer-brand fade-in">CampusConnect</div>
+      <div class="gnav-footer-brand fade-in">
+        <h3>CampusConnect</h3>
+        <p style="font-size: 14px; opacity: 0.8; margin-top: 10px;">Connecting students, events, and campus life.</p>
+      </div>
       <div class="gnav-footer-col fade-in">
         <h4>Quick Links</h4>
         <ul>
-          <li><a href="#"><i class='bx bx-home'></i> Home</a></li>
-          <li><a href="#"><i class='bx bx-calendar'></i> Events</a></li>
-          <li><a href="#"><i class='bx bx-restaurant'></i> Mess</a></li>
-          <li><a href="#"><i class='bx bx-search-alt'></i> Lost & Found</a></li>
+          <li><a href="{% url 'app2index' %}"><i class='bx bx-home'></i> Home</a></li>
+          <li><a href="{% url 'events' %}"><i class='bx bx-calendar'></i> Events</a></li>
+          <li><a href="{% url 'mess' %}"><i class='bx bx-restaurant'></i> Mess</a></li>
+          <li><a href="{% url 'lost_and_found_dashboard' %}"><i class='bx bx-search-alt'></i> Lost & Found</a></li>
         </ul>
       </div>
       <div class="gnav-footer-col fade-in">
@@ -334,13 +558,18 @@ body.dark .search-field i{
       <div class="gnav-footer-col fade-in">
         <h4>Newsletter</h4>
         <form>
-          <input type="email" placeholder="Your email" style="padding: 10px; width: 100%; border-radius: 5px; border: none; margin-bottom: 10px;">
-          <button type="submit" style="padding: 10px 20px; background: var(--accent); border: none; border-radius: 5px; color: var(--text); cursor: pointer;">Subscribe</button>
+          <input type="email" placeholder="Your email" style="padding: 12px; width: 100%; border-radius: 8px; border: 1px solid var(--text-light); margin-bottom: 12px; background: var(--search-bar); color: var(--text);">
+          <button type="submit" style="padding: 12px 24px; width: 100%; background: var(--accent); border: none; border-radius: 8px; color: var(--text); cursor: pointer; font-weight: 500; transition: background 0.3s ease;">Subscribe</button>
         </form>
       </div>
     </div>
     <div class="gnav-footer-row gnav-footer-bottom fade-in">
       <p>&copy; 2025 CampusConnect. All rights reserved.</p>
+      <div class="gnav-footer-social">
+        <a href="#"><i class='bx bxl-twitter'></i></a>
+        <a href="#"><i class='bx bxl-instagram'></i></a>
+        <a href="#"><i class='bx bxl-linkedin'></i></a>
+      </div>
     </div>
   </footer>
 

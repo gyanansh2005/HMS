@@ -157,6 +157,7 @@
                         <div class="chart-legend">
                             <span class="legend-item pending"><i class="fas fa-circle"></i> Pending</span>
                             <span class="legend-item confirmed"><i class="fas fa-circle"></i> Confirmed</span>
+                            <span class="legend-item rejected"><i class="fas fa-circle"></i> Rejected</span>
                         </div>
                     </div>
                     <div class="allocation-chart">
@@ -610,7 +611,7 @@
                     <button class="tab-btn {% if day_filter == day|lower %}active{% endif %}"onclick =  '    location.href=  "{% url "admin_dashboard" %}?tab=mess&day={{ day|lower }}"    '>{{ day }} </button>
                     {% endfor %}
                     <button class="tab-btn {% if not day_filter %}active{% endif %}"
-                        onclick='location.href=  "{% url "admin_dashboard" % }?tab=mess " '>All</button>
+                        onclick='location.href=  "{% url "admin_dashboard" %}?tab=mess " '>All</button>
                 </div>
                 
                 <div class="tab-content">
@@ -789,21 +790,23 @@
 
 <!-- Scripts unchanged -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('allocationChart').getContext('2d');
+document.addEventListener('DOMContentLoaded', function () {
+    // Allocation Chart
     const allocationData = {
         labels: ['Pending', 'Confirmed', 'Rejected'],
         datasets: [{
             data: [
-                {{ stats.pending_allocations|default:0 }},
-                {{ stats.confirmed_allocations|default:0 }},
-                {{ status_counts.rejected|default:0 }}
+                {{ allocation_data.pending|default:0 }},
+                {{ allocation_data.confirmed|default:0 }},
+                {{ allocation_data.rejected|default:0 }}
             ],
             backgroundColor: [
-                'rgba(255, 209, 102, 0.8)', // Warning (#ffd166, CampusNest-inspired)
-                'rgba(6, 214, 160, 0.8)',  // Success (#06d6a0, CampusNest)
-                'rgba(239, 71, 111, 0.8)'   // Danger (#ef476f, CampusNest)
+                'rgba(255, 209, 102, 0.8)', // Warning (Pending)
+                'rgba(6, 214, 160, 0.8)',   // Success (Confirmed)
+                'rgba(239, 71, 111, 0.8)'   // Danger (Rejected)
             ],
             borderColor: [
                 'rgba(255, 209, 102, 1)',
@@ -813,8 +816,10 @@
             borderWidth: 1
         }]
     };
-    new Chart(ctx, {
-        type: 'doughnut', // Consistent with dashboard visuals
+
+    const ctx = document.getElementById('allocationChart').getContext('2d');
+    const allocationChart = new Chart(ctx, {
+        type: 'doughnut',
         data: allocationData,
         options: {
             responsive: true,
@@ -824,25 +829,24 @@
                     position: 'bottom',
                     labels: {
                         font: {
-                            family: 'Inter, sans-serif',
-                            size: 14
+                            size: 14,
+                            family: "'Inter', sans-serif"
                         },
                         color: document.body.classList.contains('dark') ? '#D1D5DB' : '#2b2d42'
                     }
                 },
                 tooltip: {
                     backgroundColor: document.body.classList.contains('dark') ? '#1F2937' : '#fff',
-                    titleFont: { family: 'Poppins, sans-serif', size: 14 },
-                    bodyFont: { family: 'Inter, sans-serif', size: 12 },
-                    borderColor: '#4361ee',
-                    borderWidth: 1
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 12 },
+                    padding: 10
                 }
             },
-            cutout: '60%' // Sleek doughnut style
+            cutout: '60%'
         }
     });
 
-    // Dark mode toggle (from previous response, retained)
+    // Dark mode toggle
     const body = document.body;
     const modeToggle = document.querySelector('.dark-light') || document.createElement('button');
     if (!modeToggle.classList.contains('dark-light')) {
@@ -859,22 +863,27 @@
         modeToggle.style.cursor = 'pointer';
         modeToggle.style.zIndex = '1001';
         document.body.appendChild(modeToggle);
+    }
 
-        let getMode = localStorage.getItem('mode');
+    let getMode = localStorage.getItem('mode');
     if (getMode && getMode === 'dark-mode') {
         body.classList.add('dark');
         modeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        allocationChart.options.plugins.legend.labels.color = '#D1D5DB';
+        allocationChart.options.plugins.tooltip.backgroundColor = '#1F2937';
+        allocationChart.update();
     }
 
     modeToggle.addEventListener('click', () => {
         body.classList.toggle('dark');
         localStorage.setItem('mode', body.classList.contains('dark') ? 'dark-mode' : 'light-mode');
         modeToggle.innerHTML = body.classList.contains('dark') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        // Update chart colors dynamically
-        ctx.getContext('2d').chart.options.plugins.legend.labels.color = body.classList.contains('dark') ? '#D1D5DB' : '#2b2d42';
-        ctx.getContext('2d').chart.options.plugins.tooltip.backgroundColor = body.classList.contains('dark') ? '#1F2937' : '#fff';
-        ctx.getContext('2d').chart.update();
+        allocationChart.options.plugins.legend.labels.color = body.classList.contains('dark') ? '#D1D5DB' : '#2b2d42';
+        allocationChart.options.plugins.tooltip.backgroundColor = body.classList.contains('dark') ? '#1F2937' : '#fff';
+        allocationChart.update();
     });
+
+    // Animation for elements
     const animateElements = (selector) => {
         const elements = document.querySelectorAll(selector);
         elements.forEach((el, index) => {
@@ -890,16 +899,14 @@
     animateElements('.stats-grid .stat-card');
     animateElements('tbody tr');
     animateElements('.activity-item');
-});
-           
 
-    // Form validation for mess tab (only if form exists)
+    // Form validation for mess tab
     const form = document.getElementById('messForm');
     if (form) {
         form.addEventListener('submit', function (e) {
-            const day = document.getElementById('id_day').value;
-            const mealType = document.getElementById('id_meal_type').value;
-            const menu = document.getElementById('id_menu').value.trim();
+            const day = document.getElementById('id_day')?.value;
+            const mealType = document.getElementById('id_meal_type')?.value;
+            const menu = document.getElementById('id_menu')?.value.trim();
 
             if (!day || !mealType || !menu) {
                 e.preventDefault();
@@ -908,83 +915,7 @@
         });
     }
 });
-
-setInterval(() => {
-    fetch(window.location.href)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.text();
-        })
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const newMessages = doc.querySelector('.chat-messages')?.innerHTML;
-            if (newMessages) {
-                document.querySelector('.chat-messages').innerHTML = newMessages;
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching chat messages:', error);
-        });
-}, 5000);
-
-
-document.addEventListener('DOMContentLoaded', function () {
-    // Fade-in animation for tables and cards
-    const animateElements = (selector) => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach((el, index) => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(10px)';
-            setTimeout(() => {
-                el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-    };
-
-    // Apply to table rows and stat cards
-    animateElements('.stats-grid .stat-card');
-    animateElements('tbody tr');
-    animateElements('.activity-item');
-
-    // Existing dark mode toggle (adjusted for spacious layout)
-    const body = document.body;
-    const modeToggle = document.createElement('button');
-    modeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-    modeToggle.className = 'dark-light';
-    modeToggle.style.position = 'fixed';
-    modeToggle.style.top = '20px';
-    modeToggle.style.right = '20px';
-    modeToggle.style.background = 'rgba(255, 255, 255, 0.1)';
-    modeToggle.style.border = 'none';
-    modeToggle.style.borderRadius = '50%';
-    modeToggle.style.width = '40px';
-    modeToggle.style.height = '40px';
-    modeToggle.style.cursor = 'pointer';
-    modeToggle.style.zIndex = '1001';
-    document.body.appendChild(modeToggle);
-
-    let getMode = localStorage.getItem('mode');
-    if (getMode && getMode === 'dark-mode') {
-        body.classList.add('dark');
-        modeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-
-    modeToggle.addEventListener('click', () => {
-        body.classList.toggle('dark');
-        localStorage.setItem('mode', body.classList.contains('dark') ? 'dark-mode' : 'light-mode');
-        modeToggle.innerHTML = body.classList.contains('dark') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-    });
-
-    // Existing chart and form validation code...
-});
-
 </script>
-
 
 <style>
     :root {
