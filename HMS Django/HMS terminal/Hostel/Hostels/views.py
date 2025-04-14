@@ -807,8 +807,28 @@ def logout_view(request):
     messages.success(request, 'Logged out successfully!')
     return redirect('index')  # Replace 'index' with the name of your homepage URL pattern
 
+# views.py
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
 
-
+@login_required
+def update_complaint_status(request, request_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to update complaint status.")
+        return redirect('index')
+    
+    complaint = get_object_or_404(ComplaintMaintenance, id=request_id)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in ['pending', 'resolved']:
+            complaint.status = new_status
+            complaint.save()
+            messages.success(request, f"Complaint status updated to {new_status.capitalize()}.")
+        else:
+            messages.error(request, "Invalid status selected.")
+    
+    return redirect('view_requests')
 
 #! admin
 

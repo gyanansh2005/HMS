@@ -47,6 +47,7 @@ urlpatterns = [
     path('mess/delete/<int:menu_id>/', views.delete_mess_menu, name='delete_mess_menu'),
      path('mess/delete/<int:menu_id>/', views.delete_mess_menu, name='delete_mess_menu'),
     path('notification/delete/<int:msg_id>/', views.delete_notification, name='delete_notification'),
+    path('complaint/update_status/<int:request_id>/', views.update_complaint_status, name='update_complaint_status'),
     
     path('claims/manage/', app2_views.manage_claims, name='manage_claims'),
     path('claims/approve/<int:claim_id>/', app2_views.approve_claim, name='approve_claim'),

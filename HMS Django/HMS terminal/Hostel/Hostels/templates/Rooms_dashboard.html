@@ -406,6 +406,7 @@
                             <th>Category</th>
                             <th>Status</th>
                             <th>Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -416,16 +417,24 @@
                             <td>{{ request.room_number }}</td>
                             <td>{{ request.category }}</td>
                             <td>
-                                <span
-                                    class="status-badge {% if request.status == 'pending' %}pending{% else %}resolved{% endif %}">
+                                <span class="status-badge {% if request.status == 'pending' %}pending{% else %}resolved{% endif %}">
                                     {{ request.status|capfirst }}
                                 </span>
                             </td>
                             <td>{{ request.created_at|date:"M d, Y" }}</td>
+                            <td class="actions">
+                                <form method="POST" action="{% url 'update_complaint_status' request.id %}">
+                                    {% csrf_token %}
+                                    <select name="status" onchange="this.form.submit()">
+                                        <option value="pending" {% if request.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="resolved" {% if request.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                    </select>
+                                </form>
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="empty-state">
+                            <td colspan="7" class="empty-state">
                                 <i class="fas fa-tools"></i>
                                 No requests found
                             </td>
@@ -1058,6 +1067,28 @@ body.dark .header {
 .user-avatar {
     font-size: 2rem;
     color: var(--primary-color);
+}
+/* Style for the status update dropdown */
+.actions select {
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--white);
+    cursor: pointer;
+    transition: var(--transition-speed);
+}
+
+body.dark .actions select {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+.actions select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(67, 97, 238, 0.2);
 }
 
 .user-name {
