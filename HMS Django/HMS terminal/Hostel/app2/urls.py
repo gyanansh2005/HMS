@@ -18,4 +18,6 @@ urlpatterns = [
     path('mess/update/<int:menu_id>/', views.update_mess_menu, name='update_mess_menu'),
     path('mess/delete/<int:menu_id>/', views.delete_mess_menu, name='delete_mess_menu'),
     path('discussion/delete-notification/<int:msg_id>/', views.delete_notification, name='delete_notification'),
+    
+    
 ]

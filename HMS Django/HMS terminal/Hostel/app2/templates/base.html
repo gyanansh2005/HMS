@@ -82,6 +82,9 @@
       transform: translateY(-2px);
       opacity: 0.9;
     }
+    .dropdown-toggle::after {
+  display: none !important;
+}
 
     .dropdown-menu {
       position: absolute;
@@ -263,7 +266,7 @@
 <body>
   <nav>
     <div class="nav-bar">
-      <div >
+      <div class="logo navLogo dropdown">
         <a href="#" class="dropdown-toggle" onclick="toggleLogoDropdown(event)">
           CampusConnect <i class='bx bx-chevron-down'></i>
         </a>
@@ -292,12 +295,11 @@
         </div>
         <div class="searchBox">
           <div class="searchToggle">
-            <i class='bx bx-x cancel'></i>
+            <i class='bx b</div>x-x cancel'></i>
             <i class='bx bx-search search'></i>
           </div>
           <div class="search-field">
             <input type="text" placeholder="Search...">
-            <i class='bx bx-search'></i>
           </div>
         </div>
       </div>
@@ -404,6 +406,34 @@
         document.querySelector(".nav-links").classList.remove("active");
       }
     });
+    // Get the search input and the content to be searched
+const searchInput = document.querySelector(".search-field input");
+const content = document.querySelector(".nav-links");
+
+// Function to filter the content based on the search query
+function filterContent(query) {
+  const links = content.querySelectorAll("li");
+  links.forEach(link => {
+    const text = link.textContent.toLowerCase();
+    if (text.includes(query.toLowerCase())) {
+      link.style.display = "block";
+    } else {
+      link.style.display = "none";
+    }
+  });
+}
+
+// Listen for the search input
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.trim();
+  filterContent(query);
+});
+
+// Clear the search input when the cancel button is clicked
+document.querySelector(".searchToggle .bx-x").addEventListener("click", () => {
+  searchInput.value = "";
+  filterContent("");
+});
   </script>
 </body>
 </html>

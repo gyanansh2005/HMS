@@ -771,8 +771,15 @@ def dashboard(request):
             'editing_message_id': message_id
         })
     elif active_tab == 'manage_claims':
-        claims = ClaimRequest.objects.filter(is_approved=False)
-        context.update({'claims': claims})
+     search_query = request.GET.get('search', '')
+     claims = ClaimRequest.objects.filter(is_approved=False)
+     if search_query:
+         claims = claims.filter(
+             models.Q(item__title__icontains=search_query) |
+             models.Q(item__description__icontains=search_query) |
+             models.Q(message__icontains=search_query)
+         )
+     context.update({'claims': claims, 'search_query': search_query})
 
     return render(request, 'Rooms_dashboard.html', context)
 
@@ -1015,6 +1022,8 @@ def delete_notification(request, msg_id):
         messages.success(request, "Notification deleted successfully.")
         return redirect('dashboard')
     return render(request, 'confirm_delete_notification.html', {'message': message})
+
+
 
 
 
