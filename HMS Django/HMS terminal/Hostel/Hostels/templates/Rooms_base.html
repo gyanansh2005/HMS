@@ -16,12 +16,10 @@
 <body>
     <!-- Navbar -->
     <div class="navbar" id="navbar">
-        <div class="dropdown logo">
-            <a href="#" class="logo-link">CampusNest <i class="fa-solid fa-angle-down"></i></a>
-            <div class="dropdown-content">
-                <a href="{% url 'app2index' %}">CampusConnect</a>
-            </div>
+        <div class="logo">
+            <a href="{% url 'index' %}" class="logo-link">CampusNest</a>
         </div>
+        
         <div class="nav-links">
             {% if user.is_authenticated and user.is_staff %}
             <a href="{%url 'admin_dashboard'%}">Dashboard</a>
