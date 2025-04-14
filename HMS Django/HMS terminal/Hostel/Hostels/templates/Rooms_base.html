@@ -43,7 +43,7 @@
                     {% if user.student_profile.profile_picture %}
                         <img src="{{ user.student_profile.profile_picture.url }}" alt="Profile Picture">
                     {% else %}
-                        <img src="{% static 'images/default_profile.png' %}" alt="Profile Picture">
+                        <img src="../static/images/profile.png" alt="Profile Picture">
                     {% endif %}
                 </div>
             </a>
