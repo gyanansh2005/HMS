@@ -29,3 +29,18 @@ class ClaimRequestAdmin(admin.ModelAdmin):
     list_display = ('item', 'created_at', 'is_approved')
     list_filter = ('is_approved', 'created_at')
     search_fields = ('item__title', 'message')
+
+from django.contrib import admin
+from .models import MessRules
+from .forms import MessRulesForm
+
+class MessRulesAdmin(admin.ModelAdmin):
+    form = MessRulesForm
+    list_display = ['rule_short', 'order', 'created_at']
+    ordering = ['order', 'created_at']
+
+    def rule_short(self, obj):
+        return obj.rule[:50] + ('...' if len(obj.rule) > 50 else '')
+    rule_short.short_description = 'Rule'
+
+admin.site.register(MessRules, MessRulesAdmin)
