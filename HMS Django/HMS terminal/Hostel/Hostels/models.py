@@ -100,6 +100,8 @@ class Allocation(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='allocations')
     allocation_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.email} - {self.room.room_number}"
@@ -114,6 +116,32 @@ class Allocation(models.Model):
             )
         ]
     
+class RoomChangeRequest(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='room_change_requests')
+    current_allocation = models.ForeignKey(Allocation, on_delete=models.CASCADE, related_name='current_room_changes')
+    requested_room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='requested_room_changes')
+    reason = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} - Change to {self.requested_room.room_number}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'status'],
+                condition=models.Q(status='pending'),
+                name='unique_pending_room_change_per_user'
+            )
+        ]
     
 # models.py
 class FeePayment(models.Model):
@@ -144,6 +172,7 @@ class FeePayment(models.Model):
     
 # models.py
 class ComplaintMaintenance(models.Model):
+    
     REQUEST_TYPES = (
         ('complaint', 'Complaint'),
         ('maintenance', 'Maintenance'),
@@ -186,3 +215,5 @@ def save_user_profile(sender, instance, **kwargs):
     if not instance.is_staff and not instance.is_superuser:
         if hasattr(instance, 'student_profile'):
             instance.student_profile.save()
+            
+            

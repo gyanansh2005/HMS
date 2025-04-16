@@ -38,24 +38,88 @@ def login_view(request):
             messages.error(request, 'Invalid email or password.')
     return render(request, 'Rooms_login.html')
 
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import login
+from django.core.exceptions import ValidationError
+from django.contrib.auth.hashers import make_password
+from .models import CustomUser, StudentProfile
+from .forms import SignupForm
+import re
+
 def signup_view(request):
     if request.method == 'POST':
-        form = SignupForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            if not user.is_staff and not user.is_superuser:
-                student_profile = user.student_profile  # Get the auto-created profile
-                student_profile.contact_number = form.cleaned_data['contact_number']
+        # Extract form data
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        contact_number = request.POST.get('contact_number')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        roll_number = request.POST.get('roll_number')
+        terms = request.POST.get('terms')
+
+        # Basic validations
+        if not terms:
+            messages.error(request, 'You must agree to the terms and conditions.')
+            return render(request, 'Rooms_signup.html', {'form': SignupForm(request.POST)})
+
+        if password1 != password2:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'Rooms_signup.html', {'form': SignupForm(request.POST)})
+
+        if CustomUser.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered.')
+            return render(request, 'Rooms_signup.html', {'form': SignupForm(request.POST)})
+
+        # Password validation
+        try:
+            # Custom password validation
+            if len(password1) < 8:
+                raise ValidationError('Password must be at least 8 characters long.')
+            if not re.search(r'[A-Z]', password1):
+                raise ValidationError('Password must contain at least one uppercase letter.')
+            if not re.search(r'[a-z]', password1):
+                raise ValidationError('Password must contain at least one lowercase letter.')
+            if not re.search(r'[0-9]', password1):
+                raise ValidationError('Password must contain at least one digit.')
+            if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password1):
+                raise ValidationError('Password must contain at least one special character.')
+
+            # Create user
+            with transaction.atomic():
+                user = CustomUser.objects.create_user(
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    password=password1,
+                    roll_number=roll_number
+                )
+
+                # Create or update student profile
+                student_profile, created = StudentProfile.objects.get_or_create(user=user)
+                student_profile.contact_number = contact_number
                 student_profile.save()
-            login(request, user)
-            return redirect('login')  # Replace 'home' with your redirect URL
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
-    else:
-        form = SignupForm()
+
+                # Log in the user
+                login(request, user)
+                messages.success(request, 'Registration successful! .')
+                return redirect('login')  # Redirect to home page after signup
+
+        except ValidationError as e:
+            for error in e.messages:
+                messages.error(request, error)
+            return render(request, 'Rooms_signup.html', {'form': SignupForm(request.POST)})
+        except Exception as e:
+            messages.error(request, f'Registration failed: {str(e)}')
+            return render(request, 'Rooms_signup.html', {'form': SignupForm(request.POST)})
+
+    # For GET request, render empty form
+    form = SignupForm()
     return render(request, 'Rooms_signup.html', {'form': form})
+
+
 
 def index(request):
     return render(request, 'Rooms_index.html',)
@@ -175,10 +239,12 @@ def room_allocation(request):
                     return redirect('room_allocation')
 
                 # Create allocation
+                room_id = request.POST.get('room_id')  # Adjust based on your form
+                room = Room.objects.get(id=room_id)
                 Allocation.objects.create(
                     user=request.user,
                     room=room,
-                    status='pending'
+                    status='pending',
                 )
 
                 # Update bed count atomically
@@ -289,8 +355,10 @@ def get_floors(request, hostel_id):
 
 def profiles(request):
     # Get the latest allocation for the user
+    
+    allocation = request.user.allocations.filter(models.Q(status='confirmed') | models.Q(status='pending')).order_by('-allocation_date').first()
+
     student_profile = getattr(request.user, 'student_profile', None)
-    allocation = request.user.allocations.first() if hasattr(request.user, 'allocations') else None
     profile_completion = calculate_profile_completion(request.user, student_profile)
     stats = {
         'bookings': request.user.allocations.count(),
@@ -589,6 +657,41 @@ from app2.models import Form, DiscussionMessage, MessMenu, TodayMenu,ClaimReques
 from app2.forms import  DiscussionForm, MessMenuForm
 from datetime import date
 
+from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation, FeePayment, RoomChangeRequest
+
+
+@login_required
+def cancel_allocation(request, allocation_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to cancel allocations.")
+        return redirect('index')
+
+    allocation = get_object_or_404(Allocation, id=allocation_id)
+
+    if allocation.status == 'cancelled':
+        messages.error(request, "This allocation is already cancelled.")
+        return redirect('admin_dashboard')
+
+    if request.method == 'POST':
+        with transaction.atomic():
+            # Update room's occupied beds
+            room = allocation.room
+            if room.occupied_beds > 0:
+                room.occupied_beds -= 1
+                room.save()
+
+            # Update allocation status
+            allocation.status = 'cancelled'
+            allocation.updated_at = timezone.now()
+            allocation.save()
+
+            messages.success(request, f"Allocation for {allocation.user.email} cancelled successfully.")
+        return redirect('/dashboard/?tab=allocations')
+
+    return render(request, 'Rooms_confirm_cancel.html', {
+        'allocation': allocation,
+    })
+
 @login_required
 def dashboard(request):
     if not request.user.is_staff:
@@ -596,6 +699,8 @@ def dashboard(request):
         return redirect('index')
     
     active_tab = request.GET.get('tab', 'overview')
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', '')
     
     # Common statistics
     total_users = CustomUser.objects.filter(is_staff=False).count()
@@ -608,6 +713,7 @@ def dashboard(request):
     status_counts = {item['status']: item['count'] for item in allocation_stats}
     pending_allocations = status_counts.get('pending', 0)
     confirmed_allocations = status_counts.get('confirmed', 0)
+    cancelled_allocations = status_counts.get('cancelled', 0)
     rejected_allocations = status_counts.get('rejected', 0)
     upcoming_events = Form.objects.filter(date__gte=date.today()).count()
     occupancy_rate = Room.objects.aggregate(total_beds=Sum('total_beds'), occupied=Sum('occupied_beds'))
@@ -621,6 +727,9 @@ def dashboard(request):
 
     context = {
         'active_tab': active_tab,
+        'search_query': search_query,
+        'status_filter': status_filter,
+       
         'stats': {
             'total_users': total_users,
             'available_rooms': available_rooms,
@@ -630,6 +739,7 @@ def dashboard(request):
             'pending_allocations': pending_allocations,
             'confirmed_allocations': confirmed_allocations,
             'rejected_allocations': rejected_allocations,
+            'cancelled_allocations': cancelled_allocations,
             'upcoming_events': upcoming_events,
             'occupancy_percentage': round(occupancy_percentage, 1),
             'rating_progress_width': rating_progress_width,
@@ -711,6 +821,30 @@ def dashboard(request):
         if search_query:
             allocations = allocations.filter(room__room_number__icontains=search_query)
         context.update({'allocations': allocations, 'status_filter': status_filter, 'search_query': search_query})
+        
+    
+    
+    
+    
+    
+    elif active_tab == 'change_room':
+        search_query = request.GET.get('search', '')
+        status_filter = request.GET.get('status', '')
+        room_change_requests = RoomChangeRequest.objects.all()
+        if search_query:
+            room_change_requests = room_change_requests.filter(
+                models.Q(user__email__icontains=search_query) |
+                models.Q(reason__icontains=search_query) |
+                models.Q(current_allocation__room__room_number__icontains=search_query) |
+                models.Q(requested_room__room_number__icontains=search_query)
+            )
+        if status_filter:
+            room_change_requests = room_change_requests.filter(status=status_filter)
+        context.update({
+            'room_change_requests': room_change_requests,
+            'search_query': search_query,
+            'status_filter': status_filter,
+        })
     
     elif active_tab == 'events':
         events = Form.objects.all().order_by('date')
@@ -1013,6 +1147,9 @@ def set_today_menu(request, menu_id):
     messages.success(request, f"{menu.meal_type} set as today's menu!")
     return redirect('/dashboard/?tab=mess')
 
+
+
+
 @login_required
 def update_mess_menu(request, menu_id):
     if not request.user.is_staff:
@@ -1051,8 +1188,110 @@ def delete_notification(request, msg_id):
     if request.method == "POST":
         message.delete()
         messages.success(request, "Notification deleted successfully.")
-        return redirect('dashboard')
+        return redirect('admin_dashboard')
     return render(request, 'confirm_delete_notification.html', {'message': message})
+
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from .forms import RoomChangeRequestForm
+from .models import RoomChangeRequest, Allocation, Room, Hostel
+
+@login_required
+def room_change_request(request):
+    if not request.user.allocations.filter(status='confirmed').exists():
+        messages.error(request, "You need a confirmed room allocation to request a change.")
+        return redirect('profiles')
+
+    hostels = Hostel.objects.all()
+
+    if request.method == 'POST':
+        form = RoomChangeRequestForm(request.POST)
+        requested_room_id = request.POST.get('requested_room')
+        if form.is_valid() and requested_room_id:
+            try:
+                requested_room = Room.objects.get(id=requested_room_id)
+                with transaction.atomic():
+                    # Check if requested room has available beds
+                    if requested_room.beds_left <= 0:
+                        messages.error(request, "The selected room is no longer available.")
+                        return redirect('room_change_request')
+
+                    # Check if user already has a pending request
+                    if RoomChangeRequest.objects.filter(user=request.user, status='pending').exists():
+                        messages.error(request, "You already have a pending room change request.")
+                        return redirect('room_change_request')
+
+                    # Create room change request
+                    room_change = form.save(commit=False)
+                    room_change.user = request.user
+                    room_change.current_allocation = request.user.allocations.get(status='confirmed')
+                    room_change.requested_room = requested_room
+                    room_change.save()
+                    messages.success(request, "Room change request submitted successfully!")
+                    return redirect('profiles')
+            except Room.DoesNotExist:
+                messages.error(request, "Invalid room selected.")
+        else:
+            messages.error(request, "Please correct the errors in the form.")
+    else:
+        form = RoomChangeRequestForm()
+
+    return render(request, 'Rooms_room_change_request.html', {
+        'form': form,
+        'hostels': hostels,
+    })
+
+
+
+@login_required
+def update_room_change_status(request, request_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to update room change requests.")
+        return redirect('index')
+
+    room_change = get_object_or_404(RoomChangeRequest, id=request_id)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in ['pending', 'approved', 'rejected']:
+            with transaction.atomic():
+                if new_status == 'approved':
+                    current_allocation = room_change.current_allocation
+                    requested_room = room_change.requested_room
+
+                    if requested_room.beds_left <= 0:
+                        messages.error(request, "Requested room is no longer available.")
+                        return redirect('admin_dashboard')
+
+                    # Update current allocation
+                    current_room = current_allocation.room
+                    current_room.occupied_beds -= 1
+                    current_room.save()
+
+                    # Update allocation to new room
+                    current_allocation.room = requested_room
+                    current_allocation.status = 'confirmed'
+                    current_allocation.allocation_date = timezone.now()
+                    current_allocation.save()
+
+                    # Update new room's occupied beds
+                    requested_room.occupied_beds += 1
+                    requested_room.save()
+
+                room_change.status = new_status
+                room_change.save()
+                messages.success(request, f"Room change request {new_status}.")
+        else:
+            messages.error(request, "Invalid status selected.")
+
+    return redirect('admin_dashboard')
+
 
 
 

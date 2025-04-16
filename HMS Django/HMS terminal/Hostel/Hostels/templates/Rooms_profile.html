@@ -21,7 +21,7 @@
     <div class="profile-progress">
         <p>Profile Completion: <span id="progress-percent">{{ profile_completion|floatformat:0 }}%</span></p>
         <div class="progress-bar">
-            <div class="progress-fill" style="width: {{ profile_completion|floatformat:0 }} %;"></div>
+            <div class="progress-fill" style="width: {{ profile_completion|floatformat:0 }}%;"></div>
         </div>
     </div>
 
@@ -77,60 +77,72 @@
         </aside>
 
         <main class="profile-main">
-            <div class="profile-section card">
-                <h2><i class="fas fa-home"></i> Hostel Details</h2>
-                {% if allocation %}
-                <div class="details-grid">
-                    <div class="detail-item">
-                        <span>Room Number:</span>
-                        <strong>{{ allocation.room.room_number }}</strong>
-                    </div>
-                    <div class="detail-item">
-                        <span>Hostel:</span>
-                        <strong>{{ allocation.room.hostel.name }}</strong>
-                    </div>
-                    <div class="detail-item">
-                        <span>Floor:</span>
-                        <strong>Floor {{ allocation.room.floor }}</strong>
-                    </div>
-                    <div class="detail-item">
-                        <span>AC Type:</span>
-                        <strong>{{ allocation.room.get_ac_type_display }}</strong>
-                    </div>
-                    <div class="detail-item">
-                        <span>Allocation Date:</span>
-                        <strong>{{ allocation.allocation_date|date:"F d, Y" }}</strong>
-                    </div>
-                    <div class="detail-item">
-                        <span>Status:</span>
-                        <strong class="status-{{ allocation.status }}">
-                            {{ allocation.get_status_display }}
-                            {% if allocation.status == 'pending' %}
-                            (Pending Payment)
-                            {% endif %}
-                        </strong>
-                    </div>
-                    {% if allocation.fee_payments.exists %}
-                    <div class="detail-item">
-                        <span>Payment Status:</span>
-                        <strong class="status-completed">
-                            Completed (₹{{ allocation.fee_payments.first.amount }})
-                        </strong>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="profile-actions">
+            <!-- Hostel Details Section -->
+<div class="profile-section card">
+    <h2><i class="fas fa-home"></i> Hostel Details</h2>
+    {% if allocation %}
+        <div class="details-grid">
+            <!-- Room Details -->
+            <div class="detail-item">
+                <span>Room Number:</span>
+                <strong>{{ allocation.room.room_number }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Hostel:</span>
+                <strong>{{ allocation.room.hostel.name }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Floor:</span>
+                <strong>Floor {{ allocation.room.floor }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>AC Type:</span>
+                <strong>{{ allocation.room.get_ac_type_display }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Allocation Date:</span>
+                <strong>{{ allocation.allocation_date|date:"F d, Y" }}</strong>
+            </div>
+            
+            <!-- Status Display -->
+            <div class="detail-item status-display">
+                <span>Status:</span>
+                <div class="status-indicator status-{{ allocation.status }}">
+                    {{ allocation.get_status_display }}
                     {% if allocation.status == 'pending' %}
-                    <a class="btn primary" href="{% url 'payment' %}">Pay Now</a>
+                    <div class="payment-pending">(Payment Required)</div>
                     {% endif %}
                 </div>
-                {% else %}
-                <div class="no-allocation">
-                    <p>You don't have a room allocation yet.</p>
-                    <a href="{% url 'room_allocation' %}" class="btn primary">Book a Room</a>
-                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                {% if allocation.status == 'confirmed' %}
+                    <a href="{% url 'room_change_request' %}" class="btn btn-primary">
+                        <i class="fas fa-exchange-alt"></i> Request Room Change
+                    </a>
+                    {% if allocation.fee_payments.exists %}
+                    <div class="payment-status">
+                        <i class="fas fa-check-circle"></i>
+                        Paid: ₹{{ allocation.fee_payments.first.amount }}
+                    </div>
+                    {% endif %}
+                {% elif allocation.status == 'pending' %}
+                    <a class="btn payment-btn" href="{% url 'payment' %}">
+                        <i class="fas fa-credit-card"></i> Complete Payment
+                    </a>
                 {% endif %}
             </div>
+        </div>
+    {% else %}
+        <div class="no-allocation">
+            <p>No active room allocation found.</p>
+            <a href="{% url 'room_allocation' %}" class="btn primary">
+                <i class="fas fa-bed"></i> Book a Room
+            </a>
+        </div>
+    {% endif %}
+</div>
 
             <div class="profile-section card">
                 <h2><i class="fas fa-user"></i> Personal Details</h2>
@@ -187,6 +199,8 @@
         </main>
     </div>
 </div>
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

@@ -2,15 +2,57 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, StudentProfile, FeePayment, ComplaintMaintenance, Feedback
 
+# forms.py
+from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.core.exceptions import ValidationError
+from .models import CustomUser, StudentProfile
+import re
+
+class LoginForm(AuthenticationForm):
+    username = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'placeholder': 'your.email@example.com'}))
+    password = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'placeholder': '••••••••'}))
+
+    def clean_username(self):
+        email = self.cleaned_data.get('username')
+        if not CustomUser.objects.filter(email=email).exists():
+            raise ValidationError("This email is not registered.")
+        return email
+
 class SignupForm(UserCreationForm):
-    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
-    contact_number = forms.CharField(max_length=15, required=True)  # Add this field
-    terms = forms.BooleanField(required=True)
+    contact_number = forms.CharField(max_length=15, required=True)
+    terms = forms.BooleanField(required=True, error_messages={'required': 'You must agree to the terms and conditions.'})
 
     class Meta:
         model = CustomUser
         fields = ('first_name', 'last_name', 'email', 'roll_number', 'contact_number', 'password1', 'password2')
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise ValidationError("This email is already registered.")
+        return email
+
+    def clean_contact_number(self):
+        contact_number = self.cleaned_data.get('contact_number')
+        if not re.match(r'^\+?1?\d{9,15}$', contact_number):
+            raise ValidationError("Enter a valid phone number (e.g., +1234567890).")
+        return contact_number
+
+    def clean_roll_number(self):
+        roll_number = self.cleaned_data.get('roll_number')
+        if roll_number and CustomUser.objects.filter(roll_number=roll_number).exists():
+            raise ValidationError("This roll number is already in use.")
+        return roll_number
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 and password2 and password1 != password2:
+            raise ValidationError("Passwords do not match.")
+        if password1 and len(password1) < 8:
+            raise ValidationError("Password must be at least 8 characters long.")
+        return password2
     
     
 class ProfileUpdateForm(forms.ModelForm):
@@ -89,4 +131,21 @@ class EventForm(forms.ModelForm):
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
             'time': forms.TimeInput(attrs={'type': 'time'}),
+        }
+        
+        
+from django import forms
+from .models import RoomChangeRequest, Room
+
+
+class RoomChangeRequestForm(forms.ModelForm):
+    class Meta:
+        model = RoomChangeRequest
+        fields = ['reason']
+        widgets = {
+            'reason': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Please provide the reason for requesting a room change',
+                'class': 'form-control'
+            }),
         }

@@ -488,6 +488,45 @@
     margin-top: 0.3rem;
     display: block;
 }
+/* Status Indicators */
+.status-indicator {
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-confirmed {
+    background: #e3fcef;
+    color: #0a5c36;
+    border: 2px solid #0a5c36;
+}
+
+.status-pending {
+    background: #fff8e6;
+    color: #8a6d3b;
+    border: 2px solid #8a6d3b;
+}
+
+.status-cancelled {
+    background: #fdecea;
+    color: #db3737;
+    border: 2px solid #db3737;
+}
+
+.payment-pending {
+    font-size: 0.9em;
+    margin-top: 4px;
+}
+
+.action-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
 
 /* Animations */
 @keyframes fadeIn {

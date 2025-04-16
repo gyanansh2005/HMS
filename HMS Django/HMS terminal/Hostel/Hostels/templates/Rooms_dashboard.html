@@ -36,6 +36,12 @@
                         <span>Allocations</span>
                     </a>
                 </li>
+                <li class="{% if active_tab == 'change_room' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}?tab=change_room">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Change Room</span>
+                    </a>
+                </li>
                 <li class="{% if active_tab == 'events' or active_tab == 'add_event' %}active{% endif %}">
                     <a href="{% url 'admin_dashboard' %}?tab=events">
                         <i class="fas fa-calendar-alt"></i>
@@ -81,6 +87,7 @@
                     {% elif active_tab == 'users' %}Users / Management
                     {% elif active_tab == 'requests' %}Requests / Management
                     {% elif active_tab == 'allocations' %}Allocations / Management
+                    {% elif active_tab == 'change_room' %}Change Room / Management
                     {% elif active_tab == 'events' %}Events / Management
                     {% elif active_tab == 'add_event' %}Events / Add Event
                     {% elif active_tab == 'mess' %}Mess Menu / Management
@@ -455,6 +462,7 @@
                         <option value="{% url 'view_allocations' %}?status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
                         <option value="{% url 'view_allocations' %}?status=confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
                         <option value="{% url 'view_allocations' %}?status=rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="{% url 'admin_dashboard' %}?tab=allocations&status=cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
                     </select>
                     <form method="GET" action="{% url 'view_allocations' %}" class="search-box">
                         <div class="search-input">
@@ -489,18 +497,32 @@
                             </td>
                             <td>{{ allocation.allocation_date|date:"M d, Y" }}</td>
                         </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="empty-state">
-                                <i class="fas fa-home"></i>
-                                No allocations found
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                        <td class="actions">
+                            {% if allocation.status == 'pending' %}
+                            <a href="#" class="action-btn approve-btn" data-id="{{ allocation.id }}" title="Approve">
+                                <i class="fas fa-check"></i>
+                            </a>
+                            <a href="#" class="action-btn reject-btn" data-id="{{ allocation.id }}" title="Reject">
+                                <i class="fas fa-times"></i>
+                            </a>
+                            {% endif %}
+                            {% if allocation.status != 'cancelled' %}
+                            <a href="{% url 'cancel_allocation' allocation.id %}" class="action-btn cancel-btn" title="Cancel Allocation">
+                                <i class="fas fa-times-circle"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fas fa-home"></i>
+                            No allocations found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            
         {% elif active_tab == 'events' %}
         <div class="events-section">
             <div class="table-header">
@@ -563,7 +585,6 @@
                     </a>
                 </div>
             </div>
-
             <div class="form-container">
                 <form method="POST" class="event-form">
                     {% csrf_token %}
@@ -789,7 +810,76 @@
     {% endfor %}
   </div>
         </div>
+
 {% endif %}
+{% elif active_tab == 'change_room' %}
+<div class="change-room-section">
+    <div class="table-header">
+        <h2>Room Change Requests</h2>
+        <div class="table-actions">
+            <form method="GET" action="{% url 'admin_dashboard' %}?tab=change_room" class="search-box">
+                <div class="search-input">
+                    <i class="fas fa-search"></i>
+                    <input type="text" name="search" placeholder="Search requests..." value="{{ search_query }}">
+                </div>
+            </form>
+            <select class="status-filter" onchange="location = this.value;">
+                <option value="{% url 'admin_dashboard' %}?tab=change_room" {% if not status_filter %}selected{% endif %}>All</option>
+                <option value="{% url 'admin_dashboard' %}?tab=change_room&status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="{% url 'admin_dashboard' %}?tab=change_room&status=approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="{% url 'admin_dashboard' %}?tab=change_room&status=rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Current Room</th>
+                    <th>Requested Room</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in room_change_requests %}
+                <tr>
+                    <td>{{ request.user.email }}</td>
+                    <td>{{ request.current_allocation.room.room_number }} ({{ request.current_allocation.room.hostel.name }})</td>
+                    <td>{{ request.requested_room.room_number }} ({{ request.requested_room.hostel.name }})</td>
+                    <td>{{ request.reason|truncatewords:10 }}</td>
+                    <td>
+                        <span class="status-badge {{ request.status }}">
+                            {{ request.status|capfirst }}
+                        </span>
+                    </td>
+                    <td>{{ request.created_at|date:"M d, Y" }}</td>
+                    <td class="actions">
+                        <form method="POST" action="{% url 'update_room_change_status' request.id %}">
+                            {% csrf_token %}
+                            <select name="status" onchange="this.form.submit()">
+                                <option value="pending" {% if request.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="approved" {% if request.status == 'approved' %}selected{% endif %}>Approved</option>
+                                <option value="rejected" {% if request.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <i class="fas fa-exchange-alt"></i>
+                        No room change requests found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endif %}
              
 
@@ -1827,7 +1917,19 @@ body.dark .chat-messages::-webkit-scrollbar-thumb {
         padding: var(--padding-small);
     }
 }    
-    
+
+/* Room change */
+.change-room-section {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: var(--padding-large);
+    margin-bottom: var(--gap-large);
+}
+
+body.dark .change-room-section {
+    background: rgba(255, 255, 255, 0.1);
+}
 
 
 
@@ -2196,6 +2298,22 @@ body.dark .discussion-form textarea {
     background: var(--secondary-color);
     transform: translateY(-2px);
 }
+.status-badge.cancelled {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+/* Style for cancel button */
+.action-btn.cancel-btn {
+    color: #ef476f;
+    margin-left: 10px;
+}
+
+.action-btn.cancel-btn:hover {
+    color: #d43f61;
+    transform: scale(1.1);
+}
+
 .footer{
     display: none;
 }

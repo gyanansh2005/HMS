@@ -30,6 +30,8 @@ urlpatterns = [
     path('profile/', views.profiles, name='profiles'),
     path('requests/', views.view_requests, name='view_requests'),
     path('allocations/', views.view_allocations, name='view_allocations'),
+    path('allocation/cancel/<int:allocation_id>/', views.cancel_allocation, name='cancel_allocation'),
+    
     path('user/edit/<int:user_id>/', views.edit_user, name='edit_user'),
     path('user/delete/<int:user_id>/', views.delete_user, name='delete_user'),
     path('staff_signup/', views.staff_signup_view, name='staff_signup'),
@@ -51,5 +53,7 @@ urlpatterns = [
     
     path('claims/manage/', app2_views.manage_claims, name='manage_claims'),
     path('claims/approve/<int:claim_id>/', app2_views.approve_claim, name='approve_claim'),
+    path('room_change/request/', views.room_change_request, name='room_change_request'),
+    path('room_change/update/<int:request_id>/', views.update_room_change_status, name='update_room_change_status'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
