@@ -1152,39 +1152,61 @@ def set_today_menu(request, menu_id):
 
 
 
+# views.py
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from app2.models import MessMenu
+from app2.forms import MessMenuForm
 
 @login_required
 def update_mess_menu(request, menu_id):
     if not request.user.is_staff:
-        messages.error(request, "You don't have permission to modify menus.")
+        messages.error(request, "You don't have permission to edit menus.")
         return redirect('index')
     
     menu = get_object_or_404(MessMenu, id=menu_id)
+    
     if request.method == 'POST':
         form = MessMenuForm(request.POST, instance=menu)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Menu updated successfully!')
+            messages.success(request, 'Menu item updated successfully!')
             return redirect('/dashboard/?tab=mess')
+        else:
+            messages.error(request, 'Failed to update menu item. Please check the form.')
     else:
         form = MessMenuForm(instance=menu)
     
-    return render(request, 'Rooms_admin_form.html', {'form': form, 'update': True})
+    return render(request, 'Rooms_admin_form.html', {
+        'form': form,
+        'menu': menu,
+        'update': True,
+        'title': 'Update Mess Menu'
+    })
 
 @login_required
 def delete_mess_menu(request, menu_id):
-    if not request.user.is_staff:
+    if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, "You don't have permission to delete menus.")
         return redirect('index')
     
     menu = get_object_or_404(MessMenu, id=menu_id)
-    menu.delete()
-    messages.success(request, 'Menu deleted successfully!')
-    return redirect('/dashboard/?tab=mess')
-
-
-
-
+    
+    if request.method == 'POST':
+        try:
+            menu.delete()
+            messages.success(request, 'Menu item deleted successfully!')
+            return redirect('/dashboard/?tab=mess')
+        except Exception as e:
+            messages.error(request, f'Failed to delete menu item: {str(e)}')
+            return redirect('/dashboard/?tab=mess')
+    
+    return render(request, 'Rooms_confirm_delete.html', {
+        'menu': menu,
+        'title': 'Delete Mess Menu',
+        'message': f'Are you sure you want to delete the {menu.meal_type} menu for {menu.day}?'
+    })
 
 def delete_notification(request, msg_id):
     message = get_object_or_404(DiscussionMessage, id=msg_id)

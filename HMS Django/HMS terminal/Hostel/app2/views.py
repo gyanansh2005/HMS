@@ -135,13 +135,7 @@ def update_mess_menu(request, menu_id):
         form = MessMenuForm(instance=menu)
     return render(request, 'update_mess_menu.html', {'form': form})
 
-def delete_mess_menu(request, menu_id):
-    menu = get_object_or_404(MessMenu, id=menu_id)
-    if request.method == "POST":
-        menu.delete()
-        messages.success(request, "Menu deleted successfully.")
-        return redirect('mess')
-    return render(request, 'confirm_delete.html', {'menu': menu})
+
 
 @login_required
 def discussion_center(request):

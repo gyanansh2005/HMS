@@ -15,8 +15,6 @@ urlpatterns = [
     path('claims/manage/', views.manage_claims, name='manage_claims'),
     path('claims/approve/<int:claim_id>/', views.approve_claim, name='approve_claim'),
     path('mess/set-today/<int:menu_id>/', views.set_today_menu, name='set_today_menu'),
-    path('mess/update/<int:menu_id>/', views.update_mess_menu, name='update_mess_menu'),
-    path('mess/delete/<int:menu_id>/', views.delete_mess_menu, name='delete_mess_menu'),
     path('discussion/delete-notification/<int:msg_id>/', views.delete_notification, name='delete_notification'),
     
     
