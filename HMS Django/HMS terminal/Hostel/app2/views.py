@@ -291,7 +291,7 @@ def add_mess_rule(request):
         form = MessRulesForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('mess_rules_list')  # Or wherever you want to redirect
+            return redirect('add_mess_rule')  # Or wherever you want to redirect
     else:
         form = MessRulesForm()
     
