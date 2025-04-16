@@ -1761,12 +1761,12 @@ body.dark .mess-form textarea {
 }
 
 .today-menu-card {
-    background: linear-gradient(45deg, var(--success-color), #09bc8a);
-    color: var(--text-light);
-    padding: var(--padding-large);
+    {% comment %} background: linear-gradient(45deg, var(--success-color), #09bc8a); {% endcomment %}
+    {% comment %} color: var(--text-light); {% endcomment %}
+    padding-left:50px;
     border-radius: 10px;
     margin-bottom: var(--gap-large);
-    box-shadow: var(--shadow);
+    {% comment %} box-shadow: var(--shadow); {% endcomment %}
 }
 
 .today-menu-card.empty {
@@ -1814,6 +1814,7 @@ body.dark .today-menu-card.empty {
     gap: var(--gap-small);
     margin-bottom: var(--gap-medium);
     overflow-x: auto;
+    padding-left: 30px;
 }
 
 .tab-btn {

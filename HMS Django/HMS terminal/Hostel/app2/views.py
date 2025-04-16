@@ -135,6 +135,14 @@ def update_mess_menu(request, menu_id):
         form = MessMenuForm(instance=menu)
     return render(request, 'update_mess_menu.html', {'form': form})
 
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+
+def delete_mess_menu(request, menu_id):
+    menu = get_object_or_404(MessMenu, id=menu_id)
+    menu.delete()
+    messages.success(request, "Menu deleted successfully.")
+    return redirect('/dashboard/?tab=mess')  # Replace 'mess' with the name of the page you're redirecting to
 
 
 @login_required
@@ -274,3 +282,17 @@ def approve_claim(request, claim_id):
     claim.item.save()
     messages.success(request, 'Claim approved successfully.')
     return redirect('manage_claims')
+
+from django.shortcuts import render, redirect
+from .forms import MessRulesForm
+
+def add_mess_rule(request):
+    if request.method == 'POST':
+        form = MessRulesForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('mess_rules_list')  # Or wherever you want to redirect
+    else:
+        form = MessRulesForm()
+    
+    return render(request, 'add_mess_rule.html', {'form': form})

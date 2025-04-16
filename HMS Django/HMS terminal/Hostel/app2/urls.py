@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import add_mess_rule
 
 urlpatterns = [
     path('', views.app2index, name='app2index'),
@@ -16,6 +17,7 @@ urlpatterns = [
     path('claims/approve/<int:claim_id>/', views.approve_claim, name='approve_claim'),
     path('mess/set-today/<int:menu_id>/', views.set_today_menu, name='set_today_menu'),
     path('discussion/delete-notification/<int:msg_id>/', views.delete_notification, name='delete_notification'),
+    path('add-rule/', add_mess_rule, name='add_mess_rule'),
     
     
 ]
