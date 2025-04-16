@@ -280,3 +280,17 @@ def approve_claim(request, claim_id):
     claim.item.save()
     messages.success(request, 'Claim approved successfully.')
     return redirect('manage_claims')
+
+from django.shortcuts import render, redirect
+from .forms import MessRulesForm
+
+def add_mess_rule(request):
+    if request.method == 'POST':
+        form = MessRulesForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('mess_rules_list')  # Or wherever you want to redirect
+    else:
+        form = MessRulesForm()
+    
+    return render(request, 'add_mess_rule.html', {'form': form})
