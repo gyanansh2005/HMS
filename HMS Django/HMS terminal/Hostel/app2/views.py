@@ -135,13 +135,15 @@ def update_mess_menu(request, menu_id):
         form = MessMenuForm(instance=menu)
     return render(request, 'update_mess_menu.html', {'form': form})
 
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+
 def delete_mess_menu(request, menu_id):
     menu = get_object_or_404(MessMenu, id=menu_id)
-    if request.method == "POST":
-        menu.delete()
-        messages.success(request, "Menu deleted successfully.")
-        return redirect('mess')
-    return render(request, 'confirm_delete.html', {'menu': menu})
+    menu.delete()
+    messages.success(request, "Menu deleted successfully.")
+    return redirect('/dashboard/?tab=mess')  # Replace 'mess' with the name of the page you're redirecting to
+
 
 @login_required
 def discussion_center(request):
