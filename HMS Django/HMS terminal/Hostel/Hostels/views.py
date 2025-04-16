@@ -644,7 +644,7 @@ from .models import CustomUser, Room, ComplaintMaintenance, Feedback, Allocation
 from django.db.models import Count, F, Avg, Sum
 from app2.models import Form
 from .forms import EventForm  # Ensure this is imported
-from datetime import date
+from datetime import date, datetime
 
 
 
@@ -754,10 +754,13 @@ def dashboard(request):
     }
 
     if active_tab == 'mess':
+        
         search_query = request.GET.get('search', '')
         day_filter = request.GET.get('day', '').capitalize()
         menus = MessMenu.objects.all()
-        today_menu = TodayMenu.objects.all()[:1]
+        today_day = datetime.today().strftime("%A")
+        today_menus = MessMenu.objects.filter(day=today_day)
+       
         days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
         if search_query:
@@ -789,7 +792,7 @@ def dashboard(request):
             'day': days,
             'day_filter': day_filter,
             'menus': menus,
-            'today_menu': today_menu,
+            'today_menus': today_menus,
             'search_query': search_query,
             'days': days,
             'form': form,

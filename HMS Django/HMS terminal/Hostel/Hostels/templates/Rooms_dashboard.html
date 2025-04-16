@@ -615,14 +615,23 @@
             </div>
 
             <!-- Today's Menu Section -->
-            {% if today_menu %}
+            {% if today_menus %}
             <div class="today-menu-card">
                 <h3>Today's Menu</h3>
-                <div class="menu-item">
-                    <span class="meal-type {{ today_menu.meal_type|lower }}">{{ today_menu.meal_type }}</span>
-                    <p>{{ today_menu.menu }}</p>
-                    <small>Day: {{ today_menu.day }}</small>
+                {% if today_menus %}
+                    {% for menu in today_menus %}
+                    <div class="menu-item">
+                        <span class="meal-type {{ menu.meal_type|lower }}">{{ menu.meal_type }}</span>
+                        <p>{{ menu.menu }}</p>
+                        <small>Day: {{ menu.day }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-utensils"></i>
+                    <p>No menu set for today.</p>
                 </div>
+                {% endif %}
             </div>
             {% else %}
             <div class="today-menu-card empty">
@@ -663,10 +672,6 @@
                                     </td>
                                     <td>{{ menu.menu }}</td>
                                     <td class="actions">
-                                        <a href="{% url 'set_today_menu' menu.id %}" class="action-btn"
-                                            title="Set as Today's Menu">
-                                            <i class="fas fa-calendar-check"></i>
-                                        </a>
                                         <a href="{% url 'update_mess_menu' menu.id %}" class="edit-btn" title="Edit">
                                             <i class="fas fa-pencil-alt"></i>
                                         </a>
@@ -867,6 +872,7 @@
                             </select>
                         </form>
                     </td>
+                    
                 </tr>
                 {% empty %}
                 <tr>

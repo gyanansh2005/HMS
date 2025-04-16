@@ -56,6 +56,7 @@
     <!-- Allocation Form with Enhanced Design -->
     <form method="post" class="allocation-form" style="display: none;">
         {% csrf_token %}
+        <input type="hidden" name="room_id" id="selected-room-id">
         <input type="hidden" name="hostel" id="form-hostel">
         <input type="hidden" name="floor" id="form-floor">
         <input type="hidden" name="ac_type" id="form-ac_type">
@@ -246,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleRoomSelection(event) {
         const roomCard = event.currentTarget;
+        const roomId = roomCard.dataset.roomId;
         if (!roomCard.classList.contains('available')) return;
 
         document.querySelectorAll('.room-card').forEach(card => {
@@ -257,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const roomNumber = roomCard.querySelector('.room-number').textContent;
         document.getElementById('selected-room-display').value = `Room ${roomNumber}`;
+        document.getElementById('selected-room-id').value = roomId;
         document.getElementById('selected-room-number').value = roomNumber;
         document.getElementById('selected-room-type').value = roomCard.closest('.room-category').classList.contains('four-sharing') ? 'four' :
             roomCard.closest('.room-category').classList.contains('double-sharing') ? 'double' :
