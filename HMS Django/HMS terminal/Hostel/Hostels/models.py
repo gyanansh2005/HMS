@@ -22,7 +22,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractUser):
     username = None  # Remove username field
     email = models.EmailField(unique=True)
-    roll_number = models.CharField(max_length=20, blank=True, null=True,)  # Optional field
+    roll_number = models.CharField(max_length=20, blank=True, null=True,unique=True)  # Optional field
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name','roll_number']  # roll_number is optional
