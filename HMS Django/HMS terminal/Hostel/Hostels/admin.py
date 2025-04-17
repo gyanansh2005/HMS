@@ -1,7 +1,7 @@
 # admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Hostel, Room, Allocation, StudentProfile
+from .models import CustomUser, Hostel, Room, Allocation, StudentProfile,Feedback
 from django.utils.html import format_html
 
 # Custom User Admin
@@ -82,3 +82,4 @@ class AllocationAdmin(admin.ModelAdmin):
 # Admin Site Customization
 
 
+admin.site.register(Feedback)

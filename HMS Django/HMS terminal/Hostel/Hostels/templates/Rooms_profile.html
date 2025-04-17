@@ -29,8 +29,8 @@
         <aside class="profile-sidebar">
             <div class="profile-picture-container">
                 <div class="profile-pic-bg"></div>
-                <img src="{% if student_profile.profile_picture %}{{ student_profile.profile_picture.url }}{% else %}{% static 'images/default_profile.png' %}{% endif %}" 
-                     alt="Profile Picture" class="profile-pic" id="profile-pic-display">
+                <img src="{% if student_profile.profile_picture %}{{ student_profile.profile_picture.url }}{% else %}{% static 'images/profile.png' %}{% endif %}"
+                alt="Profile Picture" class="profile-pic" id="profile-pic-display">
 
                 <form id="profile-picture-form" method="post" enctype="multipart/form-data" action="{% url 'update_profile_pic' %}">
                     {% csrf_token %}
@@ -39,7 +39,7 @@
                 </form>
 
                 <div id="image-preview" style="display: none; margin-top: 1rem;">
-                    <img id="preview-image" style="max-width: 100%; border-radius: 50%; border: 4px solid var(--primary);">
+                    <img id="preview-image" style="max-width: 100%; border-radius: 50%; border: 4px solid var(--primary);" src="../static/images/profile.png">
                 </div>
             </div>
 
