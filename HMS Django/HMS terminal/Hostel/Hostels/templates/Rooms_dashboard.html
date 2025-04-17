@@ -723,7 +723,7 @@
                 </div>
                 {% endif %}
                 <small class="text-muted">
-                    {{ msg.user.email }} - {{ msg.timestamp|timesince }} ago
+                    {{ msg.user.get_full_name|default:msg.user.email }} - {{ msg.timestamp|timesince }} ago
                     {% if msg.is_notification %}
                     <span class="badge bg-danger">System Notification</span>
                     {% endif %}

@@ -105,7 +105,7 @@ def signup_view(request):
                 # Log in the user
                 login(request, user)
                 messages.success(request, 'Registration successful! .')
-                return redirect('login')  # Redirect to home page after signup
+                return redirect('login_view')  # Redirect to home page after signup
 
         except ValidationError as e:
             for error in e.messages:
