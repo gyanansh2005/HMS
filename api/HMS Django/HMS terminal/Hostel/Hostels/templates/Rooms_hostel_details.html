@@ -1,0 +1,110 @@
+<!-- Rooms_hostel_details.html -->
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/Rooms_hostel_details.css' %}">
+<div class="hostel-details-container">
+    <div class="hostel-header">
+        <h1>Our Premium Residences</h1>
+        <p class="header-subtitle">Discover your perfect student home</p>
+    </div>
+
+    <div class="hostel-grid">
+        {% for hostel in hostels %}
+        <div class="hostel-card">
+            <div class="hostel-header-card">
+                <h2 class="hostel-title">{{ hostel.name }}</h2>
+            </div>
+            <ul class="feature-list">
+                {% for feature in hostel.feature_list|slice:":3" %}
+                <li>
+                    <span class="feature-icon">⭐</span>
+                    <span class="feature-text">{{ feature }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="action-buttons">
+                <a href="#" class="btn btn-explore" data-bs-toggle="modal" 
+                   data-bs-target="#hostelModal{{ hostel.id }}">
+                    Explore More
+                </a>
+                <a href="{% url 'room_allocation' %}" class="btn btn-book">Book Now</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Modals -->
+    {% for hostel in hostels %}
+    <div class="modal fade" id="hostelModal{{ hostel.id }}" tabindex="-1" 
+         aria-labelledby="hostelModalLabel{{ hostel.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hostelModalLabel{{ hostel.id }}">{{ hostel.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-image-container">
+                        <img src="../static/images/hostel-details3.jpg" 
+                             alt="{{ hostel.name }}" class="modal-image">
+                    </div>
+                    <div class="modal-details">
+                        <h6 class="modal-section-title">Premium Features</h6>
+                        <ul class="modal-feature-list">
+                            {% for feature in hostel.feature_list %}
+                            <li>
+                                <span class="feature-icon">⭐</span>
+                                <span class="feature-text">{{ feature }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <div class="modal-info">
+                            <p><strong>Floors:</strong> {{ hostel.total_floors }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="{% url 'room_allocation' %}" class="btn btn-primary">Book Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" 
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" 
+        crossorigin="anonymous"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap JS is not loaded!');
+        return;
+    }
+
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(function(modal) {
+        // Ensure modals are hidden by default (Bootstrap already does this, but reinforcing)
+        modal.style.display = 'none'; // Explicitly set to none on load
+        
+        modal.addEventListener('shown.bs.modal', function () {
+            console.log(`Modal ${modal.id} opened`);
+        });
+        modal.addEventListener('hidden.bs.modal', function () {
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '';
+            modal.style.display = 'none'; // Ensure it hides after closing
+            console.log(`Modal ${modal.id} closed, scrolling restored`);
+        });
+    });
+});
+</script>
+{% endblock %}
+
+
+{% endblock %}

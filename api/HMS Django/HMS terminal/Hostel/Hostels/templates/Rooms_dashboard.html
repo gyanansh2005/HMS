@@ -1,0 +1,2322 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="sidebar">
+        <div class="logo">
+            <div class="logo-container">
+                <img src="../static/images/profile.png" alt="CampusNest Logo" class="logo-img">
+                <h2>CampusNest</h2>
+            </div>
+        </div>
+        <nav>
+            <ul>
+                <li class="{% if active_tab == 'overview' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}?tab=overview">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Overview</span>
+                    </a>
+                </li>
+                <li class="{% if active_tab == 'users' %}active{% endif %}">
+                    <a href="{% url 'view_users' %}">
+                        <i class="fas fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                </li>
+                <li class="{% if active_tab == 'requests' %}active{% endif %}">
+                    <a href="{% url 'view_requests' %}">
+                        <i class="fas fa-tools"></i>
+                        <span>Requests</span>
+                    </a>
+                </li>
+                <li class="{% if active_tab == 'allocations' %}active{% endif %}">
+                    <a href="{% url 'view_allocations' %}">
+                        <i class="fas fa-home"></i>
+                        <span>Allocations</span>
+                    </a>
+                </li>
+                <li class="{% if active_tab == 'change_room' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}?tab=change_room">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Change Room</span>
+                    </a>
+                </li>
+                <li class="{% if active_tab == 'events' or active_tab == 'add_event' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}?tab=events">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Events</span>
+                    </a>
+                </li>
+                <li class="{% if active_tab == 'mess' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}?tab=mess">
+                        <i class="fas fa-utensils"></i>
+                        <span>Menu</span>
+                    </a>
+                </li>
+                <li class="{% if active_tab == 'manage_claims' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}?tab=manage_claims">
+                      <i class="fas fa-utensils"></i>
+                      <span>Lost&Found</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'notifications' %}active{% endif %}" 
+                       href="?tab=notifications">
+                        💬 Notifications
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="header-left">
+
+                <h1>Admin Dashboard</h1>
+
+                <div class="breadcrumb">
+                    {% if active_tab == 'overview' %}Overview / Statistics
+                    {% elif active_tab == 'users' %}Users / Management
+                    {% elif active_tab == 'requests' %}Requests / Management
+                    {% elif active_tab == 'allocations' %}Allocations / Management
+                    {% elif active_tab == 'change_room' %}Change Room / Management
+                    {% elif active_tab == 'events' %}Events / Management
+                    {% elif active_tab == 'add_event' %}Events / Add Event
+                    {% elif active_tab == 'mess' %}Mess Menu / Management
+                    {% endif %}
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">{{ request.user.get_full_name }}</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+        </div>
+
+        {% if active_tab == 'overview' %}
+        <div class="dashboard-grid">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card bg-gradient-primary">
+                    <div class="stat-content">
+                        <h3>Total Users</h3>
+                        <p class="stat-number">{{ stats.total_users }}</p>
+                    </div>
+                    <i class="fas fa-users stat-icon"></i>
+                </div>
+                <div class="stat-card bg-gradient-success">
+                    <div class="stat-content">
+                        <h3>Available Rooms</h3>
+                        <p class="stat-number">{{ stats.available_rooms }}</p>
+                    </div>
+                    <i class="fas fa-bed stat-icon"></i>
+                </div>
+                <div class="stat-card bg-gradient-warning">
+                    <div class="stat-content">
+                        <h3>Pending Requests</h3>
+                        <p class="stat-number">{{ stats.pending_requests }}</p>
+                    </div>
+                    <i class="fas fa-exclamation-circle stat-icon"></i>
+                </div>
+                <div class="stat-card bg-gradient-info">
+                    <div class="stat-content">
+                        <h3>Total Revenue</h3>
+                        <p class="stat-number">₹{{ stats.total_revenue|floatformat:2 }}</p>
+                    </div>
+                    <i class="fas fa-rupee-sign stat-icon"></i>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="action-card">
+                    <h4>Quick Allocate</h4>
+                    <a href="{% url 'room_allocation' %}" class="btn-action">
+                        <i class="fas fa-home"></i> Allocate Room
+                    </a>
+                </div>
+                <div class="action-card">
+                    <h4>New Complaint</h4>
+                    <a href="{% url 'complaint_maintenance' %}" class="btn-action">
+                        <i class="fas fa-tools"></i> File Complaint
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="content-grid">
+                <!-- Allocation Statistics -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Allocation Statistics</h3>
+                        <div class="chart-legend">
+                            <span class="legend-item pending"><i class="fas fa-circle"></i> Pending</span>
+                            <span class="legend-item confirmed"><i class="fas fa-circle"></i> Confirmed</span>
+                            <span class="legend-item rejected"><i class="fas fa-circle"></i> Rejected</span>
+                        </div>
+                    </div>
+                    <div class="allocation-chart">
+                        <canvas id="allocationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="quick-stats-grid">
+                    <div class="quick-stat rating-card">
+                        <h4>Service Rating</h4>
+                        <div class="rating-value">
+                            {{ stats.avg_service_rating }}<small>/5.0</small>
+                        </div>
+                        <div class="rating-stars">
+                            {% for i in "54321" %}
+                            {% if stats.avg_service_rating >= forloop.counter %}
+                            <i class="fas fa-star"></i>
+                            {% else %}
+                            <i class="far fa-star"></i>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="rating-progress">
+                            <div class="progress-bar" style="width: {{ stats.rating_progress_width }}%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-gradient-purple">
+                        <div class="stat-content">
+                            <h3>Upcoming Events</h3>
+                            <p class="stat-number">{{ stats.upcoming_events }}</p>
+                        </div>
+                        <i class="fas fa-calendar-alt stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-gradient-dark">
+                        <div class="stat-content">
+                            <h3>Occupancy Rate</h3>
+                            <p class="stat-number">{{ stats.occupancy_percentage }}%</p>
+                        </div>
+                        <i class="fas fa-percentage stat-icon"></i>
+                    </div>
+                    <div class="quick-stat allocations-card">
+                        <h4>Allocations</h4>
+                        <div class="allocation-progress">
+                            <div class="progress-item">
+                                <span class="progress-label">Pending</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill pending"
+                                        style="width: {{ stats.pending_allocations|default:0 }}%"></div>
+                                </div>
+                                <span class="progress-value">{{ stats.pending_allocations }}</span>
+                            </div>
+                            <div class="progress-item">
+                                <span class="progress-label">Confirmed</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill confirmed"
+                                        style="width: {{ stats.confirmed_allocations|default:0 }}%"></div>
+                                </div>
+                                <span class="progress-value">{{ stats.confirmed_allocations }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="recent-activities">
+                <div class="activity-card">
+                    <div class="card-header">
+                        <h3>Recent Complaints</h3>
+                        <a href="{% url 'view_requests' %}" class="view-all">View All <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="activity-list">
+                        {% for complaint in recent_complaints %}
+                        <div class="activity-item">
+                            <div class="activity-icon {{ complaint.request_type }}">
+                                <i class="fas fa-{{ complaint.request_type }}"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">{{ complaint.request_type|capfirst }}</div>
+                                <div class="activity-details">{{ complaint.details|truncatewords:8 }}</div>
+                                <div class="activity-time">{{ complaint.created_at|timesince }} ago</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <p>No recent complaints</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="activity-card">
+                    <div class="card-header">
+                        <h3>Recent Payments</h3>
+                        <a href="#" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="activity-list">
+                        {% for payment in recent_payments %}
+                        <div class="activity-item">
+                            <div class="activity-icon payment">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Payment {{ payment.status }}</div>
+                                <div class="activity-details">₹{{ payment.amount }} • {{ payment.user.email }}</div>
+                                <div class="activity-time">{{ payment.payment_date|timesince }} ago</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <p>No recent payments</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% elif active_tab == 'users' %}
+        <div class="users-table">
+            <div class="table-header">
+                <h2>User Management</h2>
+                <div class="table-actions">
+                    <select class="bulk-action" name="bulk_action">
+                        <option value="">Bulk Actions</option>
+                        <option value="activate">Activate</option>
+                        <option value="deactivate">Deactivate</option>
+                        <option value="delete">Delete</option>
+                    </select>
+                    <button class="btn-apply-bulk">Apply</button>
+                    <a href="{% url 'staff_signup' %}" class="btn-add-user">
+                        <i class="fas fa-plus"></i> Add Staff
+                    </a>
+                    <form method="GET" action="{% url 'admin_dashboard' %}" class="search-box">
+                        <input type="hidden" name="tab" value="users">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Search users..." value="{{ search_query }}">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all"></th>
+                            <th>User</th>
+                            <th>Contact</th>
+                            <th>Roll Number</th>
+                            <th>Room</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        {% if not user.is_staff %}
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar">
+                                        {% if user.student_profile.profile_picture %}
+                                        <img src="{{ user.student_profile.profile_picture.url }}"
+                                            alt="{{ user.get_full_name }}">
+                                        {% else %}
+                                        <i class="fas fa-user-circle"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="user-info">
+                                        <div class="user-name">{{ user.get_full_name }}</div>
+                                        <div class="user-email">{{ user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user.student_profile.contact_number|default:"-" }}</td>
+                            <td>{{ user.student_profile.roll_number|default:"-" }}</td>
+                            <td>{{ user.student_profile.room.room_number|default:"-" }}</td>
+                            <td>
+                                <span class="role-badge user">
+                                    {% if user.is_staff %}Staff{% else %}Student{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
+                                    {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td class="actions">
+                                <div class="action-buttons">
+                                    <a href="{% url 'edit_user' user.id %}" class="edit-btn" title="Edit">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </a>
+                                    <a href="{% url 'delete_user' user.id %}" class="delete-btn" title="Delete"
+                                        onclick="return confirm('Are you sure you want to delete this user?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <i class="fas fa-user-slash"></i>
+                                No users found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% elif active_tab == 'requests' %}
+        <div class="requests-table">
+            <div class="table-header">
+                <h2>Requests Management</h2>
+                <div class="table-actions">
+                    <select class="status-filter" onchange="location = this.value;">
+                        <option value="{% url 'view_allocations' %}" {% if not status_filter %}selected{% endif %}>All
+                        </option>
+                        <option value = "{% url 'view_allocations' %}?status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value = "{% url 'view_allocations' %}?status=confirmed" {% if status_filter == 'confirmed'%}selected{% endif %}>Confirmed</option>
+                        <option value="{% url 'view_allocations' %}?status=rejected" {% if status_filter == 'rejected'%}selected{% endif %}>Rejected</option>
+                    </select>
+                    <form method="GET" action="{% url 'view_requests' %}" class="search-box">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Search requests..."
+                                value="{{ search_query }}">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Type</th>
+                            <th>Room</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in requests %}
+                        <tr>
+                            <td>{{ request.user.email }}</td>
+                            <td>{{ request.request_type|capfirst }}</td>
+                            <td>{{ request.room_number }}</td>
+                            <td>{{ request.category }}</td>
+                            <td>
+                                <span class="status-badge {% if request.status == 'pending' %}pending{% else %}resolved{% endif %}">
+                                    {{ request.status|capfirst }}
+                                </span>
+                            </td>
+                            <td>{{ request.created_at|date:"M d, Y" }}</td>
+                            <td class="actions">
+                                <form method="POST" action="{% url 'update_complaint_status' request.id %}">
+                                    {% csrf_token %}
+                                    <select name="status" onchange="this.form.submit()">
+                                        <option value="pending" {% if request.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="resolved" {% if request.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                    </select>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-tools"></i>
+                                No requests found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% elif active_tab == 'allocations' %}
+        <div class="allocations-table">
+            <div class="table-header">
+                <h2>Room Allocations</h2>
+                <div class="table-actions">
+                    <select class="status-filter" onchange="location = this.value;">
+                        <option value="{% url 'view_allocations' %}" {% if not status_filter %}selected{% endif %}>All
+                        </option>
+                        <option value="{% url 'view_allocations' %}?status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="{% url 'view_allocations' %}?status=confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                        <option value="{% url 'view_allocations' %}?status=rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="{% url 'admin_dashboard' %}?tab=allocations&status=cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                    <form method="GET" action="{% url 'view_allocations' %}" class="search-box">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Search allocations..."
+                                value="{{ search_query }}">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Hostel</th>
+                            <th>Room</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for allocation in allocations %}
+                        <tr>
+                            <td>{{ allocation.user.email }}</td>
+                            <td>{{ allocation.room.hostel.name }}</td>
+                            <td>{{ allocation.room.room_number }}</td>
+                            <td>
+                                <span class="status-badge {{ allocation.status }}">
+                                    {{ allocation.status|capfirst }}
+                                </span>
+                            </td>
+                            <td>{{ allocation.allocation_date|date:"M d, Y" }}</td>
+                        </tr>
+                        <td class="actions">
+                            {% if allocation.status == 'pending' %}
+                            <a href="#" class="action-btn approve-btn" data-id="{{ allocation.id }}" title="Approve">
+                                <i class="fas fa-check"></i>
+                            </a>
+                            <a href="#" class="action-btn reject-btn" data-id="{{ allocation.id }}" title="Reject">
+                                <i class="fas fa-times"></i>
+                            </a>
+                            {% endif %}
+                            {% if allocation.status != 'cancelled' %}
+                            <a href="{% url 'cancel_allocation' allocation.id %}" class="action-btn cancel-btn" title="Cancel Allocation">
+                                <i class="fas fa-times-circle"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fas fa-home"></i>
+                            No allocations found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            
+        {% elif active_tab == 'events' %}
+        <div class="events-section">
+            <div class="table-header">
+                <h2>Event Management</h2>
+                <div class="table-actions">
+                    <a href="{% url 'admin_dashboard' %}?tab=add_event" class="btn-add-user">
+                        <i class="fas fa-plus"></i> Add Event
+                    </a>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Venue</th>
+                            <th>Organizer</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                        <tr>
+                            <td>{{ event.name }}</td>
+                            <td>{{ event.date }}</td>
+                            <td>{{ event.time }}</td>
+                            <td>{{ event.venue }}</td>
+                            <td>{{ event.organizer }}</td>
+                            <td class="actions">
+                                <a href="{% url 'update' event.id %}" class="edit-btn" title="Edit">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                <a href="{% url 'delete' event.id %}" class="delete-btn" title="Delete"
+                                    onclick="return confirm('Are you sure you want to delete this event?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-calendar-alt"></i>
+                                No events scheduled
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% elif active_tab == 'add_event' %}
+        <div class="events-section">
+            <div class="table-header">
+                <h2>Add New Event</h2>
+                <div class="table-actions">
+                    <a href="{% url 'admin_dashboard' %}?tab=events" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Events
+                    </a>
+                </div>
+            </div>
+            <div class="form-container">
+                <form method="POST" class="event-form">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Add Event</button>
+                </form>
+            </div>
+        </div>
+        {% elif active_tab == 'mess' %}
+        <div class="mess-section">
+            <div class="table-header">
+                <h2>Mess Menu Management</h2>
+                <div class="table-actions">
+                    <form method="GET" action="{% url 'admin_dashboard' %}?tab=mess" class="search-box">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Search menu, day, or meal..." value="{{ search_query }}">
+                        </div>
+                    </form>
+                    <select class="filter-select" onchange="location = this.value;">
+                        <option value="{% url 'admin_dashboard' %}?tab=mess" {% if not day_filter %}selected{% endif %}>All Days</option>
+                        {% for day in days %}
+                        <option value="{% url 'admin_dashboard' %}?tab=mess&day={{ day|lower }}" {% if day_filter == day|lower %}selected{% endif %}>{{ day }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        
+            <!-- Today's Menu Section -->
+            {% if today_menus %}
+            <div class="today-menu-card">
+                <h3>Today's Menu</h3>
+                {% for menu in today_menus %}
+                <div class="menu-item">
+                    <span class="meal-type {{ menu.meal_type|lower }}">{{ menu.meal_type }}</span>
+                    <p>{{ menu.menu }}</p>
+                    <small>Day: {{ menu.day }}</small>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="today-menu-card empty">
+                <h3>Today's Menu</h3>
+                <div class="empty-state">
+                    <i class="fas fa-utensils"></i>
+                    <p>No menu set for today.</p>
+                </div>
+            </div>
+            {% endif %}
+        
+            <!-- Weekly Menu Tabs -->
+            <div class="menu-tabs">
+                <div class="tab-header">
+                    {% for day in days %}
+                    <button class="tab-btn {% if day_filter == day|lower %}active{% endif %}" onclick="location.href='{% url 'admin_dashboard' %}?tab=mess&day={{ day|lower }}'">{{ day }}</button>
+                    {% endfor %}
+                    <button class="tab-btn {% if not day_filter %}active{% endif %}" onclick="location.href='{% url 'admin_dashboard' %}?tab=mess'">All</button>
+                </div>
+                
+                <div class="tab-content">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Meal Type</th>
+                                    <th>Menu</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for menu in menus %}
+                                <tr>
+                                    <td>{{ menu.day }}</td>
+                                    <td><span class="meal-type {{ menu.meal_type|lower }}">{{ menu.meal_type }}</span></td>
+                                    <td>{{ menu.menu }}</td>
+                                    <td class="actions">
+                                        <a href="{% url 'update_mess_menu' menu.id %}" class="edit-btn" title="Edit">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </a>
+                                        <form action="{% url 'delete_mess_menu' menu.id %}" method="POST" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="delete-btn" title="Delete" onclick="return confirm('Are you sure you want to delete {{ menu.meal_type|title }} for {{ menu.day|title }}?')">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="empty-state">
+                                        <i class="fas fa-utensils"></i> No menu items found
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Add Menu Form -->
+            <div class="form-container">
+                <h3>Add New Menu Item</h3>
+                <form method="POST" class="mess-form" id="messForm">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Add Menu</button>
+                </form>
+            </div>
+        </div>
+
+        {% elif active_tab == 'notifications' %}
+        <div class="chat-interface mt-4">
+    <div class="d-flex justify-content-between mb-3">
+        <h4>Manage Notifications</h4>
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('messageForm').scrollIntoView()">
+            <i class="fas fa-plus"></i> New Notification
+        </button>
+    </div>
+    
+    <div class="chat-messages card mb-3" style="height: 400px; overflow-y: auto;">
+        {% for msg in chat_messages %}
+        <div class="message p-2 position-relative">
+            <div class="d-inline-block p-2 rounded {% if msg.is_notification %}bg-warning{% else %}bg-light{% endif %}">
+                {% if request.user.is_staff %}
+                <div class="message-actions position-absolute top-0 end-0 mt-1 me-2">
+                    <a href="?tab=notifications&edit={{ msg.id }}#messageForm" 
+                       class="btn btn-sm btn-link text-dark">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="?tab=notifications&delete={{ msg.id }}" 
+                       class="btn btn-sm btn-link text-danger"
+                       onclick="return confirm('Delete this message permanently?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+                {% endif %}
+                <small class="text-muted">
+                    {{ msg.user.get_full_name|default:msg.user.email }} - {{ msg.timestamp|timesince }} ago
+                    {% if msg.is_notification %}
+                    <span class="badge bg-danger">System Notification</span>
+                    {% endif %}
+                </small>
+                <div>{{ msg.message }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <form method="POST" id="messageForm" class="chat-form card p-3">
+        {% csrf_token %}
+        {% if editing_message_id %}
+        <input type="hidden" name="edit_id" value="{{ editing_message_id }}">
+        {% endif %}
+        <div class="mb-3">
+            {{ discussion_form.message }}
+        </div>
+        {% if discussion_form.is_notification %}
+        <div class="form-check mb-3">
+            {{ discussion_form.is_notification }}
+            <label class="form-check-label" for="{{ discussion_form.is_notification.id_for_label }}">
+                Mark as System Notification
+            </label>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">
+            {% if editing_message_id %}Update{% else %}Send{% endif %} Message
+        </button>
+        {% if editing_message_id %}
+        <a href="?tab=notifications" class="btn btn-secondary">Cancel</a>
+        {% endif %}
+    </form>
+        </div>
+        {% elif active_tab == 'manage_claims' %}
+        <div class="claims-section">
+        <div class="table-header">
+        <h2>Manage Claims</h2>
+        <div class="table-actions">
+        <form method="GET" action="{% url 'admin_dashboard' %}?tab=manage_claims" class="search-box">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input type="text" name="search" placeholder="Search claims..." value="{{ search_query }}">
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="table-container">
+    {% if claims %}
+    {% for claim in claims %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Claim for: {{ claim.item.title }}</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Item Details:</h6>
+            <p><strong>Category:</strong> {{ claim.get_category_display }}</p>
+            <p><strong>Date Found:</strong> {{ claim.item.date_found }}</p>
+            <p><strong>Location Found:</strong> {{ claim.item.location }}</p>
+            <p><strong>Description:</strong> {{ claim.item.description }}</p>
+          </div>
+          <div class="col-md-6">
+            <h6>Claim Details:</h6>
+            <p><strong>Claim Date:</strong> {{ claim.created_at }}</p>
+            <p><strong>Proof/Explanation:</strong></p>
+            <p>{{ claim.message }}</p>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="{% url 'approve_claim' claim.id %}" class="btn btn-success">Approve Claim</a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info">
+      No pending claims to manage.
+    </div>
+    {% endfor %}
+  </div>
+        </div>
+
+{% endif %}
+{% elif active_tab == 'change_room' %}
+<div class="change-room-section">
+    <div class="table-header">
+        <h2>Room Change Requests</h2>
+        <div class="table-actions">
+            <form method="GET" action="{% url 'admin_dashboard' %}?tab=change_room" class="search-box">
+                <div class="search-input">
+                    <i class="fas fa-search"></i>
+                    <input type="text" name="search" placeholder="Search requests..." value="{{ search_query }}">
+                </div>
+            </form>
+            <select class="status-filter" onchange="location = this.value;">
+                <option value="{% url 'admin_dashboard' %}?tab=change_room" {% if not status_filter %}selected{% endif %}>All</option>
+                <option value="{% url 'admin_dashboard' %}?tab=change_room&status=pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="{% url 'admin_dashboard' %}?tab=change_room&status=approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="{% url 'admin_dashboard' %}?tab=change_room&status=rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Current Room</th>
+                    <th>Requested Room</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in room_change_requests %}
+                <tr>
+                    <td>{{ request.user.email }}</td>
+                    <td>{{ request.current_allocation.room.room_number }} ({{ request.current_allocation.room.hostel.name }})</td>
+                    <td>{{ request.requested_room.room_number }} ({{ request.requested_room.hostel.name }})</td>
+                    <td>{{ request.reason|truncatewords:10 }}</td>
+                    <td>
+                        <span class="status-badge {{ request.status }}">
+                            {{ request.status|capfirst }}
+                        </span>
+                    </td>
+                    <td>{{ request.created_at|date:"M d, Y" }}</td>
+                    <td class="actions">
+                        <form method="POST" action="{% url 'update_room_change_status' request.id %}">
+                            {% csrf_token %}
+                            <select name="status" onchange="this.form.submit()">
+                                <option value="pending" {% if request.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="approved" {% if request.status == 'approved' %}selected{% endif %}>Approved</option>
+                                <option value="rejected" {% if request.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </form>
+                    </td>
+                    
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <i class="fas fa-exchange-alt"></i>
+                        No room change requests found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+             
+
+    </div>
+</div>
+
+
+<!-- Scripts unchanged -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Allocation Chart
+    const allocationData = {
+        labels: ['Pending', 'Confirmed', 'Rejected'],
+        datasets: [{
+            data: [
+                {{ allocation_data.pending|default:0 }},
+                {{ allocation_data.confirmed|default:0 }},
+                {{ allocation_data.rejected|default:0 }}
+            ],
+            backgroundColor: [
+                'rgba(255, 209, 102, 0.8)', // Warning (Pending)
+                'rgba(6, 214, 160, 0.8)',   // Success (Confirmed)
+                'rgba(239, 71, 111, 0.8)'   // Danger (Rejected)
+            ],
+            borderColor: [
+                'rgba(255, 209, 102, 1)',
+                'rgba(6, 214, 160, 1)',
+                'rgba(239, 71, 111, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const ctx = document.getElementById('allocationChart').getContext('2d');
+    const allocationChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: allocationData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            size: 14,
+                            family: "'Inter', sans-serif"
+                        },
+                        color: document.body.classList.contains('dark') ? '#D1D5DB' : '#2b2d42'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: document.body.classList.contains('dark') ? '#1F2937' : '#fff',
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 12 },
+                    padding: 10
+                }
+            },
+            cutout: '60%'
+        }
+    });
+
+    // Dark mode toggle
+    const body = document.body;
+    const modeToggle = document.querySelector('.dark-light') || document.createElement('button');
+    if (!modeToggle.classList.contains('dark-light')) {
+        modeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        modeToggle.className = 'dark-light';
+        modeToggle.style.position = 'fixed';
+        modeToggle.style.top = '20px';
+        modeToggle.style.right = '20px';
+        modeToggle.style.background = 'rgba(255, 255, 255, 0.1)';
+        modeToggle.style.border = 'none';
+        modeToggle.style.borderRadius = '50%';
+        modeToggle.style.width = '40px';
+        modeToggle.style.height = '40px';
+        modeToggle.style.cursor = 'pointer';
+        modeToggle.style.zIndex = '1001';
+        document.body.appendChild(modeToggle);
+    }
+
+    let getMode = localStorage.getItem('mode');
+    if (getMode && getMode === 'dark-mode') {
+        body.classList.add('dark');
+        modeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        allocationChart.options.plugins.legend.labels.color = '#D1D5DB';
+        allocationChart.options.plugins.tooltip.backgroundColor = '#1F2937';
+        allocationChart.update();
+    }
+
+    modeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark');
+        localStorage.setItem('mode', body.classList.contains('dark') ? 'dark-mode' : 'light-mode');
+        modeToggle.innerHTML = body.classList.contains('dark') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        allocationChart.options.plugins.legend.labels.color = body.classList.contains('dark') ? '#D1D5DB' : '#2b2d42';
+        allocationChart.options.plugins.tooltip.backgroundColor = body.classList.contains('dark') ? '#1F2937' : '#fff';
+        allocationChart.update();
+    });
+
+    // Animation for elements
+    const animateElements = (selector) => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((el, index) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(10px)';
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    };
+    animateElements('.stats-grid .stat-card');
+    animateElements('tbody tr');
+    animateElements('.activity-item');
+
+    // Form validation for mess tab
+    const form = document.getElementById('messForm');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const day = document.getElementById('id_day')?.value;
+            const mealType = document.getElementById('id_meal_type')?.value;
+            const menu = document.getElementById('id_menu')?.value.trim();
+
+            if (!day || !mealType || !menu) {
+                e.preventDefault();
+                alert('Please fill in all fields.');
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    :root {
+    --primary-color: #4361ee; /* CampusNest */
+    --secondary-color: #3a0ca3; /* CampusNest */
+    --accent-color: #FBBF24; /* CampusConnect */
+    --success-color: #06d6a0;
+    --warning-color: #ffd166;
+    --danger-color: #ef476f;
+    --dark-bg: #1F2937; /* CampusConnect */
+    --light-bg: #f8f9fa; /* CampusNest */
+    --text-dark: #2b2d42;
+    --text-light: #D1D5DB;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.15);
+    --transition-speed: 0.3s;
+    --sidebar-width: 260px;
+    --gap-small: 1rem;
+    --gap-medium: 1.5rem;
+    --gap-large: 2rem;
+    --padding-small: 1rem;
+    --padding-medium: 1.5rem;
+    --padding-large: 2rem;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--light-bg);
+    color: var(--text-dark);
+    transition: var(--transition-speed);
+    font-size: 1rem;
+}
+
+body.dark {
+    background: var(--dark-bg);
+    color: var(--text-light);
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin-bottom: var(--gap-small);
+}
+
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    height: fit-content;
+    margin-top: 5rem;
+    width: var(--sidebar-width);
+    background: linear-gradient(195deg, var(--primary-color), var(--secondary-color));
+    color: var(--text-light);
+    padding: var(--padding-medium);
+    position: fixed;
+    height: 100%;
+    transition: var(--transition-speed);
+    z-index: 1000;
+    box-shadow: var(--shadow);
+}
+
+.sidebar .logo-container {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-small);
+    margin-bottom: var(--gap-large);
+}
+
+.sidebar .logo-img {
+    width: 36px;
+    height: 36px;
+}
+
+.sidebar h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar nav ul li a {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-small);
+    padding: 0.8rem 1rem;
+    color: var(--text-light);
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: var(--transition-speed);
+}
+
+.sidebar nav ul li a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.sidebar nav ul li.active a {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    flex-grow: 1;
+    padding: var(--padding-large);
+    background: var(--light-bg);
+}
+
+body.dark .main-content {
+    background: var(--dark-bg);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--gap-large);
+    padding: var(--padding-medium);
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+body.dark .header {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-small);
+}
+
+.user-avatar {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+/* Style for the status update dropdown */
+.actions select {
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--white);
+    cursor: pointer;
+    transition: var(--transition-speed);
+}
+
+body.dark .actions select {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+.actions select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(67, 97, 238, 0.2);
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.user-role {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--gap-medium);
+    margin-bottom: var(--gap-large);
+}
+
+.stat-card {
+    padding: var(--padding-medium);
+    border-radius: 10px;
+    color: var(--text-light);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition-speed);
+    box-shadow: var(--shadow);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, var(--primary-color), #4cc9f0);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, var(--success-color), #09bc8a);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, var(--warning-color), var(--accent-color));
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #3a86ff, var(--primary-color));
+}
+
+.bg-gradient-purple {
+    background: linear-gradient(45deg, #7209b7, var(--secondary-color));
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(45deg, var(--dark-bg), #4d5061);
+}
+
+.stat-content h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+.stat-icon {
+    position: absolute;
+    right: var(--padding-medium);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 4rem;
+    opacity: 0.2;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--gap-medium);
+    margin-bottom: var(--gap-large);
+}
+
+.action-card {
+    background: var(--white);
+    padding: var(--padding-medium);
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: var(--transition-speed);
+}
+
+body.dark .action-card {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.action-card:hover {
+    transform: translateY(-3px);
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    background: var(--primary-color);
+    color: var(--text-light);
+    text-decoration: none;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    background: var(--secondary-color);
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--gap-medium);
+    margin-bottom: var(--gap-large);
+}
+
+.chart-card {
+    background: var(--white);
+    padding: var(--padding-medium);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+body.dark .chart-card {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.quick-stats-grid {
+    display: grid;
+    gap: var(--gap-medium);
+}
+
+.quick-stat {
+    background: var(--white);
+    padding: var(--padding-medium);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+body.dark .quick-stat {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.rating-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 1rem 0;
+}
+
+body.dark .rating-value {
+    color: var(--text-light);
+}
+
+.rating-stars {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+}
+
+.recent-activities {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--gap-medium);
+}
+
+.activity-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+body.dark .activity-card {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--padding-medium);
+    border-bottom: 1px solid #f1f5f9;
+}
+
+body.dark .card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.activity-list {
+    padding: var(--padding-medium);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    gap: var(--gap-small);
+    padding: 1rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    transition: var(--transition-speed);
+}
+
+.activity-item:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.dark .activity-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark .activity-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+}
+
+.activity-icon.complaint {
+    background: var(--danger-color);
+}
+
+.activity-icon.maintenance {
+    background: var(--primary-color);
+}
+
+.activity-icon.payment {
+    background: var(--success-color);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--padding-large);
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.users-table,
+.requests-table,
+.allocations-table,
+.events-section,
+.mess-section,
+.chat-interface
+ {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin-bottom: var(--gap-large);
+}
+
+body.dark .users-table,
+body.dark .requests-table,
+body.dark .allocations-table,
+body.dark .events-section,
+body.dark .mess-section,
+body.dark .chat-interface,
+body.dark .claims-section {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--padding-medium);
+}
+
+.table-actions {
+    display: flex;
+    gap: var(--gap-small);
+    align-items: center;
+}
+
+.search-input {
+    position: relative;
+    width: 280px;
+}
+
+.search-input input {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+body.dark .search-input input {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+.search-input i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.table-container {
+    overflow-x: auto;
+    padding: var(--padding-medium);
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.95rem;
+}
+
+thead th {
+    background: var(--light-bg);
+    color: var(--text-dark);
+    font-weight: 600;
+    padding: var(--padding-medium);
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+    font-family: 'Poppins', sans-serif;
+}
+
+body.dark thead th {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+tbody tr {
+    transition: var(--transition-speed);
+}
+
+tbody tr:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.dark tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+tbody td {
+    padding: var(--padding-medium);
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+body.dark tbody td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-small);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.dark .user-avatar {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.role-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.role-badge.user {
+    background: rgba(6, 214, 160, 0.1);
+    color: var(--success-color);
+}
+
+.status-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.status-badge.active,
+.status-badge.confirmed {
+    background: rgba(6, 214, 160, 0.1);
+    color: var(--success-color);
+}
+
+.status-badge.inactive,
+.status-badge.pending {
+    background: rgba(255, 99, 132, 0.1);
+    color: var(--danger-color);
+}
+
+.status-badge.resolved {
+    background: rgba(54, 162, 235, 0.1);
+    color: var(--primary-color);
+}
+
+.status-badge::before {
+    content: '\f111'; /* Font Awesome circle */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.6rem;
+    opacity: 0.7;
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--gap-small);
+}
+
+.edit-btn,
+.delete-btn {
+    padding: 0.6rem;
+    border-radius: 8px;
+    transition: var(--transition-speed);
+}
+
+.edit-btn {
+    color: var(--primary-color);
+    background: rgba(67, 97, 238, 0.1);
+}
+
+.delete-btn {
+    color: var(--danger-color);
+    background: rgba(239, 71, 111, 0.1);
+}
+
+.edit-btn:hover,
+.delete-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.8;
+}
+
+.allocation-chart {
+    position: relative;
+    height: 380px; /* Slightly shorter for balance */
+    padding: var(--padding-medium); /* 1.5rem */
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow); /* 0 4px 12px rgba(0, 0, 0, 0.1) */
+    margin-bottom: var(--gap-medium); /* 1.5rem */
+}
+
+body.dark .allocation-chart {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#allocationChart {
+    max-height: 330px; /* Adjusted for padding */
+    width: 100% !important;
+}
+
+#allocationChart {
+    max-height: 350px;
+    width: 100% !important;
+}
+
+.form-container {
+    padding: var(--padding-medium);
+}
+
+.event-form,
+.mess-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-medium);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.event-form p,
+.mess-form p {
+    margin: 0;
+}
+
+.event-form label,
+.mess-form label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.event-form input,
+.event-form textarea,
+.mess-form select,
+.mess-form textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: var(--transition-speed);
+}
+
+.event-form input:focus,
+.event-form textarea:focus,
+.mess-form select:focus,
+.mess-form textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(67, 97, 238, 0.2);
+}
+
+body.dark .event-form input,
+body.dark .event-form textarea,
+body.dark .mess-form select,
+body.dark .mess-form textarea {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-speed);
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: var(--text-light);
+}
+
+.btn-primary:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #64748b;
+    color: var(--text-light);
+}
+
+.btn-secondary:hover {
+    background: var(--accent-color);
+    transform: translateY(-2px);
+}
+
+.today-menu-card {
+    {% comment %} background: linear-gradient(45deg, var(--success-color), #09bc8a); {% endcomment %}
+    {% comment %} color: var(--text-light); {% endcomment %}
+    padding-left:50px;
+    border-radius: 10px;
+    margin-bottom: var(--gap-large);
+    {% comment %} box-shadow: var(--shadow); {% endcomment %}
+}
+
+.today-menu-card.empty {
+    background: var(--light-bg);
+    color: var(--text-light);
+}
+
+body.dark .today-menu-card.empty {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.menu-item {
+    margin-bottom: var(--gap-medium);
+}
+
+.meal-type {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.meal-type.breakfast {
+    background: rgba(54, 162, 235, 0.1);
+    color: #36a2eb;
+}
+
+.meal-type.lunch {
+    background: rgba(255, 209, 102, 0.1);
+    color: var(--accent-color);
+}
+
+.meal-type.dinner {
+    background: rgba(113, 88, 183, 0.1);
+    color: #7209b7;
+}
+
+.menu-tabs {
+    margin-bottom: var(--gap-large);
+}
+
+.tab-header {
+    display: flex;
+    gap: var(--gap-small);
+    margin-bottom: var(--gap-medium);
+    overflow-x: auto;
+    padding-left: 30px;
+}
+
+.tab-btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    background: #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition-speed);
+    font-size: 0.95rem;
+}
+
+body.dark .tab-btn {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn.active,
+.tab-btn:hover {
+    background: var(--primary-color);
+    color: var(--text-light);
+}
+
+.chat-messages {
+    height: 400px;
+    overflow-y: auto;
+    padding: var(--padding-medium);
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+body.dark .chat-messages::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+body.dark .chat-messages::-webkit-scrollbar-thumb {
+    background: var(--text-light);
+}
+
+.message {
+    position: relative;
+    margin-bottom: var(--gap-medium);
+}
+
+.message .p-2 {
+    border-radius: 8px;
+    padding: var(--padding-medium) !important;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: var(--padding-medium);
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: var(--padding-medium);
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .recent-activities {
+        grid-template-columns: 1fr;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .search-input {
+        width: 200px;
+    }
+
+    .sidebar nav ul li a {
+        font-size: 0.9rem;
+    }
+
+    thead th,
+    tbody td {
+        padding: var(--padding-small);
+    }
+}    
+
+/* Room change */
+.change-room-section {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: var(--padding-large);
+    margin-bottom: var(--gap-large);
+}
+
+body.dark .change-room-section {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+
+
+
+/* Lost and Found (Claims) */
+.claims-section {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow); /* 0 4px 12px rgba(0, 0, 0, 0.1) */
+    padding: var(--padding-large); /* 2rem */
+    margin-bottom: var(--gap-large); /* 2rem */
+    transition: var(--transition-speed);
+}
+
+body.dark .claims-section {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.claims-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--gap-medium); /* 1.5rem */
+}
+
+.claims-filters {
+    display: flex;
+    gap: var(--gap-small); /* 1rem */
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.claims-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.95rem;
+}
+
+.claims-table thead th {
+    background: var(--light-bg);
+    color: var(--text-dark);
+    font-weight: 600;
+    padding: var(--padding-medium); /* 1.5rem */
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+    font-family: 'Poppins', sans-serif;
+}
+
+body.dark .claims-table thead th {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.claims-table tbody tr:nth-child(even) {
+    background: rgba(248, 249, 250, 0.5); /* Subtle alternating color */
+}
+
+body.dark .claims-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.claims-table tbody tr {
+    transition: var(--transition-speed);
+}
+
+.claims-table tbody tr:hover {
+    background: rgba(67, 97, 238, 0.1); /* Primary color hover */
+    transform: scale(1.01);
+}
+
+body.dark .claims-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.claims-table tbody td {
+    padding: var(--padding-medium); /* 1.5rem */
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+body.dark .claims-table tbody td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.claims-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.claims-table .user-cell .user-avatar {
+    width: 48px; /* Larger for clarity */
+    height: 48px;
+}
+
+.claim-status {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-transform: capitalize;
+}
+
+.claim-status.pending {
+    background: rgba(255, 209, 102, 0.2); /* #FBBF24-inspired */
+    color: var(--warning-color);
+}
+
+.claim-status.approved {
+    background: rgba(6, 214, 160, 0.2);
+    color: var(--success-color);
+}
+
+.claim-status.rejected {
+    background: rgba(239, 71, 111, 0.2);
+    color: var(--danger-color);
+}
+
+.claim-status::before {
+    content: '\f111';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.claim-action {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition-speed);
+    margin-right: 0.5rem;
+}
+
+.claim-action.approve {
+    background: var(--primary-color); /* #4361ee */
+    color: var(--text-light);
+}
+
+.claim-action.reject {
+    background: var(--danger-color); /* #ef476f */
+    color: var(--text-light);
+}
+
+.claim-action:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.claims-form {
+    margin-top: var(--gap-large); /* 2rem */
+    padding: var(--padding-medium); /* 1.5rem */
+    background: rgba(248, 249, 250, 0.5);
+    border-radius: 10px;
+}
+
+body.dark .claims-form {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.claims-form h4 {
+    margin-bottom: var(--gap-medium); /* 1.5rem */
+}
+
+.claims-form .form-group {
+    margin-bottom: var(--gap-medium); /* 1.5rem */
+}
+
+.claims-form label {
+    font-weight: 500;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.claims-form input,
+.claims-form textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+body.dark .claims-form input,
+body.dark .claims-form textarea {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+.claims-form button {
+    background: var(--primary-color);
+    color: var(--text-light);
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.claims-form button:hover {
+    background: var(--secondary-color); /* #3a0ca3 */
+    transform: translateY(-2px);
+}
+
+/* Discussion (Notifications) */
+.chat-interface {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: var(--padding-large); /* 2rem */
+    margin-bottom: var(--gap-large); /* 2rem */
+}
+
+body.dark .chat-interface {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.chat-messages {
+    max-height: 450px;
+    overflow-y: auto;
+    padding: var(--padding-medium); /* 1.5rem */
+    margin-bottom: var(--gap-medium); /* 1.5rem */
+    border-radius: 10px;
+    background: rgba(248, 249, 250, 0.5);
+}
+
+body.dark .chat-messages {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.message {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-small); /* 1rem */
+    margin-bottom: var(--gap-medium); /* 1.5rem */
+    padding: var(--padding-small); /* 1rem */
+    border-radius: 10px;
+    transition: var(--transition-speed);
+}
+
+.message.own {
+    flex-direction: row-reverse;
+    background: rgba(67, 97, 238, 0.1); /* Primary color */
+}
+
+body.dark .message.own {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.message .user-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.message-content {
+    flex-grow: 1;
+    max-width: 70%;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.message-header .user-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--primary-color);
+}
+
+.message-header .timestamp {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.message-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    background: var(--white);
+    padding: var(--padding-small); /* 1rem */
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+body.dark .message-text {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+}
+
+.message-actions {
+    display: flex;
+    gap: var(--gap-small); /* 1rem */
+    margin-top: 0.5rem;
+}
+
+.message-action {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: var(--transition-speed);
+}
+
+.message-action:hover {
+    color: var(--primary-color);
+}
+
+.pinned {
+    background: rgba(255, 209, 102, 0.2); /* #FBBF24-inspired */
+    border-left: 4px solid var(--accent-color);
+}
+
+body.dark .pinned {
+    background: rgba(255, 209, 102, 0.1);
+}
+
+.discussion-form {
+    display: flex;
+    gap: var(--gap-small); /* 1rem */
+    margin-top: var(--gap-medium); /* 1.5rem */
+}
+
+.discussion-form textarea {
+    flex-grow: 1;
+    padding: var(--padding-small); /* 1rem */
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+body.dark .discussion-form textarea {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+.discussion-form button {
+    background: var(--primary-color);
+    color: var(--text-light);
+    padding: var(--padding-small) var(--padding-medium); /* 1rem 1.5rem */
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.discussion-form button:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}
+.status-badge.cancelled {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+/* Style for cancel button */
+.action-btn.cancel-btn {
+    color: #ef476f;
+    margin-left: 10px;
+}
+
+.action-btn.cancel-btn:hover {
+    color: #d43f61;
+    transform: scale(1.1);
+}
+
+.footer{
+    display: none;
+}
+    
+</style>
+
+{% endblock %}
+

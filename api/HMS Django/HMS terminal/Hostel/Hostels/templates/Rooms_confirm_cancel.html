@@ -1,0 +1,67 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h2>Confirm Cancellation</h2>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to cancel the allocation for <strong>{{ allocation.user.email }}</strong> in room <strong>{{ allocation.room.room_number }}</strong> ({{ allocation.room.hostel.name }})?</p>
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                <a href="{% url 'admin_dashboard' %}?tab=allocations" class="btn btn-secondary">Back</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 600px;
+    margin: auto;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background: linear-gradient(45deg, #4361ee, #3a0ca3);
+    color: white;
+    border-radius: 10px 10px 0 0;
+    padding: 1.5rem;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.btn-danger {
+    background: #ef476f;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+}
+
+.btn-danger:hover {
+    background: #d43f61;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #64748b;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,40 @@
+<!-- Rooms_post_allocation.html -->
+{% extends 'Rooms_base.html' %}
+{% block content %}
+<div class="post-allocation-container">
+    <h2>🎉 Room Allocated Successfully!</h2>
+    <div class="cta-buttons">
+        <a href="{% url 'payment' %}" class="btn primary">
+            <i class="fas fa-credit-card"></i> Proceed to Payment
+        </a>
+        <a href="{% url 'profiles' %}" class="btn secondary">
+            <i class="fas fa-user"></i> View Profile
+        </a>
+    </div>
+    <p class="notice">Please complete payment within 24 hours to confirm your booking</p>
+</div>
+
+<style>
+.post-allocation-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.cta-buttons {
+    display: grid;
+    gap: 1.5rem;
+    margin: 3rem 0;
+}
+
+.notice {
+    color: #666;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}

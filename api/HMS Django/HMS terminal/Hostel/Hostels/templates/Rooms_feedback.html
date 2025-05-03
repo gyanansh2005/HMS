@@ -1,0 +1,114 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/Rooms_feedback.css' %}">
+<section class="feedback-header">
+    <div class="header-content">
+        <div class="header-logo-text">CampusNest</div>
+        <h1>Share Your Feedback</h1>
+        <p>Your thoughts help us make CampusNest a better place for everyone!</p>
+    </div>
+</section>
+
+<div class="feedback-container">
+    <div class="form-section">
+        <div class="form-image">
+            <div class="form-tagline">We Value Your Voice!</div>
+        </div>
+        <form method="POST" class="feedback-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.hostel.id_for_label }}">Hostel:</label>
+                {{ form.hostel }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.environment_rating.id_for_label }}">Environment Rating:</label>
+                {{ form.environment_rating }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.service_rating.id_for_label }}">Service Rating:</label>
+                <div class="star-rating-input">
+                    {{ form.service_rating }}
+                    <div class="star-display" aria-live="polite">
+                        {% for i in "12345" %}
+                        <span class="star" data-value="{{ i }}" aria-label="Rate {{ i }} stars">★</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="{{ form.comments.id_for_label }}">Comments:</label>
+                {{ form.comments }}
+            </div>
+            <button type="submit" class="submit-btn">Submit Feedback</button>
+        </form>
+    </div>
+
+    <div class="feedback-list-section">
+        <h2>Previous Feedback</h2>
+        <div class="feedback-list">
+            {% for feedback in feedbacks %}
+            <div class="feedback-item">
+                <h4>{{ feedback.user.get_full_name }} - {{ feedback.hostel }}</h4>
+                <p class="rating-container">
+                    Environment: 
+                    <span class="rating rating-{{ feedback.environment_rating|lower }}" aria-label="Environment Rating: {{ feedback.environment_rating }}">
+                        {{ feedback.environment_rating }}
+                    </span>
+                </p>
+                <p class="rating-container">
+                    Service: 
+                    <span class="rating rating-{{ feedback.service_rating }}" aria-label="Service Rating: {{ feedback.service_rating }} out of 5">
+                        {% for i in "12345" %}
+                        <i class="fas fa-star {% if forloop.counter <= feedback.service_rating %}filled{% else %}empty{% endif %}" aria-hidden="true"></i>
+                        {% endfor %}
+                    </span>
+                </p>
+                <p class="comments">Comments: {{ feedback.comments }}</p>
+            </div>
+            {% empty %}
+            <p class="no-feedback">No feedback submissions yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const starInputs = document.querySelectorAll('.star-rating-input');
+    starInputs.forEach(container => {
+        const select = container.querySelector('select');
+        const stars = container.querySelectorAll('.star');
+
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const value = star.dataset.value;
+                select.value = value;
+                updateStars();
+            });
+            star.addEventListener('mouseover', () => {
+                const value = star.dataset.value;
+                stars.forEach(s => s.classList.toggle('hover', s.dataset.value <= value));
+            });
+            star.addEventListener('mouseout', () => {
+                stars.forEach(s => s.classList.remove('hover'));
+            });
+        });
+
+        const updateStars = () => {
+            const value = select.value || '0';
+            stars.forEach(s => {
+                s.classList.toggle('selected', s.dataset.value <= value);
+            });
+            // Announce for accessibility
+            const starsFilled = parseInt(value);
+            container.querySelector('.star-display').setAttribute('aria-label', `${starsFilled} stars selected`);
+        };
+
+        select.addEventListener('change', updateStars);
+        updateStars();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Hero Section */
+  .hero-section {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--text-light);
+    padding: 100px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://source.unsplash.com/random/1920x1080?campus') no-repeat center/cover;
+    opacity: 0.2;
+    z-index: 0;
+  }
+
+  .hero-section h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-section p {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-section .btn {
+    background: var(--accent);
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border-radius: 50px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-section .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Feature Cards */
+  .container-custom {
+    max-width: 1200px;
+    margin: 50px auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 0 20px;
+  }
+
+  .card-custom {
+    background: var(--text-light);
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card-custom:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-custom h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.8rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+  }
+
+  .card-custom p {
+    font-size: 1rem;
+    color: var(--text);
+  }
+
+  /* Events Section */
+  .events-section {
+    padding: 50px 20px;
+    background: var(--background);
+  }
+
+  .events-section h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 40px;
+    color: var(--primary);
+  }
+
+  .event-card {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .event-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .event-card .card-body {
+    padding: 20px;
+  }
+
+  .event-card .btn {
+    border-radius: 50px;
+    padding: 8px 20px;
+  }
+
+  /* Did You Know */
+  .did-you-know {
+    padding: 50px 20px;
+    background: linear-gradient(135deg, #F0F4FF, #E0E7FF);
+    text-align: center;
+  }
+
+  .did-you-know h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 30px;
+  }
+
+  .fun-fact {
+    max-width: 600px;
+    margin: 15px auto;
+    padding: 20px;
+    background: var(--text-light);
+    border-left: 5px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.6s ease-out;
+  }
+
+  /* Testimonials */
+  .testimonials {
+    padding: 50px 20px;
+    background: var(--background);
+    text-align: center;
+  }
+
+  .testimonials h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 40px;
+  }
+
+  .testimonial-card {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    background: var(--text-light);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .testimonial-card img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  /* Contact Section */
+  .contact-section {
+    padding: 50px 20px;
+    background: var(--dark-bg);
+    color: var(--text-light);
+    text-align: center;
+  }
+
+  .contact-section h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+  }
+
+  .contact-section form {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .contact-section input, .contact-section textarea {
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+  }
+
+  .contact-section button {
+    padding: 12px;
+    background: var(--accent);
+    border: none;
+    border-radius: 50px;
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .contact-section button:hover {
+    background: #F59E0B;
+  }
+
+  /* Animations */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .hero-section h1 {
+      font-size: 2.5rem;
+    }
+
+    .hero-section p {
+      font-size: 1rem;
+    }
+
+    .container-custom {
+      grid-template-columns: 1fr;
+    }
+
+    .event-card {
+      margin-bottom: 20px;
+    }
+  }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section fade-in">
+  <div class="container">
+    <h1>Welcome to CampusConnect 🏠</h1>
+    <p>Your one-stop hub for everything happening in your hostel – from events to meals, discussions, and beyond.</p>
+    <a href="{% url 'index' %}" class="btn">Back to CampusNest</a>
+  </div>
+</section>
+
+<!-- Feature Cards Section -->
+<div class="container-custom" id="features">
+  <div class="card-custom fade-in">
+    <h2><i class='bx bx-calendar'></i> Event Calendar</h2>
+    <p>View upcoming hostel events, RSVP, and propose new ones.</p>
+  </div>
+  <div class="card-custom fade-in">
+    <h2><i class='bx bx-search-alt'></i> Lost & Found</h2>
+    <p>Report lost items, browse found items, and claim yours safely.</p>
+  </div>
+  <div class="card-custom fade-in">
+    <h2><i class='bx bx-restaurant'></i> Mess Menu</h2>
+    <p>Check the mess schedule and opt in/out of specific meals.</p>
+  </div>
+  <div class="card-custom fade-in">
+    <h2><i class='bx bx-message-square-dots'></i> Discussions</h2>
+    <p>Join forums to share tips, talk events, and connect with others.</p>
+  </div>
+</div>
+
+<!-- Upcoming Events Section -->
+<section class="events-section">
+  <h2 class="fade-in">📅 Events</h2>
+  <div class="row justify-content-center">
+    {% if show %}
+      {% for event in show %}
+        <div class="col-md-4">
+          <div class="event-card fade-in">
+            <div class="card-body">
+              <h5 class="card-title">{{ event.organizer }}</h5>
+              <p class="card-text">
+                Date: {{ event.date }}<br>
+                Time: {{ event.time }}<br>
+                Venue: {{ event.venue }}
+              </p>
+              <a href="{% url 'events' %}" class="btn btn-outline-primary">More Details</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-center fade-in">No upcoming events yet. Stay tuned!</p>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Did You Know Section -->
+<section class="did-you-know">
+  <h2 class="fade-in">🤔 Did You Know?</h2>
+  <div class="fun-fact">HostelConnect helps reduce lost item cases by 40% each semester.</div>
+  <div class="fun-fact">Students who RSVP to events are 3x more likely to actually attend!</div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials">
+  <h2 class="fade-in">💬 What Students Say</h2>
+  <div class="testimonial-card fade-in">
+    <img src="https://randomuser.me/api/portraits/women/1.jpg" alt="Ananya">
+    <div>
+      <p>“HostelConnect made my hostel life so much easier. I never miss events now!”</p>
+      <strong>— Ananya S.</strong>
+    </div>
+  </div>
+  <div class="testimonial-card fade-in">
+    <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="Rohan">
+    <div>
+      <p>“Claimed my lost phone using the Lost & Found section. Brilliant!”</p>
+      <strong>— Rohan T.</strong>
+    </div>
+  </div>
+</section>
+
+<!-- Contact / Feedback -->
+<section class="contact-section">
+  <h2 class="fade-in">📬 Got Suggestions?</h2>
+  <p>We'd love to hear from you! Help us improve your hostel experience.</p>
+  <form class="fade-in">
+    <input type="text" placeholder="Your Name" required>
+    <input type="email" placeholder="Your Email" required>
+    <textarea placeholder="Your Message" rows="5" required></textarea>
+    <button type="submit">Send Feedback</button>
+  </form>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'Rooms_base.html' %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="main-content">
+        <div class="header">
+            <h1>Confirm Delete Menu Item</h1>
+        </div>
+        <div class="form-container">
+            <p>Are you sure you want to delete the <strong>{{ menu.meal_type }}</strong> menu for <strong>{{ menu.day }}</strong>?</p>
+            <p>Menu details: {{ menu.menu }}</p>
+            <form method="POST" action="{% url 'delete_mess_menu' menu.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                <a href="{% url 'admin_dashboard' %}?tab=mess" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

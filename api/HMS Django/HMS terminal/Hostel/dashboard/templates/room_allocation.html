@@ -1,0 +1,184 @@
+{% extends 'dash_base.html' %}
+{% block title %}Room Allocation{% endblock %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Room Allocation</h2>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Allocate a Room</h5>
+                    <form id="roomAllocationForm">
+                        <div class="mb-3">
+                            <label class="form-label">Hostel</label>
+                            <select class="form-select" id="hostel" required>
+                                <option value="hostel-1">Hostel 1</option>
+                                <option value="hostel-2">Hostel 2</option>
+                                <option value="hostel-3">Hostel 3</option>
+                                <option value="hostel-4">Hostel 4</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Floor</label>
+                            <select class="form-select" id="floor" required>
+                                <option value="1">Floor 1</option>
+                                <option value="2">Floor 2</option>
+                                <option value="3">Floor 3</option>
+                                <option value="4">Floor 4</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Room Number</label>
+                            <input type="number" class="form-control" id="room_number" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Room Type</label>
+                            <select class="form-select" id="room_type" required>
+                                <option value="four">Four-Bed</option>
+                                <option value="double">Double-Bed</option>
+                                <option value="single">Single-Bed</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Student Name</label>
+                            <input type="text" class="form-control" id="student_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Roll Number</label>
+                            <input type="text" class="form-control" id="student_roll_no" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Allocate Room</button>
+                    </form>
+                    <div id="formMessage" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Available Rooms</h5>
+                    <div id="availableRooms"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const FLASK_API = 'http://localhost:5000/api';
+
+document.getElementById('roomAllocationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = {
+        hostel: document.getElementById('hostel').value,
+        floor: parseInt(document.getElementById('floor').value),
+        room_number: parseInt(document.getElementById('room_number').value),
+        room_type: document.getElementById('room_type').value,
+        student_name: document.getElementById('student_name').value,
+        student_roll_no: document.getElementById('student_roll_no').value
+    };
+
+    try {
+        const response = await fetch(`${FLASK_API}/room_allocations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        const result = await response.json();
+        const messageDiv = document.getElementById('formMessage');
+        if (response.ok) {
+            messageDiv.innerHTML = `<div class="alert alert-success">${result.message || 'Room allocated!'}</div>`;
+            fetchAvailableRooms();
+        } else {
+            messageDiv.innerHTML = `<div class="alert alert-danger">${result.message || 'Error allocating room'}</div>`;
+        }
+    } catch (error) {
+        document.getElementById('formMessage').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+});
+
+async function fetchAvailableRooms() {
+    const hostel = document.getElementById('hostel').value || 'hostel-1';
+    const floor = document.getElementById('floor').value || 1;
+    try {
+        const response = await fetch(`${FLASK_API}/get_available_rooms?hostel=${hostel}&floor=${floor}`);
+        const data = await response.json();
+        console.log('API Response:', data); // Debug log
+        
+        let html = `<h6 class="mb-3">Hostel: ${data.hostel}, Floor: ${data.floor}</h6>`;
+        
+        // Display available rooms
+        if (data.available.four.length > 0) {
+            html += '<h6>Four-Bed Rooms:</h6>';
+            html += '<ul class="list-group mb-3">';
+            data.available.four.forEach(room => {
+                html += `<li class="list-group-item">
+                    Room ${room.number}: ${room.beds_left} beds left
+                    ${room.student_name ? `<br><small class="text-muted">Occupied by: ${room.student_name} (${room.student_roll_no})</small>` : ''}
+                </li>`;
+            });
+            html += '</ul>';
+        } else {
+            html += '<p class="text-muted">No four-bed rooms available.</p>';
+        }
+        
+        if (data.available.double.length > 0) {
+            html += '<h6>Double-Bed Rooms:</h6>';
+            html += '<ul class="list-group mb-3">';
+            data.available.double.forEach(room => {
+                html += `<li class="list-group-item">
+                    Room ${room.number}: ${room.beds_left} beds left
+                    ${room.student_name ? `<br><small class="text-muted">Occupied by: ${room.student_name} (${room.student_roll_no})</small>` : ''}
+                </li>`;
+            });
+            html += '</ul>';
+        } else {
+            html += '<p class="text-muted">No double-bed rooms available.</p>';
+        }
+        
+        if (data.available.single.length > 0) {
+            html += '<h6>Single-Bed Rooms:</h6>';
+            html += '<ul class="list-group mb-3">';
+            data.available.single.forEach(room => {
+                html += `<li class="list-group-item">
+                    Room ${room.number}: ${room.beds_left} beds left
+                    ${room.student_name ? `<br><small class="text-muted">Occupied by: ${room.student_name} (${room.student_roll_no})</small>` : ''}
+                </li>`;
+            });
+            html += '</ul>';
+        } else {
+            html += '<p class="text-muted">No single-bed rooms available.</p>';
+        }
+        
+        // Display booked rooms
+        if (data.booked && data.booked.length > 0) {
+            html += '<h6>Booked Rooms:</h6>';
+            html += '<ul class="list-group">';
+            data.booked.forEach(room => {
+                html += `<li class="list-group-item list-group-item-danger">
+                    Room ${room.number} (${room.type})
+                    <br><small class="text-muted">Occupied by: ${room.student_name} (${room.student_roll_no})</small>
+                </li>`;
+            });
+            html += '</ul>';
+        } else {
+            html += '<p class="text-muted">No rooms are currently booked.</p>';
+        }
+        
+        document.getElementById('availableRooms').innerHTML = html;
+    } catch (error) {
+        console.error('Error fetching rooms:', error); // Debug log
+        document.getElementById('availableRooms').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+}
+
+// Add event listeners for hostel and floor changes
+document.getElementById('hostel').addEventListener('change', fetchAvailableRooms);
+document.getElementById('floor').addEventListener('change', fetchAvailableRooms);
+
+// Initial fetch
+fetchAvailableRooms();
+</script>
+{% endblock %}

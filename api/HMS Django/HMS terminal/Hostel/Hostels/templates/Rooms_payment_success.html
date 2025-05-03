@@ -1,0 +1,140 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/Room_payment_success.css' %}">
+<div class="payment-success">
+    <div class="success-animation">
+        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+    </div>
+
+    <div class="success-details">
+        <h2>Payment Processed Successfully!</h2>
+
+        <div class="no-dues-banner"> <!-- Add this section -->
+            <i class="fas fa-check-circle"></i>
+            <span>No Dues Certificate Generated</span>
+        </div>
+        
+        <div class="transaction-card">
+            <div class="bank-header">
+                <img src="{% static 'images/payment/bank-logo.png' %}" alt="Bank Logo">
+                <span>Virtual Account: {{ virtual_account }}</span>
+            </div>
+            
+            <div class="transaction-info">
+                <div class="info-row">
+                    <span>Transaction ID:</span>
+                    <strong>{{ payment.transaction_id }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Amount:</span>
+                    <strong>₹{{ payment.amount }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Date:</span>
+                    <strong>{{ payment.payment_date|date:"d M Y, H:i:s" }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Gateway:</span>
+                    <strong>{{ payment_gateway }}</strong>
+                </div>
+            </div>
+            
+            <div class="security-code">
+                <span>Auth Code:</span>
+                <strong>{{ auth_code }}</strong>
+            </div>
+        </div>
+
+        <div class="success-actions">
+            <a href="{% url 'profiles' %}" class="btn">
+                <i class="fas fa-user-circle"></i> View Profile
+            </a>
+            <button class="btn" onclick="window.print()">
+                <i class="fas fa-print"></i> Print Receipt
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.no-dues-banner {
+    background: #4CAF50;
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.payment-success {
+    max-width: 800px;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+.checkmark__circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke-miterlimit: 10;
+    stroke: #4CAF50;
+    fill: none;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark__check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+    100% { stroke-dashoffset: 0; }
+}
+
+.transaction-card {
+    background: #fff;
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 2rem auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    text-align: left;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.success-actions {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn {
+    background: #2196F3;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+</style>
+
+
+
+{% endblock %}

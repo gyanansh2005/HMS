@@ -1,0 +1,37 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Update Mess Menu</h2>
+    <form method="POST" class="mess-form">
+        {% csrf_token %}
+        <p>
+            <label for="id_day">Day</label>
+            <select name="day" id="id_day" required>
+                <option value="Monday" {% if menu_item.day == "Monday" %}selected{% endif %}>Monday</option>
+                <option value="Tuesday" {% if menu_item.day == "Tuesday" %}selected{% endif %}>Tuesday</option>
+                <option value="Wednesday" {% if menu_item.day == "Wednesday" %}selected{% endif %}>Wednesday</option>
+                <option value="Thursday" {% if menu_item.day == "Thursday" %}selected{% endif %}>Thursday</option>
+                <option value="Friday" {% if menu_item.day == "Friday" %}selected{% endif %}>Friday</option>
+                <option value="Saturday" {% if menu_item.day == "Saturday" %}selected{% endif %}>Saturday</option>
+                <option value="Sunday" {% if menu_item.day == "Sunday" %}selected{% endif %}>Sunday</option>
+            </select>
+        </p>
+        <p>
+            <label for="id_meal_type">Meal Type</label>
+            <select name="meal_type" id="id_meal_type" required>
+                <option value="Breakfast" {% if menu_item.meal_type == "Breakfast" %}selected{% endif %}>Breakfast</option>
+                <option value="Lunch" {% if menu_item.meal_type == "Lunch" %}selected{% endif %}>Lunch</option>
+                <option value="Dinner" {% if menu_item.meal_type == "Dinner" %}selected{% endif %}>Dinner</option>
+            </select>
+        </p>
+        <p>
+            <label for="id_menu">Menu</label>
+            <textarea name="menu" id="id_menu" required>{{ menu_item.menu }}</textarea>
+        </p>
+        <button type="submit" class="btn btn-primary">Update Menu</button>
+        <a href="{% url 'admin_dashboard' %}?tab=mess" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

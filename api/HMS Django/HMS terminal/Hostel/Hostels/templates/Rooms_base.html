@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hostel Management System{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="shortcut icon" href="../static/images/Favicon.png" type="image/x-icon">
+    <!-- In Rooms_base.html, inside <head> -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/Rooms_base.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div class="navbar" id="navbar">
+        <div class="logo">
+            <a href="{% url 'index' %}" class="logo-link">CampusNest</a>
+        </div>
+        
+        <div class="nav-links">
+            {% if user.is_authenticated and user.is_staff %}
+            <a href="{%url 'admin_dashboard'%}">Dashboard</a>
+            {% endif %}
+           
+            <a href="{% url 'index' %}">Home</a>
+            <div class="dropdown">
+                <a href="#">Services<i class="fa-solid fa-angle-down"></i></a>
+                <div class="dropdown-content">
+                    <a href="{% url 'room_allocation' %}">Room Allocation</a>
+                    <a href="{% url 'payment' %}">Fee Payment</a>
+                    <a href="{% url 'complaint_maintenance' %}">Complaint/Maintenance</a>
+                </div>
+            </div>
+            <a href="{% url 'hostel_details' %}">Hostel Details</a>
+            <a href="{% url 'feedback' %}">Feedback</a>
+            <a href="{% url 'about' %}">About</a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'profiles' %}">
+                <div class="profile-circle">
+                    {% if user.student_profile.profile_picture %}
+                        <img src="{{ user.student_profile.profile_picture.url }}" alt="Profile Picture">
+                    {% else %}
+                        <img src="../static/images/profile.png" alt="Profile Picture">
+                    {% endif %}
+                </div>
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            {% endif %}
+        </div>
+        <button class="nav-toggle" id="nav-toggle">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
+    
+
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+            <button type="button" class="close" onclick="this.parentElement.style.display='none'">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <br><br>
+
+    {% block content %}
+    {% endblock %}
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <p>Providing the best hostel management services with efficiency and ease.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms & Conditions</a></li>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Support</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <ul>
+                    <li><a href="#">Instagram</a></li>
+                    <li><a href="#">Facebook</a></li>
+                    <li><a href="#">Twitter</a></li>
+                    <li><a href="#">WhatsApp</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>Email: campusnest@gmail.com</p>
+                <p>Phone: +91 9876543210</p>
+            </div>
+            <div class="footer-section">
+                <h3>CampusNest</h3>
+                <p>Subscribe to campusnest for updates.</p>
+                <input type="email" placeholder="Enter your email"
+                    style="padding: 5px; width: 80%; border-radius: 5px; border: 1px solid #ccc;">
+                <button
+                    style="padding: 5px 10px; margin-top: 5px; border: none; background: black; color: white; border-radius: 5px; cursor: pointer;">Subscribe</button>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Hostel Management System | CampusNest | All Rights Reserved</p>
+            <p><a href="#top" class="back-to-top">Back to Top</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll effect
+        window.addEventListener("scroll", function () {
+            let navbar = document.getElementById("navbar");
+            navbar.classList.toggle("scrolled", window.scrollY > 10);
+        });
+
+        // Nav toggle functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            const navToggle = document.getElementById('nav-toggle');
+            const navLinks = document.querySelector('.nav-links');
+
+            navToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('show');
+            });
+
+            // Close menu when clicking outside on mobile
+            document.addEventListener('click', function (event) {
+                if (!navToggle.contains(event.target) && !navLinks.contains(event.target)) {
+                    navLinks.classList.remove('show');
+                }
+            });
+
+            // Close menu when clicking a link (mobile)
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 768) {
+                        navLinks.classList.remove('show');
+                    }
+                });
+            });
+        });
+
+        // Dropdown toggle functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            const dropdowns = document.querySelectorAll('.dropdown');
+
+            dropdowns.forEach(dropdown => {
+                const link = dropdown.querySelector('a');
+                const content = dropdown.querySelector('.dropdown-content');
+
+                link.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        content.classList.toggle('show');
+                    }
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target)) {
+                        content.classList.remove('show');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

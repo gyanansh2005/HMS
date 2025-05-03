@@ -1,0 +1,82 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f6f9;
+}
+
+.sidebar {
+    min-height: 100vh;
+    background: #1a2533;
+    color: #fff;
+    padding-top: 20px;
+    transition: width 0.3s;
+    width: 250px;
+}
+
+.sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar .logo {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffd700;
+}
+
+.sidebar .nav-link {
+    color: #d1d4d7;
+    padding: 12px 20px;
+    border-radius: 5px;
+    margin: 5px 10px;
+    transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover, .sidebar .nav-link.active {
+    background: #2c3e50;
+    color: #ffd700;
+}
+
+.navbar {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.table {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: #1a2533;
+    color: #fff;
+}
+
+.table-actions .btn {
+    margin-right: 5px;
+}
+
+.alert {
+    border-radius: 5px;
+}
+
+.modal-content {
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 80px;
+    }
+    .sidebar .nav-link span {
+        display: none;
+    }
+}
