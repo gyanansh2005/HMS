@@ -346,7 +346,7 @@
 /* Status Styling */
 .status-confirmed {
     color: var(--white) !important;
-    background: #2e7d32; /* Deep green */
+    background: green; /* Deep green */
     padding: 0.3rem 0.8rem;
     border-radius: 12px;
     font-weight: 500;
@@ -355,7 +355,8 @@
 
 .status-pending {
     color: var(--white)!important;
-    background: #f57c00; /* Orange */
+    /* background: #f57c00; Orange */
+    background-color: rgb(255, 174, 0);
     padding: 0.3rem 0.8rem;
     border-radius: 12px;
     font-weight: 500;
@@ -498,17 +499,17 @@
     gap: 8px;
 }
 
-.status-confirmed {
+/* .status-confirmed {
     background: #e3fcef;
     color: #0a5c36;
     border: 2px solid #0a5c36;
-}
+} */
 
-.status-pending {
-    background: #fff8e6;
-    color: #8a6d3b;
+/* .status-pending {
+    background: #b4c9e8;
+    color: #f2a41d !important;
     border: 2px solid #8a6d3b;
-}
+} */
 
 .status-cancelled {
     background: #fdecea;
@@ -524,8 +525,20 @@
 .action-buttons {
     margin-top: 1.5rem;
     display: flex;
-    gap: 1rem;
     align-items: center;
+    justify-content: center;
+    border: 2px solid;
+    border-radius: 20px;
+    padding: 8px;
+    background-color: #0029f9;
+    color: white;
+}
+.action-buttons>a{
+    text-decoration: none;
+    color: white;
+}
+.action-buttons:hover{
+    background-color:#001998;
 }
 
 /* Animations */
