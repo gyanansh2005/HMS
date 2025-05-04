@@ -48,6 +48,24 @@ from .models import CustomUser, StudentProfile
 from .forms import SignupForm
 import re
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import login
+from django.core.exceptions import ValidationError
+from django.db import transaction
+import re
+
+from .forms import SignupForm
+from .models import CustomUser, StudentProfile
+
+import re
+from django.core.exceptions import ValidationError
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.db import transaction
+from .forms import SignupForm
+from .models import CustomUser, StudentProfile
+
 def signup_view(request):
     if request.method == 'POST':
         # Extract form data
@@ -73,9 +91,8 @@ def signup_view(request):
             messages.error(request, 'Email already registered.')
             return render(request, 'Rooms_signup.html', {'form': SignupForm(request.POST)})
 
-        # Password validation
         try:
-            # Custom password validation
+            # Password validation
             if len(password1) < 8:
                 raise ValidationError('Password must be at least 8 characters long.')
             if not re.search(r'[A-Z]', password1):
@@ -87,7 +104,7 @@ def signup_view(request):
             if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password1):
                 raise ValidationError('Password must contain at least one special character.')
 
-            # Create user
+            # Create user and student profile inside a transaction
             with transaction.atomic():
                 user = CustomUser.objects.create_user(
                     email=email,
@@ -96,26 +113,24 @@ def signup_view(request):
                     password=password1,
                     roll_number=roll_number
                 )
-
-                # Create or update student profile
                 student_profile, created = StudentProfile.objects.get_or_create(user=user)
                 student_profile.contact_number = contact_number
                 student_profile.save()
 
-                # Log in the user
-                login(request, user)
-                messages.success(request, 'Registration successful! .')
-                return redirect('login_view')  # Redirect to home page after signup
+            # Do NOT log in user here
+            messages.success(request, 'Registration successful! Please log in.')
+            return redirect('login')  # ✅ ensure this matches your urls.py
 
         except ValidationError as e:
             for error in e.messages:
                 messages.error(request, error)
             return render(request, 'Rooms_signup.html', {'form': SignupForm(request.POST)})
+
         except Exception as e:
             messages.error(request, f'Registration failed: {str(e)}')
             return render(request, 'Rooms_signup.html', {'form': SignupForm(request.POST)})
 
-    # For GET request, render empty form
+    # GET request
     form = SignupForm()
     return render(request, 'Rooms_signup.html', {'form': form})
 
