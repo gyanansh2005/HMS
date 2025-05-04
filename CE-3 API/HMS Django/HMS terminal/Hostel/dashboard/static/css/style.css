@@ -5,7 +5,7 @@ body {
 
 .sidebar {
     min-height: 100vh;
-    background: #1a2533;
+    background-color: #3e35c7;
     color: #fff;
     padding-top: 20px;
     transition: width 0.3s;
@@ -31,12 +31,12 @@ body {
 }
 
 .sidebar .nav-link:hover, .sidebar .nav-link.active {
-    background: #2c3e50;
+    background-color: #3e35c7;
     color: #ffd700;
 }
 
 .navbar {
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: #3e35c7;
 }
 
 .card {
@@ -56,7 +56,7 @@ body {
 }
 
 .table thead th {
-    background: #1a2533;
+    background-color: #3e35c7;
     color: #fff;
 }
 

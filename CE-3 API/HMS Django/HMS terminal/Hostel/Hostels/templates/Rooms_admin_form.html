@@ -100,27 +100,31 @@ h1, h2, h3, h4, h5 {
 .admin-container {
     display: flex;
     min-height: 100vh;
+    margin-top: 80px; /* Move margin to container */
+    position: relative; /* Add position relative */
 }
 
 .sidebar {
-    height: fit-content;
-    margin-top: 5rem;
     width: var(--sidebar-width);
     background: linear-gradient(195deg, var(--primary-color), var(--secondary-color));
     color: var(--text-light);
     padding: var(--padding-medium);
     position: fixed;
-    height: 100%;
+    top: 80px; /* Match navbar height */
+    left: 0;
+    height: calc(100vh - 80px); /* Subtract navbar height */
     transition: var(--transition-speed);
     z-index: 1000;
     box-shadow: var(--shadow);
+    overflow-y: auto;
 }
 
 .sidebar .logo-container {
     display: flex;
     align-items: center;
     gap: var(--gap-small);
-    margin-bottom: var(--gap-large);
+    margin: 0 0 var(--gap-large) 0; /* Remove top margin */
+    padding-top: 0; /* Remove top padding */
 }
 
 .sidebar .logo-img {
@@ -165,6 +169,9 @@ h1, h2, h3, h4, h5 {
     flex-grow: 1;
     padding: var(--padding-large);
     background: var(--light-bg);
+    min-height: calc(100vh - 80px); /* Adjust height to account for navbar */
+    transition: var(--transition-speed);
+    padding-top: 2rem;
 }
 
 body.dark .main-content {
@@ -180,6 +187,7 @@ body.dark .main-content {
     background: var(--white);
     border-radius: 10px;
     box-shadow: var(--shadow);
+    margin-top: 1rem; /* Add margin to the header */
 }
 
 body.dark .header {
@@ -915,15 +923,16 @@ body.dark .chat-messages::-webkit-scrollbar-thumb {
 
 @media (max-width: 768px) {
     .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-        padding: var(--padding-medium);
+        transform: translateX(-100%);
     }
-
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
     .main-content {
         margin-left: 0;
-        padding: var(--padding-medium);
+        padding: var(--padding-small);
     }
 
     .content-grid {
