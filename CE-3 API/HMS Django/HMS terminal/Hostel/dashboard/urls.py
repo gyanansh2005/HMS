@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     path('', views.dashboard_home, name='dashboard_home'),
-    path('room_allocation/', views.room_allocation_page, name='room_allocation'),
+    path('room_allocation/', views.room_allocation_page, name='das_room_allocation'),
     path('feedback/', views.submit_feedback_page, name='submit_feedback'),
     path('room_allocations/', views.room_allocations, name='room_allocations'),
     path('room_allocations/add/', views.add_room_allocation, name='add_room_allocation'),
