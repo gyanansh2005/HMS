@@ -24,6 +24,12 @@
         <div class="nav-links">
             {% if user.is_authenticated and user.is_staff %}
             <a href="{%url 'admin_dashboard'%}">Dashboard</a>
+            
+           
+
+        
+          
+            <a href="{%url 'api_users'%}">API Dashboard</a>
             {% endif %}
            
             <a href="{% url 'index' %}">Home</a>
