@@ -1,0 +1,155 @@
+{% extends 'Rooms_base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - HMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sidebar">
+    <div class="logo">Admin Dashboard</div>
+    <button class="toggle-sidebar">
+        <i class="fas fa-bars"></i>
+    </button>
+    <div class="section-title">Main</div>
+    <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+    </a>
+    <a href="{% url 'api_users' %}" class="nav-link {% if request.resolver_match.url_name == 'api_users' %}active{% endif %}">
+        <i class="fas fa-code"></i>
+        <span>API Dashboard</span>
+    </a>
+    <div class="section-title">Management</div>
+    <a href="{% url 'manage_students' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_students' %}active{% endif %}">
+        <i class="fas fa-users"></i>
+        <span>Students</span>
+    </a>
+    <a href="{% url 'manage_rooms' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_rooms' %}active{% endif %}">
+        <i class="fas fa-door-open"></i>
+        <span>Rooms</span>
+    </a>
+    <a href="{% url 'manage_complaints' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_complaints' %}active{% endif %}">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>Complaints</span>
+    </a>
+    <div class="section-title">Settings</div>
+    <a href="{% url 'admin_settings' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_settings' %}active{% endif %}">
+        <i class="fas fa-cog"></i>
+        <span>Settings</span>
+    </a>
+</div>
+
+<div class="content-area">
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Total Students</h3>
+                <p>{{ total_students }}</p>
+            </div>
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Available Rooms</h3>
+                <p>{{ available_rooms }}</p>
+            </div>
+            <div class="stat-icon">
+                <i class="fas fa-door-open"></i>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Pending Complaints</h3>
+                <p>{{ pending_complaints }}</p>
+            </div>
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Total Revenue</h3>
+                <p>₹{{ total_revenue }}</p>
+            </div>
+            <div class="stat-icon">
+                <i class="fas fa-rupee-sign"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h3 class="chart-title">Student Distribution</h3>
+        <canvas id="studentChart"></canvas>
+    </div>
+
+    <div class="dashboard-table">
+        <h3>Recent Activities</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Activity</th>
+                    <th>User</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in recent_activities %}
+                <tr>
+                    <td>{{ activity.date }}</td>
+                    <td>{{ activity.description }}</td>
+                    <td>{{ activity.user }}</td>
+                    <td>
+                        <span class="badge {% if activity.status == 'completed' %}bg-success{% elif activity.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ activity.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Sidebar toggle
+    const toggleBtn = document.querySelector('.toggle-sidebar');
+    const sidebar = document.querySelector('.sidebar');
+    const contentArea = document.querySelector('.content-area');
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+    });
+
+    // Student distribution chart
+    const ctx = document.getElementById('studentChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Boys', 'Girls'],
+            datasets: [{
+                data: [{{ male_students }}, {{ female_students }}],
+                backgroundColor: ['#4361ee', '#ef476f'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 
