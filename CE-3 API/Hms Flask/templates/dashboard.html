@@ -68,7 +68,7 @@
             <tr>
               <th>Name</th>
               <th>Email</th>
-              <th>Username</th>
+              <th>Roll Number</th>
               <th>Role</th>
               <th>Actions</th>
             </tr>
@@ -76,15 +76,19 @@
           <tbody>
             {% for user in users %}
             <tr>
-              <td>{{ user.name }}</td>
+              <td>{{ user.first_name }} {{ user.last_name }}</td>
               <td>{{ user.email }}</td>
-              <td>{{ user.username }}</td>
-              <td><span class="role-badge">{{ user.role }}</span></td>
+              <td>{{ user.roll_number }}</td>
+              <td>
+                <span class="role-badge">
+                  {% if user.is_superuser %}Admin{% else %}User{% endif %}
+                </span>
+              </td>
               <td class="actions">
                 <button class="edit-btn" data-user-id="{{ user.id }}">
                   <i class="fas fa-edit"></i>
                 </button>
-                <a href="{{ url_for('delete_user', user_id=user.id) }}" class="delete-btn"
+                <a href="{{ url_for('delete_user_api', id=user.id) }}" class="delete-btn"
                   onclick="return confirm('Are you sure you want to delete this user?')">
                   <i class="fas fa-trash-alt"></i>
                 </a>
@@ -104,7 +108,7 @@
               <th>Type</th>
               <th>User</th>
               <th>Room</th>
-              <th>Details</th>
+              <th>Details</h>
               <th>Status</th>
               <th>Date</th>
               <th>Actions</th>
@@ -113,16 +117,16 @@
           <tbody>
             {% for request in requests %}
             <tr>
-              <td>{{ request.type|capitalize }}</td>
-              <td>{{ request.user.name }}</td>
+              <td>{{ request.request_type|capitalize }}</td>
+              <td>{{ request.user.first_name }} {{ request.user.last_name }}</td>
               <td>{{ request.room_number }}</td>
               <td>{{ request.details }}</td>
               <td><span class="status-badge {{ request.status }}">{{ request.status|capitalize }}</span></td>
               <td>{{ request.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
               <td>
-                <a href="{{ url_for('update_request', request_id=request.id, status='resolved') }}"
+                <a href="{{ url_for('update_request_api', id=request.id) }}?status=resolved"
                   class="action-btn resolve">Resolve</a>
-                <a href="{{ url_for('update_request', request_id=request.id, status='pending') }}"
+                <a href="{{ url_for('update_request_api', id=request.id) }}?status=pending"
                   class="action-btn pending">Pending</a>
               </td>
             </tr>
@@ -137,7 +141,6 @@
         <table>
           <thead>
             <tr>
-              <th>Name</th>
               <th>Hostel</th>
               <th>Environment</th>
               <th>Service Rating</th>
@@ -148,12 +151,11 @@
           <tbody>
             {% for feedback in feedbacks %}
             <tr>
-              <td>{{ feedback.first_name }} {{ feedback.last_name }}</td>
               <td>{{ feedback.hostel }}</td>
-              <td>{{ feedback.environment }}</td>
+              <td>{{ feedback.environment_rating }}</td>
               <td>{{ feedback.service_rating }}/5</td>
-              <td>{{ feedback.description|truncate(50) }}</td>
-              <td>{{ feedback.created_at.strftime('%Y-%m-%d') }}</td>
+              <td>{{ feedback.comments|truncate(50) }}</td>
+              <td>{{ feedback.submitted_at.strftime('%Y-%m-%d') }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -173,18 +175,33 @@
               <th>Student Name</th>
               <th>Roll No</th>
               <th>Beds Left</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for allocation in allocations %}
             <tr>
-              <td>{{ allocation.hostel }}</td>
-              <td>{{ allocation.floor }}</td>
-              <td>{{ allocation.room_number }}</td>
-              <td>{{ allocation.room_type|capitalize }}</td>
-              <td>{{ allocation.student_name }}</td>
-              <td>{{ allocation.student_roll_no }}</td>
-              <td>{{ allocation.beds_left }}</td>
+              <td>{{ allocation.room.hostel.name if allocation.room and allocation.room.hostel else 'None' }}</td>
+              <td>{{ allocation.room.floor if allocation.room else 'None' }}</td>
+              <td>{{ allocation.room.room_number if allocation.room else 'None' }}</td>
+              <td>{{ allocation.room.room_type|capitalize if allocation.room else 'None' }}</td>
+              <td>
+                {% if allocation.user %}
+                  {{ allocation.user.first_name }} {{ allocation.user.last_name }}
+                {% else %}
+                  None
+                {% endif %}
+              </td>
+              <td>{{ allocation.user.roll_number if allocation.user else 'None' }}</td>
+              <td>{{ allocation.room.beds_left if allocation.room else 'None' }}</td>
+              <td>
+                <!-- Delete Button -->
+                <form action="{{ url_for('delete_room_allocation', id=allocation.id) }}" method="post" style="display:inline;">
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this allocation?');">Delete</button>
+                </form>
+                <!-- Edit Button (link to edit page or modal) -->
+                <a href="{{ url_for('edit_room_allocation', id=allocation.id) }}" class="btn btn-primary btn-sm">Edit</a>
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -202,22 +219,26 @@
       <form id="editUserForm" method="POST">
         <input type="hidden" name="user_id" id="editUserId">
         <div class="form-group">
-          <label>Full Name:</label>
-          <input type="text" name="name" id="editName" required>
+          <label>First Name:</label>
+          <input type="text" name="first_name" id="editFirstName" required>
+        </div>
+        <div class="form-group">
+          <label>Last Name:</label>
+          <input type="text" name="last_name" id="editLastName" required>
         </div>
         <div class="form-group">
           <label>Email:</label>
           <input type="email" name="email" id="editEmail" required>
         </div>
         <div class="form-group">
-          <label>Username:</label>
-          <input type="text" name="username" id="editUsername" required>
+          <label>Roll Number:</label>
+          <input type="text" name="roll_number" id="editRollNumber" required>
         </div>
         <div class="form-group">
           <label>Role:</label>
-          <select name="role" id="editRole">
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
+          <select name="is_superuser" id="editRole">
+            <option value="0">User</option>
+            <option value="1">Admin</option>
           </select>
         </div>
         <div class="form-actions">
@@ -244,10 +265,11 @@
         }
 
         document.getElementById('editUserId').value = user.id;
-        document.getElementById('editName').value = user.name;
+        document.getElementById('editFirstName').value = user.first_name;
+        document.getElementById('editLastName').value = user.last_name;
         document.getElementById('editEmail').value = user.email;
-        document.getElementById('editUsername').value = user.username;
-        document.getElementById('editRole').value = user.role;
+        document.getElementById('editRollNumber').value = user.roll_number;
+        document.getElementById('editRole').value = user.is_superuser ? "1" : "0";
 
         // Dynamically set the form action with the user ID
         form.action = `/update_user/${userId}`;

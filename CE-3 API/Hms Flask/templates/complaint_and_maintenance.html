@@ -19,27 +19,53 @@
         <div id="upper_container">
             <div class="section">
                 <h3>Maintenance Request</h3>
-                <form method="POST" action="{{ url_for('submit_request') }}">
-                    <input type="hidden" name="request_type" value="maintenance">
-
-                    <label for="name">Your Name:</label>
-                    <input type="text" name="name" value="{{ current_user.name }}" required readonly>
-
-                    <label for="room">Room Number:</label>
-                    <input type="text" name="room_number" required>
-
-                    <label for="maintenanceType">Maintenance Type:</label>
-                    <select name="maintenance_type" required>
-                        <option value="Plumbing">Plumbing</option>
-                        <option value="Electricity">Electricity</option>
-                        <option value="Furniture">Furniture</option>
-                        <option value="Other">Other</option>
-                    </select>
-
-                    <label for="details">Details:</label>
-                    <textarea name="details" rows="4" required></textarea>
-
-                    <button type="submit">Submit Maintenance Request</button>
+                <form id="request-form" method="POST" action="{{ url_for('submit_request') }}">
+                    <div class="form-group">
+                        <label for="request_type">Request Type</label>
+                        <select name="request_type" id="request_type" class="form-control" required>
+                            <option value="">Select Type</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="complaint">Complaint</option>
+                        </select>
+                    </div>
+                    
+                    <div id="maintenance-fields" class="d-none">
+                        <div class="form-group">
+                            <label for="maintenance_type">Maintenance Type</label>
+                            <select name="maintenance_type" class="form-control">
+                                <option value="electrical">Electrical</option>
+                                <option value="plumbing">Plumbing</option>
+                                <option value="carpentry">Carpentry</option>
+                                <option value="housekeeping">Housekeeping</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="complaint-fields" class="d-none">
+                        <div class="form-group">
+                            <label for="complaint_type">Complaint Type</label>
+                            <select name="complaint_type" class="form-control">
+                                <option value="noise">Noise</option>
+                                <option value="cleanliness">Cleanliness</option>
+                                <option value="roommate">Roommate</option>
+                                <option value="facilities">Facilities</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="room_number">Room Number</label>
+                        <input type="text" name="room_number" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="details">Details</label>
+                        <textarea name="details" class="form-control" rows="4" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
                 </form>
             </div>
 
@@ -122,4 +148,3 @@
 </body>
 
 </html>
-[file content end]

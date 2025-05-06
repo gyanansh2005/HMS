@@ -13,144 +13,232 @@
     {% block content %}
     <div class="container">
         <h2>Room Allocation</h2>
-        <form class="allocation-form" id="allocation-form">
-            <label for="hostel">Select Hostel:</label>
-            <select id="hostel" name="hostel">
-                <option value="hostel-1">Campus 1</option>
-                <option value="hostel-2">Campus 2</option>
-                <option value="hostel-3">Campus 3</option>
-                <option value="hostel-4">Campus 4</option>
-            </select>
-
-            <label for="floor">Select Floor:</label>
-            <select id="floor" name="floor">
-                <option value="1">Floor 1</option>
-                <option value="2">Floor 2</option>
-                <option value="3">Floor 3</option>
-            </select>
-
-            <label for="student-name">Student Name:</label>
-            <input type="text" id="student-name" name="student-name" required>
-
-            <label for="student-roll-no">Student Roll Number:</label>
-    <input type="text" id="student-roll-no" name="student-roll-no" required>
-
-            <button type="submit">Allocate Room</button><br>
-            <a href="{{url_for('payment')}}">Proceed to Pay</a>
+        <form id="room-allocation-form">
+            <div class="form-group">
+                <label for="hostel">Hostel:</label>
+                <select name="hostel" id="hostel" class="form-control" required>
+                    {% for hostel in hostels %}
+                        <option value="{{ hostel.id }}">{{ hostel.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="floor">Floor:</label>
+                <select name="floor" id="floor" class="form-control" required>
+                    <!-- Will be populated by JS -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="student-name">Student Name:</label>
+                <input type="text" name="student-name" id="student-name" class="form-control" 
+                       value="{{ current_user.first_name }} {{ current_user.last_name }}" readonly>
+            </div>
+            <div class="form-group">
+                <label for="student-roll-no">Student Roll No:</label>
+                <input type="text" name="student-roll-no" id="student-roll-no" class="form-control" 
+                       value="{{ current_user.roll_number }}" readonly>
+            </div>
+            <input type="hidden" name="room-number" id="room-number">
+            <input type="hidden" name="room-type" id="room-type">
+            <button type="submit" class="btn btn-primary mt-2">Book Room</button>
         </form>
 
-        <div class="room-status">
-            <h3>4 Sharing Room Availability</h3>
+        <div class="room-status mt-4">
+            <h3>Four Sharing Room Availability</h3>
             <div class="room-grid" id="four-sharing-grid"></div>
             <h3>Double Sharing Room Availability</h3>
             <div class="room-grid" id="double-sharing-grid"></div>
             <h3>Single Seater Room Availability</h3>
             <div class="room-grid" id="single-seater-grid"></div>
-            <div id="no-rooms-message"></div>
+            <div id="no-rooms-message" style="color:red;"></div>
         </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Hostel</th>
+                    <th>Floor</th>
+                    <th>Room</th>
+                    <th>Type</th>
+                    <th>Student Name</th>
+                    <th>Roll No</th>
+                    <th>Beds Left</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for allocation in allocations %}
+                <tr>
+                    <td>{{ allocation.room.hostel.name }}</td>
+                    <td>{{ allocation.room.floor }}</td>
+                    <td>{{ allocation.room.room_number }}</td>
+                    <td>{{ allocation.room.room_type|capitalize }}</td>
+                    <td>{{ allocation.user.first_name }} {{ allocation.user.last_name }}</td>
+                    <td>{{ allocation.user.roll_number }}</td>
+                    <td>{{ allocation.room.beds_left }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let selectedRoom = null;
-            let selectedRoomType = null;
+        const hostelData = {{ hostels|tojson }};
+        const hostelSelect = document.getElementById('hostel');
+        const floorSelect = document.getElementById('floor');
+        let selectedRoom = null;
+        let selectedRoomType = null;
 
-            function fetchAvailableRooms() {
-                const selectedHostel = document.getElementById('hostel').value;
-                const selectedFloor = document.getElementById('floor').value;
-
-                fetch(`/get_available_rooms?hostel=${selectedHostel}&floor=${selectedFloor}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const availableRooms = data.available || {};
-                        const bookedRooms = data.booked || [];
-
-                        populateRoomGrid('four-sharing-grid', availableRooms['four'] || [], bookedRooms, 'four');
-                        populateRoomGrid('double-sharing-grid', availableRooms['double'] || [], bookedRooms, 'double');
-                        populateRoomGrid('single-seater-grid', availableRooms['single'] || [], bookedRooms, 'single');
-                    })
-                    .catch(error => console.error('Error fetching rooms:', error));
-            }
-
-            // Add event listeners to refresh rooms when hostel or floor changes
-            document.getElementById('hostel').addEventListener('change', fetchAvailableRooms);
-            document.getElementById('floor').addEventListener('change', fetchAvailableRooms);
-
-            function populateRoomGrid(gridId, rooms, bookedRooms, roomType) {
-                const grid = document.getElementById(gridId);
-                grid.innerHTML = '';
-
-                if (rooms.length === 0) {
-                    const noRoomsMessage = document.getElementById('no-rooms-message');
-                    noRoomsMessage.textContent = 'No available rooms';
-                    noRoomsMessage.style.display = 'block';
-                } else {
-                    rooms.forEach(room => {
-                        const roomDiv = document.createElement('div');
-                        roomDiv.classList.add('room');
-                        roomDiv.textContent = `Room ${room.number} (${room.beds_left} left)`;
-                        roomDiv.dataset.roomNumber = room.number;
-                        roomDiv.dataset.roomType = roomType;
-
-                        if (bookedRooms.includes(room.number)) {
-                            roomDiv.classList.add('booked');
-                        } else {
-                            roomDiv.addEventListener('click', function () {
-                                selectRoom(roomDiv);
-                            });
-                        }
-
-                        grid.appendChild(roomDiv);
-                    });
+        function populateFloors() {
+            const selectedHostelId = parseInt(hostelSelect.value.replace('hostel-', ''));
+            const selectedHostel = hostelData.find(h => h.id === selectedHostelId);
+            floorSelect.innerHTML = '';
+            if (selectedHostel) {
+                for (let i = 1; i <= selectedHostel.total_floors; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = `Floor ${i}`;
+                    floorSelect.appendChild(opt);
                 }
             }
-
-            function selectRoom(roomDiv) {
-                if (roomDiv.classList.contains('booked')) return;
-
-                if (selectedRoom) {
-                    selectedRoom.classList.remove('selected');
-                }
-                selectedRoom = roomDiv;
-                selectedRoom.classList.add('selected');
-                selectedRoomType = roomDiv.dataset.roomType;
-            }
-
-            document.getElementById("allocation-form").addEventListener("submit", function (event) {
-                event.preventDefault();
-
-                if (!selectedRoom) {
-                    alert("Please select a room first.");
-                    return;
-                }
-
-                const formData = new FormData(event.target);
-                formData.append("room-number", selectedRoom.dataset.roomNumber);
-                formData.append("room-type", selectedRoom.dataset.roomType);
-
-                fetch("/room_allocation", {
-                    method: "POST",
-                    body: formData
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(data.message);
-                        if (data.success) {
-                            fetchAvailableRooms();
-                            selectedRoom.classList.remove('selected');
-                            selectedRoom.classList.add('booked');
-                            selectedRoom = null;
-                            selectedRoomType = null;
-                        }
-                    })
-                    .catch(error => console.error("Error allocating room:", error));
-            });
-
             fetchAvailableRooms();
+        }
+
+        hostelSelect.addEventListener('change', populateFloors);
+        floorSelect.addEventListener('change', fetchAvailableRooms);
+        document.addEventListener('DOMContentLoaded', populateFloors);
+
+        function fetchAvailableRooms() {
+            const selectedHostel = hostelSelect.value;
+            const selectedFloor = floorSelect.value;
+            if (!selectedHostel || !selectedFloor) return;
+
+            const hostelId = parseInt(selectedHostel.replace('hostel-', ''));
+            fetch(`/api/get_available_rooms?hostel_id=${hostelId}&floor=${selectedFloor}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderRooms('four-sharing-grid', data.available.four, data.booked, 'four');
+                    renderRooms('double-sharing-grid', data.available.double, data.booked, 'double');
+                    renderRooms('single-seater-grid', data.available.single, data.booked, 'single');
+                })
+                .catch(error => {
+                    document.getElementById('no-rooms-message').textContent = "Error fetching rooms.";
+                });
+        }
+
+        function renderRooms(gridId, rooms, bookedRooms, roomType) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+            if ((!rooms || rooms.length === 0) && (!bookedRooms || bookedRooms.length === 0)) {
+                grid.innerHTML = '<span style="color:gray;">No available rooms</span>';
+                return;
+            }
+            // Show available rooms
+            rooms.forEach(room => {
+                const div = document.createElement('div');
+                div.className = 'room available';
+                div.title = `Room ${room.number} (${room.beds_left} beds left)`;
+                div.innerHTML = `<span>Room ${room.number}</span> <span class="badge">${room.beds_left} left</span>`;
+                div.dataset.roomNumber = room.number;
+                div.dataset.roomType = roomType;
+                div.onclick = function() {
+                    if (selectedRoom) selectedRoom.classList.remove('selected');
+                    selectedRoom = div;
+                    selectedRoomType = roomType;
+                    div.classList.add('selected');
+                    document.getElementById('room-number').value = room.number;
+                    document.getElementById('room-type').value = roomType;
+                };
+                grid.appendChild(div);
+            });
+            // Show booked rooms
+            if (bookedRooms && bookedRooms.length > 0) {
+                bookedRooms.forEach(roomNum => {
+                    const div = document.createElement('div');
+                    div.className = 'room booked';
+                    div.title = `Room ${roomNum} (Full)`;
+                    div.innerHTML = `<span>Room ${roomNum}</span> <span class="badge badge-danger">Full</span>`;
+                    grid.appendChild(div);
+                });
+            }
+        }
+
+        document.getElementById("room-allocation-form").addEventListener("submit", function (event) {
+            event.preventDefault();
+            if (!selectedRoom) {
+                alert("Please select a room first.");
+                return;
+            }
+            const formData = new FormData(event.target);
+            fetch("/room_allocation", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                    fetchAvailableRooms();
+                    if (selectedRoom) selectedRoom.classList.remove('selected');
+                    selectedRoom = null;
+                    selectedRoomType = null;
+                }
+            })
+            .catch(error => alert("Error allocating room."));
         });
-        
-    
     </script>
+
+    <style>
+        .room-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .room {
+            padding: 10px 16px;
+            border: 1.5px solid #007bff;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s, box-shadow 0.2s;
+            min-width: 110px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 500;
+            font-size: 1rem;
+            position: relative;
+        }
+        .room.selected {
+            background: #007bff;
+            color: #fff;
+            border-color: #0056b3;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+        }
+        .room.booked {
+            background: #f5c6cb;
+            color: #721c24;
+            border-color: #dc3545;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .room.available:hover:not(.selected) {
+            background: #e2e6ea;
+            border-color: #0056b3;
+        }
+        .badge {
+            background: #17a2b8;
+            color: #fff;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.85em;
+            margin-left: 8px;
+        }
+        .badge-danger {
+            background: #dc3545;
+        }
+    </style>
     {% endblock %}
 </body>
 

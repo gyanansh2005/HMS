@@ -17,6 +17,7 @@ import json
 import time
 from datetime import date
 from random import randint
+import requests
 
 def login_view(request):
     if request.method == 'POST':
@@ -1331,6 +1332,64 @@ def update_room_change_status(request, request_id):
             messages.error(request, "Invalid status selected.")
 
     return redirect('admin_dashboard')
+
+def rooms_dashboard(request):
+    # Fetch Flask API data
+    base_url = "http://localhost:5000/api"
+    endpoints = [
+        ("allocations", "api_allocations"),
+        ("users", "api_users"),
+        ("complaints", "api_complaints"),
+        ("feedbacks", "api_feedbacks"),
+    ]
+    api_data = {}
+    for endpoint, key in endpoints:
+        try:
+            resp = requests.get(f"{base_url}/{endpoint}")
+            api_data[key] = resp.json() if resp.status_code == 200 else []
+        except Exception:
+            api_data[key] = []
+
+    # Fetch hostels from Flask API
+    try:
+        hostels_resp = requests.get(f"{base_url}/hostels")
+        api_hostels = hostels_resp.json() if hostels_resp.status_code == 200 else []
+    except Exception:
+        api_hostels = []
+
+    # Fetch Django data
+    from .models import Allocation, CustomUser, ComplaintMaintenance, Feedback, Hostel
+    django_allocations = Allocation.objects.all()
+    django_users = CustomUser.objects.all()
+    django_complaints = ComplaintMaintenance.objects.all()
+    django_feedbacks = Feedback.objects.all()
+    django_hostels = Hostel.objects.all()  # Add this line
+
+    context = {
+        "api_allocations": api_data["api_allocations"],
+        "api_users": api_data["api_users"],
+        "api_complaints": api_data["api_complaints"],
+        "api_feedbacks": api_data["api_feedbacks"],
+        "api_hostels": api_hostels,
+        "django_allocations": django_allocations,
+        "django_users": django_users,
+        "django_complaints": django_complaints,
+        "django_feedbacks": django_feedbacks,
+        "django_hostels": django_hostels,  # Pass to template
+    }
+    return render(request, "Rooms_dashboard.html", context)
+
+import requests
+from django.shortcuts import render
+
+def external_hostels(request):
+    api_url = "http://localhost:5000/api/hostels"
+    try:
+        response = requests.get(api_url)
+        hostels = response.json() if response.status_code == 200 else []
+    except Exception:
+        hostels = []
+    return render(request, "Rooms_hostel_details.html", {"hostels": hostels})
 
 
 

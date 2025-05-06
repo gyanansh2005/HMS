@@ -101,8 +101,8 @@
             {% for feedback in feedbacks %}
             <div class="col-md-4">
                 <div class="review-box p-3 shadow rounded feedback-entry">
-                    <p>"{{ feedback.description }}!"</p>
-                    <h5>- {{ feedback.first_name }} {{ feedback.last_name }}</h5>
+                    <p>"{{ feedback.comments }}"</p>
+                    <h5>- {{ feedback.user.first_name if feedback.user else '' }} {{ feedback.user.last_name if feedback.user else '' }}</h5>
                 </div>
             </div>
             {% else %}

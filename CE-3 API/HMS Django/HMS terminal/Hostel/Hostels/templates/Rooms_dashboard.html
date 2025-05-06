@@ -283,6 +283,61 @@
                 </div>
             </div>
         </div>
+
+        <!-- Display Hostels from API and Django -->
+        <div class="row" style="display: flex; gap: 2rem; margin-top: 2rem;">
+            <div style="flex:1;">
+                <h3>Hostels (Flask API)</h3>
+                <table class="table-container">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Total Floors</th>
+                            <th>Features</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hostel in api_hostels %}
+                        <tr>
+                            <td>{{ hostel.id }}</td>
+                            <td>{{ hostel.name }}</td>
+                            <td>{{ hostel.total_floors }}</td>
+                            <td>{{ hostel.features }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">No hostels from API</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div style="flex:1;">
+                <h3>Hostels (Django DB)</h3>
+                <table class="table-container">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Total Floors</th>
+                            <th>Features</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hostel in Hostels.objects.all %}
+                        <tr>
+                            <td>{{ hostel.id }}</td>
+                            <td>{{ hostel.name }}</td>
+                            <td>{{ hostel.total_floors }}</td>
+                            <td>{{ hostel.features }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">No hostels in Django DB</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         {% elif active_tab == 'users' %}
         <div class="users-table">
             <div class="table-header">
@@ -1313,7 +1368,7 @@ body.dark .chart-card {
 
 .quick-stats-grid {
     display: grid;
-    gap: var(--gap-medium);
+    gap: var (--gap-medium);
 }
 
 .quick-stat {
@@ -1580,7 +1635,7 @@ body.dark .user-avatar {
 
 .role-badge.user {
     background: rgba(6, 214, 160, 0.1);
-    color: var(--success-color);
+    color: var (--success-color);
 }
 
 .status-badge {
@@ -1967,7 +2022,7 @@ body.dark .claims-section {
 
 .claims-table thead th {
     background: var(--light-bg);
-    color: var(--text-dark);
+    color: var (--text-dark);
     font-weight: 600;
     padding: var(--padding-medium); /* 1.5rem */
     text-align: left;

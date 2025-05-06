@@ -26,50 +26,50 @@
             <form method="POST" action="{{ url_for('feedback') }}" class="feedback-form">
                 <div class="form-group">
                     <label for="first_name">First Name*</label>
-                    <input type="text" name="first_name" id="first_name" placeholder="First Name" required>
+                    <input type="text" name="first_name" id="first_name" placeholder="First Name" required
+                           value="{{ current_user.first_name }}">
                 </div>
                 <div class="form-group">
                     <label for="last_name">Last Name*</label>
-                    <input type="text" name="last_name" id="last_name" placeholder="Last Name" required>
+                    <input type="text" name="last_name" id="last_name" placeholder="Last Name" required
+                           value="{{ current_user.last_name }}">
                 </div>
                 <div class="form-group">
                     <label for="email">Email*</label>
-                    <input type="email" name="email" id="email" placeholder="Email" required>
+                    <input type="email" name="email" id="email" placeholder="Email" required
+                           value="{{ current_user.email }}">
                 </div>
                 <div class="form-group">
-                    <label for="environment">Our Environment*</label>
-                    <select name="environment" id="environment" required>
-                        <option selected disabled>Choose</option>
-                        <option>Excellent</option>
-                        <option>Good</option>
-                        <option>Bad</option>
+                    <label for="hostel">From Which Hostel Are You?</label>
+                    <select name="hostel" id="hostel" required>
+                        <option disabled {% if not feedback %}selected{% endif %}>Select Hostel</option>
+                        {% for h in hostels %}
+                        <option value="{{ h.name }}" {% if feedback and feedback.hostel == h.name %}selected{% endif %}>{{ h.name }}</option>
+                        {% endfor %}
+                        <option value="Others" {% if feedback and feedback.hostel == 'Others' %}selected{% endif %}>Others</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="environment_rating">Our Environment*</label>
+                    <select name="environment_rating" id="environment_rating" required>
+                        <option disabled {% if not feedback %}selected{% endif %}>Choose</option>
+                        <option {% if feedback and feedback.environment_rating == 'Excellent' %}selected{% endif %}>Excellent</option>
+                        <option {% if feedback and feedback.environment_rating == 'Good' %}selected{% endif %}>Good</option>
+                        <option {% if feedback and feedback.environment_rating == 'Bad' %}selected{% endif %}>Bad</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="service_rating">Service Rating (out of 5)*</label>
                     <select name="service_rating" id="service_rating" required>
-                        <option selected disabled>Choose</option>
-                        <option>5</option>
-                        <option>4</option>
-                        <option>3</option>
-                        <option>2</option>
-                        <option>1</option>
+                        <option disabled {% if not feedback %}selected{% endif %}>Choose</option>
+                        {% for i in range(5, 0, -1) %}
+                        <option value="{{ i }}" {% if feedback and feedback.service_rating == i %}selected{% endif %}>{{ i }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="descr">How Would You Rate Our Services? (Description)*</label>
-                    <textarea name="descr" id="descr" placeholder="Tell us more..." required rows="4"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="hostel">From Which Hostel Are You?</label>
-                    <select name="hostel" id="hostel" required>
-                        <option selected disabled>Select Hostel</option>
-                        <option>Hostel 1</option>
-                        <option>Hostel 2</option>
-                        <option>Hostel 3</option>
-                        <option>Hostel 4</option>
-                        <option>Others</option>
-                    </select>
+                    <label for="comments">How Would You Rate Our Services? (Description)*</label>
+                    <textarea name="comments" id="comments" placeholder="Tell us more..." required rows="4">{{ feedback.comments if feedback else '' }}</textarea>
                 </div>
                 <button type="submit" class="submit-btn">Submit Feedback</button>
             </form>
@@ -80,11 +80,11 @@
             <div class="feedback-list">
                 {% for feedback in feedbacks %}
                 <div class="feedback-item">
-                    <h4>{{ feedback.first_name }} {{ feedback.last_name }} - {{ feedback.hostel }}</h4>
-                    <p><strong>Environment:</strong> {{ feedback.environment }}</p>
+                    <h4>{{ feedback.hostel }}</h4>
+                    <p><strong>Environment:</strong> {{ feedback.environment_rating }}</p>
                     <p><strong>Service Rating:</strong> {{ feedback.service_rating }}/5</p>
-                    <p><strong>Comments:</strong> {{ feedback.description }}</p>
-                    <small>Submitted on {{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    <p><strong>Comments:</strong> {{ feedback.comments }}</p>
+                    <small>Submitted on {{ feedback.submitted_at.strftime('%Y-%m-%d %H:%M') }}</small>
                 </div>
                 {% else %}
                 <p>No feedback submissions yet.</p>

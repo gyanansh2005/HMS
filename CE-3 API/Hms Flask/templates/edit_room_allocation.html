@@ -1,0 +1,16 @@
+<form action="{{ url_for('delete_room_allocation', id=allocation.id) }}" method="post" style="display:inline;">
+    <label for="room_id">Room:</label>
+    <select name="room_id" id="room_id">
+        {% for room in rooms %}
+        <option value="{{ room.id }}" {% if allocation.room_id == room.id %}selected{% endif %}>
+            {{ room.room_number }} ({{ room.room_type }})
+        </option>
+        {% endfor %}
+    </select>
+    <label for="status">Status:</label>
+    <select name="status" id="status">
+        <option value="pending" {% if allocation.status == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="allocated" {% if allocation.status == 'allocated' %}selected{% endif %}>Allocated</option>
+    </select>
+    <button type="submit">Update</button>
+</form>

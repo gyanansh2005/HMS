@@ -34,29 +34,31 @@
         <form class="signup" action="{{url_for('signup')}}" method="POST">
             <h3 class="title">User  Signup</h3>
             
-
-            <div class="text-input">
-                <i class="ri-user-fill"></i>
-                <input type="text" id="name" name="name" placeholder="Name" required>
+            <div class="form-group">
+                <label for="first_name">First Name</label>
+                <input type="text" name="first_name" class="form-control" required>
             </div>
-            <div class="text-input">
-                <i class="ri-user-fill"></i>
-                <input type="text" placeholder="Username" id="username" name="username" required>
+            <div class="form-group">
+                <label for="last_name">Last Name</label>
+                <input type="text" name="last_name" class="form-control" required>
             </div>
-            <div class="text-input">
-                <i class="ri-mail-fill"></i>
-                <input type="email" placeholder="Email" id="email" name="email" required>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" name="email" class="form-control" required>
             </div>
-            <div class="text-input">
-                <i class="ri-lock-fill"></i>
-                <input type="password" placeholder="Password" id="password" name="password" required>
+            <div class="form-group">
+                <label for="roll_number">Roll Number</label>
+                <input type="text" name="roll_number" class="form-control" required>
             </div>
-            <div class="text-input">
-                <i class="ri-lock-fill"></i>
-                <input type="password" placeholder="Confirm Password" id="confirm_password" name="confirm_password" required>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="password" class="form-control" required>
             </div>
-            <input type="submit" value="Signup" class="signup-btn" name="submit">
-            
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" name="confirm_password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
 
             <div class="terms"><a href="{{url_for('login')}}" >Already have an account? Login</a> </div>
        

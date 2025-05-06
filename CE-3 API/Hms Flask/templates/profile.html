@@ -37,10 +37,34 @@
         <div class="profile-main">
             <h2>Hostel Details</h2>
             <ul>
-                <li><strong>Room Number:</strong> 13</li>
-                <li><strong>Block:</strong> A</li>
-                <li><strong>Hostel Name:</strong> Campus 1</li>
-                <li><strong>Check-in Date:</strong> January 2024</li>
+                <li><strong>Room Number:</strong>
+                    {% if not user.is_superuser and allocation %}
+                        {{ allocation.room.room_number }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </li>
+                <li><strong>Block:</strong>
+                    {% if not user.is_superuser and allocation %}
+                        {{ allocation.room.block or 'Not set' }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </li>
+                <li><strong>Hostel Name:</strong>
+                    {% if not user.is_superuser and hostel %}
+                        {{ hostel.name }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </li>
+                <li><strong>Check-in Date:</strong>
+                    {% if not user.is_superuser and allocation %}
+                        {{ allocation.check_in_date.strftime('%B %Y') if allocation.check_in_date else 'Not set' }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </li>
             </ul>
             <h2>Account Details</h2>
             <ul>
@@ -52,6 +76,38 @@
             <div class="profile-actions">
                 <button class="btn edit">Edit Profile Photo</button>
                 <a href="{{ url_for('logout') }}"><button class="btn logout">Logout</button></a>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header">Profile Information</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% if user.student_profile and user.student_profile.profile_picture %}
+                            <img src="{{ user.student_profile.profile_picture }}" class="img-fluid rounded-circle profile-pic" alt="Profile Picture">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="img-fluid rounded-circle profile-pic" alt="Default Profile Picture">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+                            <p><strong>Email:</strong> {{ user.email }}</p>
+                            <p><strong>Roll Number:</strong>
+                                {% if not user.is_superuser %}
+                                    {{ user.roll_number or 'Not set' }}
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </p>
+                            {% if user.student_profile and not user.is_superuser %}
+                            <p><strong>Contact:</strong> {{ user.student_profile.contact_number or 'Not set' }}</p>
+                            <p><strong>Bio:</strong> {{ user.student_profile.bio or 'No bio added yet' }}</p>
+                            {% elif user.is_superuser %}
+                            <p><strong>Contact:</strong> None</p>
+                            <p><strong>Bio:</strong> None</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
