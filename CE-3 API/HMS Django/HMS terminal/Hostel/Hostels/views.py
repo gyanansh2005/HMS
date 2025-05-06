@@ -1357,6 +1357,13 @@ def rooms_dashboard(request):
     except Exception:
         api_hostels = []
 
+    # Fetch rooms from Flask API
+    try:
+        rooms_resp = requests.get(f"{base_url}/rooms")
+        api_rooms = rooms_resp.json() if rooms_resp.status_code == 200 else []
+    except Exception:
+        api_rooms = []
+
     # Fetch Django data
     from .models import Allocation, CustomUser, ComplaintMaintenance, Feedback, Hostel
     django_allocations = Allocation.objects.all()
@@ -1371,6 +1378,7 @@ def rooms_dashboard(request):
         "api_complaints": api_data["api_complaints"],
         "api_feedbacks": api_data["api_feedbacks"],
         "api_hostels": api_hostels,
+        "api_rooms": api_rooms,  # Add rooms to context
         "django_allocations": django_allocations,
         "django_users": django_users,
         "django_complaints": django_complaints,
