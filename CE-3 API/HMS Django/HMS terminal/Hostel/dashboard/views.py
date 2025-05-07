@@ -147,7 +147,7 @@ def dashboard(request):
         return redirect('dashboard')
     
     # Handle Read (GET)
-    users = CustomUser.objects.all()
+    users = api_get('/api/v1/users',request)or []
     complaints = api_get('/api/v1/complaints', request) or []
     feedbacks = api_get('/api/v1/feedbacks', request) or []
     allocations = api_get('/api/v1/room_allocation', request) or []
@@ -338,34 +338,26 @@ def delete_user(request, id):
         return redirect('users')
 
 @login_required
-@api_view(['DELETE'])
+@api_view(['POST'])
 def delete_complaint(request, id):
     response = api_delete(f"/api/v1/complaints/{id}", request)
-    if response:
-        if 'error' in response:
-            logger.error(f"API error deleting complaint: {response['error']}")
-            messages.error(request, response['error'])
-        else:
-            messages.success(request, 'Complaint deleted successfully!')
-        return redirect('complaints')
-    logger.error(f"API delete call to /api/v1/complaints/{id} failed")
-    messages.error(request, 'Failed to delete complaint: API call returned no response')
-    return redirect('complaints')
+    if response is True:
+        messages.success(request, 'Complaint deleted successfully!')
+    else:
+        logger.error(f"API delete call to /api/v1/complaints/{id} failed")
+        messages.error(request, 'Failed to delete complaint')
+    return redirect('dashboard')
 
 @login_required
-@api_view(['DELETE'])
+@api_view(['POST'])
 def delete_feedback(request, id):
     response = api_delete(f"/api/v1/feedbacks/{id}", request)
-    if response:
-        if 'error' in response:
-            logger.error(f"API error deleting feedback: {response['error']}")
-            messages.error(request, response['error'])
-        else:
-            messages.success(request, 'Feedback deleted successfully!')
-        return redirect('feedback')
-    logger.error(f"API delete call to /api/v1/feedbacks/{id} failed")
-    messages.error(request, 'Failed to delete feedback: API call returned no response')
-    return redirect('feedback')
+    if response is True:
+        messages.success(request, 'Feedback deleted successfully!')
+    else:
+        logger.error(f"API delete call to /api/v1/feedbacks/{id} failed")
+        messages.error(request, 'Failed to delete feedback')
+    return redirect('dashboard')
 
 @login_required
 @api_view(['DELETE'])
