@@ -336,16 +336,19 @@ def delete_feedback(request, id):
     return redirect('dashboard')
 
 @login_required
-@api_view(['DELETE'])
 def delete_allocation(request, id):
-    response = api_delete(f"/api/v1/allocations/{id}", request)
-    if response:
-        if 'error' in response:
-            logger.error(f"API error deleting allocation: {response['error']}")
-            messages.error(request, response['error'])
+    """Delete an allocation"""
+    try:
+        # Make API call to delete allocation
+        response = api_delete(f'/api/v1/allocations/{id}', request)
+        
+        if response is True:
+            messages.success(request, 'Allocation deleted successfully')
         else:
-            messages.success(request, 'Allocation deleted successfully!')
-        return redirect('allocations')
-    logger.error(f"API delete call to /api/v1/allocations/{id} failed")
-    messages.error(request, 'Failed to delete allocation: API call returned no response')
-    return redirect('allocations')
+            messages.error(request, 'Failed to delete allocation')
+            
+    except Exception as e:
+        logger.error(f"Error deleting allocation: {str(e)}")
+        messages.error(request, f'Error deleting allocation: {str(e)}')
+    
+    return redirect('dashboard')
