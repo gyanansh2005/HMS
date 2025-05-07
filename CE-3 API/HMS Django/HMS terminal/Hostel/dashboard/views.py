@@ -27,54 +27,22 @@ def dashboard(request):
             serializer = UserSerializer(data=data)
             if serializer.is_valid():
                 validated_data = serializer.validated_data
-                try:
-                    if 'id' in data:
-                        # Update existing user
-                        user = CustomUser.objects.get(id=data['id'])
-                        user.first_name = validated_data.get('first_name', user.first_name)
-                        user.last_name = validated_data.get('last_name', user.last_name)
-                        user.email = validated_data.get('email', user.email)
-                        user.roll_number = validated_data.get('roll_number', user.roll_number)
-                        user.is_staff = validated_data.get('is_staff', user.is_staff)
-                        user.is_superuser = validated_data.get('is_superuser', user.is_superuser)
-                        password = validated_data.get('password')
-                        if password:
-                            user.set_password(password)
-                        user.save()
-                        logger.info(f"Updated user {user.email} with ID {user.id}")
-                        messages.success(request, 'User updated successfully!')
-                    else:
-                        # Create new user
-                        user = CustomUser(
-                            first_name=validated_data['first_name'],
-                            last_name=validated_data['last_name'],
-                            email=validated_data['email'],
-                            roll_number=validated_data.get('roll_number', ''),
-                            is_staff=validated_data.get('is_staff', False),
-                            is_superuser=validated_data.get('is_superuser', False)
-                        )
-                        password = validated_data.get('password')
-                        if password:
-                            user.set_password(password)
-                        else:
-                            logger.error("Password required for new user")
-                            messages.error(request, 'Password is required for new users')
-                            return redirect('dashboard')
-                        user.save()
-                        logger.info(f"Created user {user.email} with ID {user.id}")
-                        messages.success(request, 'User created successfully!')
-                    return redirect('dashboard')
-                except CustomUser.DoesNotExist:
-                    logger.error(f"User ID {data.get('id')} not found")
-                    messages.error(request, 'User not found')
-                    return redirect('dashboard')
-                except Exception as e:
-                    logger.error(f"Error saving user: {str(e)}")
-                    messages.error(request, f'Failed to save user: {str(e)}')
-                    return redirect('dashboard')
-            logger.error(f"Serializer errors for user: {serializer.errors}")
-            messages.error(request, serializer.errors)
-            return redirect('dashboard')
+                # Push through Flask API instead of local ORM
+                if data.get('id'):
+                    endpoint = f"/api/v1/users/{data['id']}"
+                    response = api_put(endpoint, validated_data, request)
+                else:
+                    endpoint = "/api/v1/users"
+                    response = api_post(endpoint, validated_data, request)
+                if response and 'error' not in response:
+                    messages.success(request, 'User saved successfully!')
+                else:
+                    msg = response.get('error') if response else 'No response from API'
+                    messages.error(request, msg)
+                return redirect('dashboard')
+            else:
+                messages.error(request, serializer.errors)
+                return redirect('dashboard')
         
         elif resource == 'complaint':
             serializer = ComplaintSerializer(data=data)
