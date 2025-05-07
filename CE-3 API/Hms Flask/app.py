@@ -434,6 +434,21 @@ class Allocation(db.Model):
             "status": self.status,
             "created_at": self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
             "updated_at": self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
+            "user": {
+                "id": self.user.id,
+                "first_name": self.user.first_name,
+                "last_name": self.user.last_name,
+                "email": self.user.email
+            } if self.user else None,
+            "room": {
+                "id": self.room.id,
+                "room_number": self.room.room_number,
+                "room_type": self.room.room_type,
+                "hostel": {
+                    "id": self.room.hostel.id,
+                    "name": self.room.hostel.name
+                } if self.room and self.room.hostel else None
+            } if self.room else None
         }
 
 class RoomChangeRequest(db.Model):
