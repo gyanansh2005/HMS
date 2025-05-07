@@ -1,354 +1,383 @@
-import requests
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from rest_framework.decorators import api_view
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse
+from django.contrib.auth import get_user_model
+from .api_utils import api_get, api_post, api_put, api_delete
+from .serializers import (
+    UserSerializer, StudentProfileSerializer, ComplaintSerializer,
+    FeedbackSerializer, HostelSerializer, RoomAllocationSerializer
+)
+import logging
 
-FLASK_API = 'http://localhost:5000/api'
+# Configure logging
+logger = logging.getLogger(__name__)
+CustomUser = get_user_model()
 
-def is_admin(user):
-    return user.is_authenticated and user.is_staff
-
-def safe_json(url):
-    try:
-        resp = requests.get(url, timeout=3)
-        if resp.status_code == 200 and 'application/json' in resp.headers.get('Content-Type', ''):
-            return resp.json()
-        else:
-            print(f"Error loading data from {url}: Status {resp.status_code}")
-            print(f"Response: {resp.text}")
-            return []
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching {url}: {str(e)}")
-        return []
-    except Exception as e:
-        print(f"Unexpected error fetching {url}: {str(e)}")
-        return []
-
-def dashboard_home(request):
-    room_allocations = safe_json(f'{FLASK_API}/room_allocations')
-    users = safe_json(f'{FLASK_API}/users')
-    feedbacks = safe_json(f'{FLASK_API}/feedbacks')
-    requests_list = safe_json(f'{FLASK_API}/requests')
-    return render(request, 'home.html', {
-        'room_allocations': room_allocations,
+@login_required
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+def dashboard(request):
+    if request.method == 'POST':
+        # Handle Create or Update based on resource
+        resource = request.POST.get('resource')
+        serializer = None
+        data = request.POST.dict()
+        
+        if resource == 'user':
+            serializer = UserSerializer(data=data)
+            if serializer.is_valid():
+                validated_data = serializer.validated_data
+                try:
+                    if 'id' in data:
+                        # Update existing user
+                        user = CustomUser.objects.get(id=data['id'])
+                        user.first_name = validated_data.get('first_name', user.first_name)
+                        user.last_name = validated_data.get('last_name', user.last_name)
+                        user.email = validated_data.get('email', user.email)
+                        user.roll_number = validated_data.get('roll_number', user.roll_number)
+                        user.is_staff = validated_data.get('is_staff', user.is_staff)
+                        user.is_superuser = validated_data.get('is_superuser', user.is_superuser)
+                        password = validated_data.get('password')
+                        if password:
+                            user.set_password(password)
+                        user.save()
+                        logger.info(f"Updated user {user.email} with ID {user.id}")
+                        messages.success(request, 'User updated successfully!')
+                    else:
+                        # Create new user
+                        user = CustomUser(
+                            first_name=validated_data['first_name'],
+                            last_name=validated_data['last_name'],
+                            email=validated_data['email'],
+                            roll_number=validated_data.get('roll_number', ''),
+                            is_staff=validated_data.get('is_staff', False),
+                            is_superuser=validated_data.get('is_superuser', False)
+                        )
+                        password = validated_data.get('password')
+                        if password:
+                            user.set_password(password)
+                        else:
+                            logger.error("Password required for new user")
+                            messages.error(request, 'Password is required for new users')
+                            return redirect('dashboard')
+                        user.save()
+                        logger.info(f"Created user {user.email} with ID {user.id}")
+                        messages.success(request, 'User created successfully!')
+                    return redirect('dashboard')
+                except CustomUser.DoesNotExist:
+                    logger.error(f"User ID {data.get('id')} not found")
+                    messages.error(request, 'User not found')
+                    return redirect('dashboard')
+                except Exception as e:
+                    logger.error(f"Error saving user: {str(e)}")
+                    messages.error(request, f'Failed to save user: {str(e)}')
+                    return redirect('dashboard')
+            logger.error(f"Serializer errors for user: {serializer.errors}")
+            messages.error(request, serializer.errors)
+            return redirect('dashboard')
+        
+        elif resource == 'complaint':
+            serializer = ComplaintSerializer(data=data)
+            data['user_id'] = request.user.id
+            endpoint = f"/api/v1/complaints/{data.get('id')}" if 'id' in data else '/api/v1/complaints'
+        elif resource == 'feedback':
+            serializer = FeedbackSerializer(data=data)
+            data['user_id'] = request.user.id
+            endpoint = f"/api/v1/feedbacks/{data.get('id')}" if 'id' in data else '/api/v1/feedbacks'
+        elif resource == 'allocation':
+            serializer = RoomAllocationSerializer(data=data)
+            data['user_id'] = request.user.id
+            endpoint = f"/api/v1/room_allocation/{data.get('id')}" if 'id' in data else '/api/v1/room_allocation'
+        
+        if resource != 'user' and serializer and serializer.is_valid():
+            logger.debug(f"Sending data to {endpoint}: {serializer.validated_data}")
+            if 'id' in data:
+                response = api_put(endpoint, serializer.validated_data, request)
+            else:
+                response = api_post(endpoint, serializer.validated_data, request)
+            if response:
+                if 'error' in response:
+                    logger.error(f"API error saving {resource}: {response['error']}")
+                    messages.error(request, response['error'])
+                else:
+                    messages.success(request, f'{resource.capitalize()} saved successfully!')
+                return redirect('dashboard')
+            logger.error(f"API call to {endpoint} failed, response is None")
+            messages.error(request, f'Failed to save {resource}: API call returned no response. Check server logs.')
+            return redirect('dashboard')
+        if resource != 'user':
+            logger.error(f"Serializer errors for {resource}: {serializer.errors if serializer else 'No serializer'}")
+            messages.error(request, serializer.errors if serializer else 'Invalid resource')
+            return redirect('dashboard')
+    
+    elif request.method == 'DELETE':
+        # Handle Delete
+        resource = request.GET.get('resource')
+        resource_id = request.GET.get('id')
+        if resource == 'user' and resource_id:
+            try:
+                user = CustomUser.objects.get(id=resource_id)
+                user.delete()
+                logger.info(f"Deleted user with ID {resource_id}")
+                messages.success(request, 'User deleted successfully!')
+                return redirect('dashboard')
+            except CustomUser.DoesNotExist:
+                logger.error(f"User ID {resource_id} not found")
+                messages.error(request, 'User not found')
+                return redirect('dashboard')
+            except Exception as e:
+                logger.error(f"Error deleting user: {str(e)}")
+                messages.error(request, f'Failed to delete user: {str(e)}')
+                return redirect('dashboard')
+        
+        if resource and resource_id:
+            endpoint = f"/api/v1/{resource}s/{resource_id}"
+            response = api_delete(endpoint, request)
+            if response:
+                if 'error' in response:
+                    logger.error(f"API error deleting {resource}: {response['error']}")
+                    messages.error(request, response['error'])
+                else:
+                    messages.success(request, f'{resource.capitalize()} deleted successfully!')
+                return redirect('dashboard')
+            logger.error(f"API delete call to {endpoint} failed")
+            messages.error(request, f'Failed to delete {resource}: API call returned no response')
+            return redirect('dashboard')
+        messages.error(request, 'Resource or ID missing')
+        return redirect('dashboard')
+    
+    # Handle Read (GET)
+    users = CustomUser.objects.all()
+    complaints = api_get('/api/v1/complaints', request) or []
+    feedbacks = api_get('/api/v1/feedbacks', request) or []
+    allocations = api_get('/api/v1/room_allocation', request) or []
+    return render(request, 'dashboard.html', {
+        'user_count': len(users),
+        'complaint_count': len(complaints),
+        'feedback_count': len(feedbacks),
+        'allocation_count': len(allocations),
         'users': users,
+        'complaints': complaints,
         'feedbacks': feedbacks,
-        'requests_list': requests_list,
-        'user': request.user,
-        'section': 'home'
+        'allocations': allocations,
+        'active_tab': 'dashboard'
     })
 
-# ------------------ ROOM ALLOCATIONS ------------------
-def room_allocations(request):
-    try:
-        data = safe_json(f'{FLASK_API}/room_allocations')
-        if not data:
-            messages.warning(request, 'No room allocations found or error fetching data')
-        return render(request, 'room_allocations.html', {
-            'allocations': data,
-            'section': 'allocations',
-            'user': request.user
-        })
-    except Exception as e:
-        messages.error(request, f'Error loading room allocations: {str(e)}')
-        return render(request, 'room_allocations.html', {
-            'allocations': [],
-            'section': 'allocations',
-            'user': request.user
-        })
-
-def add_room_allocation(request):
-    if request.method == 'POST':
-        payload = {
-            'hostel': request.POST['hostel'],
-            'floor': request.POST['floor'],
-            'room_number': request.POST['room_number'],
-            'room_type': request.POST['room_type'],
-            'beds_left': request.POST.get('beds_left', 4),
-            'user_id': request.POST['user_id'],
-            'student_name': request.POST['student_name'],
-            'student_roll_no': request.POST['student_roll_no'],
-        }
-        resp = requests.post(f'{FLASK_API}/room_allocations', json=payload)
-        if resp.status_code == 201:
-            messages.success(request, 'Room Allocation Added!')
-        else:
-            messages.error(request, 'Error adding allocation!')
-        return redirect('room_allocations')
-    return render(request, 'add_room_allocation.html', {'section': 'allocations'})
-
-def edit_room_allocation(request, id):
-    if request.method == 'POST':
-        payload = {
-            'hostel': request.POST['hostel'],
-            'floor': request.POST['floor'],
-            'room_number': request.POST['room_number'],
-            'room_type': request.POST['room_type'],
-            'beds_left': request.POST.get('beds_left', 4),
-            'user_id': request.POST['user_id'],
-            'student_name': request.POST['student_name'],
-            'student_roll_no': request.POST['student_roll_no'],
-        }
-        resp = requests.put(f'{FLASK_API}/room_allocations/{id}', json=payload)
-        if resp.status_code == 200:
-            messages.success(request, 'Room Allocation Updated!')
-        else:
-            messages.error(request, 'Error updating allocation!')
-        return redirect('room_allocations')
-    resp = requests.get(f'{FLASK_API}/room_allocations/{id}')
-    data = resp.json() if resp.status_code == 200 else {}
-    return render(request, 'edit_room_allocation.html', {'allocation': data, 'section': 'allocations'})
-
-def delete_room_allocation(request, id):
-    resp = requests.delete(f'{FLASK_API}/room_allocations/{id}')
-    if resp.status_code == 200:
-        messages.success(request, 'Room Allocation Deleted!')
-    else:
-        messages.error(request, 'Error deleting allocation!')
-    return redirect('room_allocations')
-
-# ------------------ USERS ------------------
+@login_required
+@api_view(['GET', 'POST'])
 def users(request):
-    data = requests.get(f'{FLASK_API}/users').json()
-    return render(request, 'users.html', {'users': data, 'section': 'users'})
-
-def add_user(request):
     if request.method == 'POST':
-        payload = {
-            'name': request.POST['name'],
-            'email': request.POST['email'],
-            'username': request.POST['username'],
-            'role': request.POST['role'],
-            'password': request.POST['password'],
-        }
-        resp = requests.post(f'{FLASK_API}/users', json=payload)
-        if resp.status_code == 201:
-            messages.success(request, 'User Added!')
-        else:
-            messages.error(request, 'Error adding user!')
-        return redirect('users')
-    return render(request, 'add_user.html', {'section': 'users'})
-
-def edit_user(request, id):
-    try:
-        if request.method == 'POST':
-            print(f"POST data: {request.POST}")
-            payload = {
-                'name': request.POST.get('name', ''),
-                'email': request.POST.get('email', ''),
-                'username': request.POST.get('username', ''),
-                'role': request.POST.get('role', ''),
-            }
-            print(f"Updating user {id} with payload: {payload}")
-            
-            # First check if user exists
-            check_resp = requests.get(f'{FLASK_API}/users/{id}')
-            if check_resp.status_code != 200:
-                messages.error(request, 'User not found!')
+        serializer = UserSerializer(data=request.POST)
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            try:
+                if 'id' in request.POST:
+                    # Update existing user
+                    user = CustomUser.objects.get(id=request.POST['id'])
+                    user.first_name = validated_data.get('first_name', user.first_name)
+                    user.last_name = validated_data.get('last_name', user.last_name)
+                    user.email = validated_data.get('email', user.email)
+                    user.roll_number = validated_data.get('roll_number', user.roll_number)
+                    user.is_staff = validated_data.get('is_staff', user.is_staff)
+                    user.is_superuser = validated_data.get('is_superuser', user.is_superuser)
+                    password = validated_data.get('password')
+                    if password:
+                        user.set_password(password)
+                    user.save()
+                    logger.info(f"Updated user {user.email} with ID {user.id}")
+                    messages.success(request, 'User updated successfully!')
+                else:
+                    # Create new user
+                    user = CustomUser(
+                        first_name=validated_data['first_name'],
+                        last_name=validated_data['last_name'],
+                        email=validated_data['email'],
+                        roll_number=validated_data.get('roll_number', ''),
+                        is_staff=validated_data.get('is_staff', False),
+                        is_superuser=validated_data.get('is_superuser', False)
+                    )
+                    password = validated_data.get('password')
+                    if password:
+                        user.set_password(password)
+                    else:
+                        logger.error("Password required for new user")
+                        messages.error(request, 'Password is required for new users')
+                        return redirect('users')
+                    user.save()
+                    logger.info(f"Created user {user.email} with ID {user.id}")
+                    messages.success(request, 'User created successfully!')
                 return redirect('users')
-            
-            # Update user
-            resp = requests.put(f'{FLASK_API}/users/{id}', json=payload)
-            if resp.status_code == 200:
-                messages.success(request, 'User Updated Successfully!')
-            else:
-                error_msg = resp.json().get('message', 'Error updating user!')
-                messages.error(request, f'Error: {error_msg}')
-                print(f"Error updating user {id}: Status {resp.status_code}")
-                print(f"Response: {resp.text}")
-            return redirect('users')
-        
-        print(f"Fetching user {id} details")
-        resp = requests.get(f'{FLASK_API}/users/{id}')
-        if resp.status_code == 200:
-            data = resp.json()
-            print(f"User data fetched: {data}")
-            return render(request, 'edit_user.html', {'user': data, 'section': 'users'})
-        else:
-            messages.error(request, 'User not found!')
-            return redirect('users')
-            
-    except requests.exceptions.RequestException as e:
-        messages.error(request, f'Error connecting to API: {str(e)}')
-        print(f"Request error editing user {id}: {str(e)}")
+            except CustomUser.DoesNotExist:
+                logger.error(f"User ID {request.POST.get('id')} not found")
+                messages.error(request, 'User not found')
+                return redirect('users')
+            except Exception as e:
+                logger.error(f"Error saving user: {str(e)}")
+                messages.error(request, f'Failed to save user: {str(e)}')
+                return redirect('users')
+        logger.error(f"Serializer errors for user: {serializer.errors}")
+        messages.error(request, serializer.errors)
         return redirect('users')
-    except Exception as e:
-        messages.error(request, f'Unexpected error: {str(e)}')
-        print(f"Unexpected error editing user {id}: {str(e)}")
-        return redirect('users')
+    users = CustomUser.objects.all()
+    return render(request, 'users.html', {'users': users})
 
+@login_required
+@api_view(['GET'])
+def user_detail(request, id):
+    try:
+        user = CustomUser.objects.get(id=id)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
+@login_required
+@api_view(['GET', 'POST'])
+def complaints(request):
+    if request.method == 'POST':
+        serializer = ComplaintSerializer(data=request.POST)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            data['user_id'] = request.user.id
+            logger.debug(f"Sending data to /api/v1/complaints: {data}")
+            if 'id' in request.POST:
+                response = api_put(f"/api/v1/complaints/{request.POST['id']}", data, request)
+            else:
+                response = api_post('/api/v1/complaints', data, request)
+            if response:
+                if 'error' in response:
+                    logger.error(f"API error saving complaint: {response['error']}")
+                    messages.error(request, response['error'])
+                else:
+                    messages.success(request, 'Complaint saved successfully!')
+                return redirect('complaints')
+            logger.error(f"API call to /api/v1/complaints failed, response is None")
+            messages.error(request, 'Failed to save complaint: API call returned no response. Check server logs.')
+            return redirect('complaints')
+        logger.error(f"Serializer errors for complaint: {serializer.errors}")
+        messages.error(request, serializer.errors)
+        return redirect('complaints')
+    complaints = api_get('/api/v1/complaints', request) or []
+    return render(request, 'complaints.html', {'complaints': complaints})
+
+@login_required
+@api_view(['GET', 'POST'])
+def feedback(request):
+    if request.method == 'POST':
+        serializer = FeedbackSerializer(data=request.POST)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            data['user_id'] = request.user.id
+            logger.debug(f"Sending data to /api/v1/feedbacks: {data}")
+            if 'id' in request.POST:
+                response = api_put(f"/api/v1/feedbacks/{request.POST['id']}", data, request)
+            else:
+                response = api_post('/api/v1/feedbacks', data, request)
+            if response:
+                if 'error' in response:
+                    logger.error(f"API error saving feedback: {response['error']}")
+                    messages.error(request, response['error'])
+                else:
+                    messages.success(request, 'Feedback saved successfully!')
+                return redirect('feedback')
+            logger.error(f"API call to /api/v1/feedbacks failed, response is None")
+            messages.error(request, 'Failed to save feedback: API call returned no response. Check server logs.')
+            return redirect('feedback')
+        logger.error(f"Serializer errors for feedback: {serializer.errors}")
+        messages.error(request, serializer.errors)
+        return redirect('feedback')
+    feedbacks = api_get('/api/v1/feedbacks', request) or []
+    return render(request, 'feedback.html', {'feedbacks': feedbacks})
+
+@login_required
+@api_view(['GET', 'POST'])
+def allocations(request):
+    if request.method == 'POST':
+        serializer = RoomAllocationSerializer(data=request.POST)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            data['user_id'] = request.user.id
+            logger.debug(f"Sending data to /api/v1/room_allocation: {data}")
+            if 'id' in request.POST:
+                response = api_put(f"/api/v1/room_allocation/{request.POST['id']}", data, request)
+            else:
+                response = api_post('/api/v1/room_allocation', data, request)
+            if response:
+                if 'error' in response:
+                    logger.error(f"API error saving allocation: {response['error']}")
+                    messages.error(request, response['error'])
+                else:
+                    messages.success(request, 'Allocation saved successfully!')
+                return redirect('allocations')
+            logger.error(f"API call to /api/v1/room_allocation failed, response is None")
+            messages.error(request, 'Failed to save allocation: API call returned no response. Check server logs.')
+            return redirect('allocations')
+        logger.error(f"Serializer errors for allocation: {serializer.errors}")
+        messages.error(request, serializer.errors)
+        return redirect('allocations')
+    allocations = api_get('/api/v1/room_allocation', request) or []
+    rooms = api_get('/api/v1/available_rooms?hostel_id=1&floor=0', request) or {}
+    return render(request, 'allocations.html', {'allocations': allocations, 'rooms': rooms})
+
+@login_required
+@api_view(['DELETE'])
 def delete_user(request, id):
     try:
-        resp = requests.delete(f'{FLASK_API}/users/{id}')
-        if resp.status_code == 200:
-            messages.success(request, 'User Deleted!')
-        else:
-            error_msg = resp.json().get('message', 'Error deleting user!')
-            messages.error(request, f'Error: {error_msg}')
-            print(f"Error deleting user {id}: Status {resp.status_code}")
-            print(f"Response: {resp.text}")
-    except requests.exceptions.RequestException as e:
-        messages.error(request, f'Error connecting to API: {str(e)}')
-        print(f"Request error deleting user {id}: {str(e)}")
+        user = CustomUser.objects.get(id=id)
+        user.delete()
+        logger.info(f"Deleted user with ID {id}")
+        messages.success(request, 'User deleted successfully!')
+        return redirect('users')
+    except CustomUser.DoesNotExist:
+        logger.error(f"User ID {id} not found")
+        messages.error(request, 'User not found')
+        return redirect('users')
     except Exception as e:
-        messages.error(request, f'Unexpected error: {str(e)}')
-        print(f"Unexpected error deleting user {id}: {str(e)}")
-    return redirect('users')
+        logger.error(f"Error deleting user: {str(e)}")
+        messages.error(request, f'Failed to delete user: {str(e)}')
+        return redirect('users')
 
-# ------------------ FEEDBACKS ------------------
-def feedbacks(request):
-    data = requests.get(f'{FLASK_API}/feedbacks').json()
-    return render(request, 'feedbacks.html', {'feedbacks': data, 'section': 'feedbacks'})
-
-def add_feedback(request):
-    if request.method == 'POST':
-        payload = {
-            'first_name': request.POST['first_name'],
-            'last_name': request.POST['last_name'],
-            'email': request.POST['email'],
-            'environment': request.POST['environment'],
-            'service_rating': request.POST['service_rating'],
-            'description': request.POST['description'],
-            'hostel': request.POST['hostel'],
-        }
-        resp = requests.post(f'{FLASK_API}/feedbacks', json=payload)
-        if resp.status_code == 201:
-            messages.success(request, 'Feedback Added!')
+@login_required
+@api_view(['DELETE'])
+def delete_complaint(request, id):
+    response = api_delete(f"/api/v1/complaints/{id}", request)
+    if response:
+        if 'error' in response:
+            logger.error(f"API error deleting complaint: {response['error']}")
+            messages.error(request, response['error'])
         else:
-            messages.error(request, 'Error adding feedback!')
-        return redirect('feedbacks')
-    return render(request, 'add_feedback.html', {'section': 'feedbacks'})
+            messages.success(request, 'Complaint deleted successfully!')
+        return redirect('complaints')
+    logger.error(f"API delete call to /api/v1/complaints/{id} failed")
+    messages.error(request, 'Failed to delete complaint: API call returned no response')
+    return redirect('complaints')
 
-def edit_feedback(request, id):
-    if request.method == 'POST':
-        payload = {
-            'first_name': request.POST['first_name'],
-            'last_name': request.POST['last_name'],
-            'email': request.POST['email'],
-            'environment': request.POST['environment'],
-            'service_rating': request.POST['service_rating'],
-            'description': request.POST['description'],
-            'hostel': request.POST['hostel'],
-        }
-        resp = requests.put(f'{FLASK_API}/feedbacks/{id}', json=payload)
-        if resp.status_code == 200:
-            messages.success(request, 'Feedback Updated!')
-        else:
-            messages.error(request, 'Error updating feedback!')
-        return redirect('feedbacks')
-    resp = requests.get(f'{FLASK_API}/feedbacks/{id}')
-    data = resp.json() if resp.status_code == 200 else {}
-    return render(request, 'edit_feedback.html', {'feedback': data, 'section': 'feedbacks'})
-
+@login_required
+@api_view(['DELETE'])
 def delete_feedback(request, id):
-    try:
-        resp = requests.delete(f'{FLASK_API}/feedbacks/{id}')
-        if resp.status_code == 200:
-            messages.success(request, 'Feedback Deleted!')
+    response = api_delete(f"/api/v1/feedbacks/{id}", request)
+    if response:
+        if 'error' in response:
+            logger.error(f"API error deleting feedback: {response['error']}")
+            messages.error(request, response['error'])
         else:
-            error_msg = resp.json().get('message', 'Error deleting feedback!')
-            messages.error(request, f'Error: {error_msg}')
-            print(f"Error deleting feedback {id}: Status {resp.status_code}")
-            print(f"Response: {resp.text}")
-    except requests.exceptions.RequestException as e:
-        messages.error(request, f'Error connecting to API: {str(e)}')
-        print(f"Request error deleting feedback {id}: {str(e)}")
-    except Exception as e:
-        messages.error(request, f'Unexpected error: {str(e)}')
-        print(f"Unexpected error deleting feedback {id}: {str(e)}")
-    return redirect('feedbacks')
+            messages.success(request, 'Feedback deleted successfully!')
+        return redirect('feedback')
+    logger.error(f"API delete call to /api/v1/feedbacks/{id} failed")
+    messages.error(request, 'Failed to delete feedback: API call returned no response')
+    return redirect('feedback')
 
-# ------------------ REQUESTS ------------------
-def requests_list(request):
-    data = requests.get(f'{FLASK_API}/requests').json()
-    return render(request, 'requests.html', {'requests': data, 'section': 'requests'})
-
-def add_request(request):
-    if request.method == 'POST':
-        payload = {
-            'type': request.POST['type'],
-            'maintenance_type': request.POST.get('maintenance_type', ''),
-            'complaint_type': request.POST.get('complaint_type', ''),
-            'user_id': request.POST['user_id'],
-            'room_number': request.POST['room_number'],
-            'details': request.POST['details'],
-            'status': request.POST.get('status', 'pending'),
-        }
-        resp = requests.post(f'{FLASK_API}/requests', json=payload)
-        if resp.status_code == 201:
-            messages.success(request, 'Request Added!')
+@login_required
+@api_view(['DELETE'])
+def delete_allocation(request, id):
+    response = api_delete(f"/api/v1/room_allocation/{id}", request)
+    if response:
+        if 'error' in response:
+            logger.error(f"API error deleting allocation: {response['error']}")
+            messages.error(request, response['error'])
         else:
-            messages.error(request, 'Error adding request!')
-        return redirect('requests_list')
-    return render(request, 'add_request.html', {'section': 'requests'})
-
-def edit_request(request, id):
-    if request.method == 'POST':
-        payload = {
-            'type': request.POST['type'],
-            'maintenance_type': request.POST.get('maintenance_type', ''),
-            'complaint_type': request.POST.get('complaint_type', ''),
-            'user_id': request.POST['user_id'],
-            'room_number': request.POST['room_number'],
-            'details': request.POST['details'],
-            'status': request.POST.get('status', 'pending'),
-        }
-        resp = requests.put(f'{FLASK_API}/requests/{id}', json=payload)
-        if resp.status_code == 200:
-            messages.success(request, 'Request Updated!')
-        else:
-            messages.error(request, 'Error updating request!')
-        return redirect('requests_list')
-    resp = requests.get(f'{FLASK_API}/requests/{id}')
-    data = resp.json() if resp.status_code == 200 else {}
-    return render(request, 'edit_request.html', {'request_obj': data, 'section': 'requests'})
-
-def delete_request(request, id):
-    resp = requests.delete(f'{FLASK_API}/requests/{id}')
-    if resp.status_code == 200:
-        messages.success(request, 'Request Deleted!')
-    else:
-        messages.error(request, 'Error deleting request!')
-    return redirect('requests_list')
-
-def room_allocation_page(request):
-    try:
-        # Get room allocations from Flask API
-        room_allocations = safe_json(f'{FLASK_API}/room_allocations')
-        print(f"Fetched {len(room_allocations)} room allocations from Flask API")
-        
-        # Get available rooms from Flask API
-        available_rooms = safe_json(f'{FLASK_API}/get_available_rooms')
-        print(f"Fetched available rooms data from Flask API")
-        
-        return render(request, 'room_allocation.html', {
-            'room_allocations': room_allocations,
-            'available_rooms': available_rooms,
-            'section': 'room_allocation',
-            'user': request.user
-        })
-    except Exception as e:
-        print(f"Error in room_allocation_page: {str(e)}")
-        messages.error(request, f'Error loading available rooms: {str(e)}')
-        return render(request, 'room_allocation.html', {
-            'room_allocations': [],
-            'available_rooms': [],
-            'section': 'room_allocation',
-            'user': request.user
-        })
-
-def submit_feedback_page(request):
-    return render(request, 'submit_feedback.html', {'section': 'feedback'})
-
-def get_user(request, id):
-    try:
-        resp = requests.get(f'{FLASK_API}/users/{id}')
-        if resp.status_code == 200:
-            return JsonResponse(resp.json())
-        else:
-            return JsonResponse({'error': 'User not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-
+            messages.success(request, 'Allocation deleted successfully!')
+        return redirect('allocations')
+    logger.error(f"API delete call to /api/v1/room_allocation/{id} failed")
+    messages.error(request, 'Failed to delete allocation: API call returned no response')
+    return redirect('allocations')

@@ -1,384 +1,48 @@
-{% extends 'dash_base.html' %}
-{% block title %}Dashboard{% endblock %}
-{% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Hostel Management Dashboard</h2>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" onclick="refreshDashboard()">
-                <i class="fas fa-sync-alt"></i> Refresh
-            </button>
-            <button class="btn btn-outline-secondary" onclick="exportDashboard()">
-                <i class="fas fa-download"></i> Export
-            </button>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostel Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; }
+        .navbar { background-color: #333; padding: 10px; }
+        .navbar a { color: white; margin-right: 20px; text-decoration: none; }
+        .navbar a.active { font-weight: bold; }
+        .container { padding: 20px; }
+        .messages { margin-bottom: 20px; }
+        .messages .success { color: green; }
+        .messages .error { color: red; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        form { margin-bottom: 20px; }
+        label { display: block; margin: 5px 0; }
+        input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background-color: #333; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #555; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="{% url 'dashboard' %}" {% if active_tab == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+        <a href="{% url 'users' %}" {% if active_tab == 'users' %}class="active"{% endif %}>Users</a>
+        <a href="{% url 'profiles' %}" {% if active_tab == 'profiles' %}class="active"{% endif %}>Profiles</a>
+        <a href="{% url 'complaints' %}" {% if active_tab == 'complaints' %}class="active"{% endif %}>Complaints</a>
+        <a href="{% url 'feedback' %}" {% if active_tab == 'feedback' %}class="active"{% endif %}>Feedback</a>
+        <a href="{% url 'hostels' %}" {% if active_tab == 'hostels' %}class="active"{% endif %}>Hostels</a>
+        <a href="{% url 'allocations' %}" {% if active_tab == 'allocations' %}class="active"{% endif %}>Allocations</a>
     </div>
-
-    <div class="row g-4">
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm hover-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title"><i class="fas fa-bed me-2"></i>Room Allocations</h5>
-                        <div class="spinner-border spinner-border-sm d-none" id="allocationsSpinner"></div>
-                    </div>
-                    <p class="card-text">Total: <span id="allocationsCount" class="h4">0</span></p>
-                    <div class="progress mb-2">
-                        <div id="allocationsProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
-                    </div>
-                    <a href="{% url 'room_allocations' %}" class="btn btn-primary btn-sm">View All</a>
-                </div>
+    <div class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
             </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm hover-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title"><i class="fas fa-users me-2"></i>Users</h5>
-                        <div class="spinner-border spinner-border-sm d-none" id="usersSpinner"></div>
-                    </div>
-                    <p class="card-text">Total: <span id="usersCount" class="h4">0</span></p>
-                    <div class="progress mb-2">
-                        <div id="usersProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
-                    </div>
-                    <a href="{% url 'users' %}" class="btn btn-primary btn-sm">View All</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm hover-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title"><i class="fas fa-comment-dots me-2"></i>Feedbacks</h5>
-                        <div class="spinner-border spinner-border-sm d-none" id="feedbacksSpinner"></div>
-                    </div>
-                    <p class="card-text">Total: <span id="feedbacksCount" class="h4">0</span></p>
-                    <div class="progress mb-2">
-                        <div id="feedbacksProgress" class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
-                    </div>
-                    <a href="{% url 'feedbacks' %}" class="btn btn-primary btn-sm">View All</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm hover-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title"><i class="fas fa-tools me-2"></i>Requests</h5>
-                        <div class="spinner-border spinner-border-sm d-none" id="requestsSpinner"></div>
-                    </div>
-                    <p class="card-text">Total: <span id="requestsCount" class="h4">0</span></p>
-                    <div class="progress mb-2">
-                        <div id="requestsProgress" class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
-                    </div>
-                    <a href="{% url 'requests_list' %}" class="btn btn-primary btn-sm">View All</a>
-                </div>
-            </div>
-        </div>
+        {% endif %}
+        {% block content %}
+        {% endblock %}
     </div>
-
-    <div class="row mt-4">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Room Occupancy</h5>
-                    <canvas id="occupancyChart" height="100"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Recent Activity</h5>
-                    <div id="recentActivity" class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>Loading activities...</span>
-                            <div class="spinner-border spinner-border-sm"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-.hover-card {
-    transition: transform 0.2s;
-}
-.hover-card:hover {
-    transform: translateY(-5px);
-}
-</style>
-
-<script>
-let dashboardData = null;
-let chart = null;
-const FLASK_API = 'http://localhost:5000/api';
-
-async function loadDashboardData() {
-    try {
-        showLoading();
-        const [allocations, users, feedbacks, requests] = await Promise.all([
-            fetch(`${FLASK_API}/room_allocations`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            }).then(async res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            }),
-            fetch(`${FLASK_API}/users`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            }).then(async res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            }),
-            fetch(`${FLASK_API}/feedbacks`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            }).then(async res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            }),
-            fetch(`${FLASK_API}/requests`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            }).then(async res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })
-        ]);
-
-        dashboardData = { allocations, users, feedbacks, requests };
-        updateDashboard();
-        updateRecentActivity();
-    } catch (error) {
-        console.error('API Error:', error);
-        showToast('Error loading dashboard data. Please check if Flask API is running.', 'danger');
-        // Show placeholder data
-        dashboardData = {
-            allocations: [],
-            users: [],
-            feedbacks: [],
-            requests: []
-        };
-        updateDashboard();
-    } finally {
-        hideLoading();
-    }
-}
-
-function updateDashboard() {
-    if (!dashboardData) return;
-
-    const { allocations, users, feedbacks, requests } = dashboardData;
-    
-    // Update counts
-    document.getElementById('allocationsCount').textContent = allocations.length;
-    document.getElementById('usersCount').textContent = users.length;
-    document.getElementById('feedbacksCount').textContent = feedbacks.length;
-    document.getElementById('requestsCount').textContent = requests.length;
-
-    // Update progress bars
-    const maxAllocations = 100; // Adjust based on your max capacity
-    const maxUsers = 200;
-    const maxFeedbacks = 50;
-    const maxRequests = 30;
-
-    document.getElementById('allocationsProgress').style.width = `${(allocations.length / maxAllocations) * 100}%`;
-    document.getElementById('usersProgress').style.width = `${(users.length / maxUsers) * 100}%`;
-    document.getElementById('feedbacksProgress').style.width = `${(feedbacks.length / maxFeedbacks) * 100}%`;
-    document.getElementById('requestsProgress').style.width = `${(requests.length / maxRequests) * 100}%`;
-
-    // Update chart
-    updateChart();
-}
-
-function updateChart() {
-    const ctx = document.getElementById('occupancyChart').getContext('2d');
-    const { allocations } = dashboardData;
-
-    if (chart) {
-        chart.destroy();
-    }
-
-    chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Single', 'Double', 'Four-Bed'],
-            datasets: [{
-                label: 'Rooms Occupied',
-                data: [
-                    allocations.filter(a => a.room_type === 'single').length,
-                    allocations.filter(a => a.room_type === 'double').length,
-                    allocations.filter(a => a.room_type === 'four').length
-                ],
-                backgroundColor: ['#007bff', '#28a745', '#ffc107'],
-                borderColor: ['#0056b3', '#218838', '#ffca2c'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { 
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Rooms'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Room Type'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.dataset.label}: ${context.raw}`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function updateRecentActivity() {
-    const activityContainer = document.getElementById('recentActivity');
-    activityContainer.innerHTML = '';
-
-    const { allocations, feedbacks, requests } = dashboardData;
-    
-    // Combine and sort activities
-    const activities = [
-        ...allocations.map(a => ({
-            type: 'allocation',
-            text: `Room ${a.room_number} allocated to ${a.student_name}`,
-            time: new Date(a.created_at || Date.now())
-        })),
-        ...feedbacks.map(f => ({
-            type: 'feedback',
-            text: `New feedback from ${f.first_name} ${f.last_name}`,
-            time: new Date(f.created_at || Date.now())
-        })),
-        ...requests.map(r => ({
-            type: 'request',
-            text: `New ${r.type} request for room ${r.room_number}`,
-            time: new Date(r.created_at || Date.now())
-        }))
-    ].sort((a, b) => b.time - a.time).slice(0, 5);
-
-    activities.forEach(activity => {
-        const item = document.createElement('div');
-        item.className = 'list-group-item';
-        item.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="fas fa-${getActivityIcon(activity.type)} me-2"></i>
-                    ${activity.text}
-                </div>
-                <small class="text-muted">${formatTime(activity.time)}</small>
-            </div>
-        `;
-        activityContainer.appendChild(item);
-    });
-}
-
-function getActivityIcon(type) {
-    switch(type) {
-        case 'allocation': return 'bed';
-        case 'feedback': return 'comment';
-        case 'request': return 'tools';
-        default: return 'info-circle';
-    }
-}
-
-function formatTime(date) {
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    
-    if (minutes < 60) return `${minutes}m ago`;
-    if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
-    return date.toLocaleDateString();
-}
-
-function showLoading() {
-    document.querySelectorAll('.spinner-border').forEach(spinner => {
-        spinner.classList.remove('d-none');
-    });
-}
-
-function hideLoading() {
-    document.querySelectorAll('.spinner-border').forEach(spinner => {
-        spinner.classList.add('d-none');
-    });
-}
-
-function refreshDashboard() {
-    loadDashboardData();
-}
-
-function exportDashboard() {
-    if (!dashboardData) return;
-    
-    const data = {
-        timestamp: new Date().toISOString(),
-        ...dashboardData
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dashboard-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-function showToast(message, type) {
-    const toast = document.getElementById('apiToast');
-    toast.querySelector('.toast-body').textContent = message;
-    toast.className = `toast bg-${type} text-white`;
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
-}
-
-// Initial load
-loadDashboardData();
-
-// Auto-refresh every 5 minutes
-setInterval(loadDashboardData, 5 * 60 * 1000);
-</script>
-{% endblock %}
+</body>
+</html>

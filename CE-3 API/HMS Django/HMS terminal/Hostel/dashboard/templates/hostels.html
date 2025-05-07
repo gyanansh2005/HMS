@@ -1,0 +1,56 @@
+{% extends 'home.html' %}
+{% block content %}
+    <h2>Manage Hostels</h2>
+    <form method="post">
+        {% csrf_token %}
+        <label>Name</label>
+        <input type="text" name="name" required>
+        <label>Total Floors</label>
+        <input type="number" name="total_floors" required>
+        <label>Features</label>
+        <textarea name="features"></textarea>
+        <button type="submit">Save Hostel</button>
+    </form>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Total Floors</th>
+            <th>Features</th>
+            <th>Actions</th>
+        </tr>
+        {% for hostel in hostels %}
+            <tr>
+                <td>{{ hostel.id }}</td>
+                <td>{{ hostel.name }}</td>
+                <td>{{ hostel.total_floors }}</td>
+                <td>{{ hostel.features|default:'N/A' }}</td>
+                <td>
+                    <a href="{% url 'hostels' %}?id={{ hostel.id }}">Edit</a>
+                    <a href="{% url 'delete_hostel' hostel.id %}" onclick="return confirm('Are you sure?')">Delete</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <h3>Available Rooms (Hostel ID: 1, Floor: 0)</h3>
+    <table>
+        <tr>
+            <th>Room Number</th>
+            <th>Type</th>
+            <th>Beds Left</th>
+            <th>AC Type</th>
+            <th>Price</th>
+        </tr>
+        {% for room_type, rooms in rooms.available.items %}
+            {% for room in rooms %}
+                <tr>
+                    <td>{{ room.number }}</td>
+                    <td>{{ room_type }}</td>
+                    <td>{{ room.beds_left }}</td>
+                    <td>{{ room.ac_type }}</td>
+                    <td>{{ room.price }}</td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </table>
+{% endblock %}

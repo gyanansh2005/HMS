@@ -173,3 +173,6 @@ CSP_CONNECT_SRC = ("'self'",)
 
 
 LOGIN_URL = '/login/'  # Redirect to login page if not authenticated
+
+
+API_BASE_URL = 'http://localhost:5000'

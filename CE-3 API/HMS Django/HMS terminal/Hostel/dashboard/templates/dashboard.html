@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal { transition: opacity 0.3s ease; }
+        .modal-open { overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="bg-gray-800 text-white w-64 p-4">
+            <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
+            <nav>
+                <a href="#overview" class="block py-2 px-4 rounded hover:bg-gray-700 {% if active_tab == 'dashboard' %}bg-gray-700{% endif %}">Overview</a>
+                <a href="#users" class="block py-2 px-4 rounded hover:bg-gray-700">Users</a>
+                <a href="#complaints" class="block py-2 px-4 rounded hover:bg-gray-700">Complaints</a>
+                <a href="#feedback" class="block py-2 px-4 rounded hover:bg-gray-700">Feedback</a>
+                <a href="#allocations" class="block py-2 px-4 rounded hover:bg-gray-700">Allocations</a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6 overflow-auto">
+            <!-- Messages -->
+            {% if messages %}
+                <div id="toast-container" class="fixed top-4 right-4 z-50">
+                    {% for message in messages %}
+                        <div class="toast bg-{% if message.tags == 'success' %}green{% else %}red{% endif %}-500 text-white p-4 rounded shadow mb-2">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Overview Section -->
+            <section id="overview" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded shadow">
+                        <p class="text-lg font-medium">Users</p>
+                        <p class="text-2xl">{{ user_count }}</p>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow">
+                        <p class="text-lg font-medium">Complaints</p>
+                        <p class="text-2xl">{{ complaint_count }}</p>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow">
+                        <p class="text-lg font-medium">Feedback</p>
+                        <p class="text-2xl">{{ feedback_count }}</p>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow">
+                        <p class="text-lg font-medium">Allocations</p>
+                        <p class="text-2xl">{{ allocation_count }}</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-semibold">Users</h2>
+                    <button onclick="openModal('user')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add User</button>
+                </div>
+                <div class="bg-white rounded shadow overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-3 text-left">ID</th>
+                                <th class="p-3 text-left">Name</th>
+                                <th class="p-3 text-left">Email</th>
+                                <th class="p-3 text-left">Roll Number</th>
+                                <th class="p-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3">{{ user.id }}</td>
+                                    <td class="p-3">{{ user.first_name }} {{ user.last_name }}</td>
+                                    <td class="p-3">{{ user.email }}</td>
+                                    <td class="p-3">{{ user.roll_number }}</td>
+                                    <td class="p-3">
+                                        <button onclick="editUser('{{ user.id }}', '{{ user.first_name|escapejs }}', '{{ user.last_name|escapejs }}', '{{ user.email|escapejs }}', '{{ user.roll_number|escapejs }}', {{ user.is_staff|lower }}, {{ user.is_superuser|lower }})" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">Edit</button>
+                                        <form method="post" action="{% url 'delete_user' id=user.id %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" onclick="return confirm('Are you sure?')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Complaints Section -->
+            <section id="complaints" class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-semibold">Complaints</h2>
+                    <button onclick="openModal('complaint')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add Complaint</button>
+                </div>
+                <div class="bg-white rounded shadow overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-3 text-left">ID</th>
+                                <th class="p-3 text-left">Type</th>
+                                <th class="p-3 text-left">Room</th>
+                                <th class="p-3 text-left">Category</th>
+                                <th class="p-3 text-left">Status</th>
+                                <th class="p-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for complaint in complaints %}
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3">{{ complaint.id }}</td>
+                                    <td class="p-3">{{ complaint.request_type }}</td>
+                                    <td class="p-3">{{ complaint.room_number }}</td>
+                                    <td class="p-3">{{ complaint.category }}</td>
+                                    <td class="p-3">{{ complaint.status }}</td>
+                                    <td class="p-3">
+                                        <button onclick="editComplaint('{{ complaint.id }}', '{{ complaint.request_type|escapejs }}', '{{ complaint.room_number|escapejs }}', '{{ complaint.category|escapejs }}', '{{ complaint.details|escapejs }}', '{{ complaint.status|escapejs }}')" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">Edit</button>
+                                        <form method="post" action="{% url 'delete_complaint' id=complaint.id %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" onclick="return confirm('Are you sure?')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Feedback Section -->
+            <section id="feedback" class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-semibold">Feedback</h2>
+                    <button onclick="openModal('feedback')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add Feedback</button>
+                </div>
+                <div class="bg-white rounded shadow overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-3 text-left">ID</th>
+                                <th class="p-3 text-left">Environment</th>
+                                <th class="p-3 text-left">Service</th>
+                                <th class="p-3 text-left">Hostel</th>
+                                <th class="p-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feedback in feedbacks %}
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3">{{ feedback.id }}</td>
+                                    <td class="p-3">{{ feedback.environment_rating }}</td>
+                                    <td class="p-3">{{ feedback.service_rating }}</td>
+                                    <td class="p-3">{{ feedback.hostel }}</td>
+                                    <td class="p-3">
+                                        <button onclick="editFeedback('{{ feedback.id }}', '{{ feedback.environment_rating|escapejs }}', '{{ feedback.service_rating|escapejs }}', '{{ feedback.comments|escapejs }}', '{{ feedback.hostel|escapejs }}')" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">Edit</button>
+                                        <form method="post" action="{% url 'delete_feedback' id=feedback.id %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" onclick="return confirm('Are you sure?')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Allocations Section -->
+            <section id="allocations" class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-semibold">Allocations</h2>
+                    <button onclick="openModal('allocation')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add Allocation</button>
+                </div>
+                <div class="bg-white rounded shadow overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-3 text-left">ID</th>
+                                <th class="p-3 text-left">User ID</th>
+                                <th class="p-3 text-left">Room ID</th>
+                                <th class="p-3 text-left">Status</th>
+                                <th class="p-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for allocation in allocations %}
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3">{{ allocation.id }}</td>
+                                    <td class="p-3">{{ allocation.user_id }}</td>
+                                    <td class="p-3">{{ allocation.room_id }}</td>
+                                    <td class="p-3">{{ allocation.status }}</td>
+                                    <td class="p-3">
+                                        <button onclick="editAllocation('{{ allocation.id }}', '{{ allocation.room_id|escapejs }}', '{{ allocation.room_number|escapejs }}', '{{ allocation.room_type|escapejs }}', '{{ allocation.hostel_id|escapejs }}', '{{ allocation.status|escapejs }}')" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">Edit</button>
+                                        <form method="post" action="{% url 'delete_allocation' id=allocation.id %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" onclick="return confirm('Are you sure?')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modal for Forms -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 id="modal-title" class="text-xl font-semibold mb-4"></h2>
+            <form id="modal-form" method="post" action="{% url 'dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="resource" id="resource">
+                <input type="hidden" name="id" id="form_id">
+                <div id="modal-fields"></div>
+                <div class="flex justify-end mt-4">
+                    <button type="button" onclick="closeModal()" class="bg-gray-300 text-black px-4 py-2 rounded mr-2 hover:bg-gray-400">Cancel</button>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(resource) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalFields = document.getElementById('modal-fields');
+            const resourceInput = document.getElementById('resource');
+            const formId = document.getElementById('form_id').value;
+
+            resourceInput.value = resource;
+            modalTitle.textContent = formId ? `Edit ${resource.charAt(0).toUpperCase() + resource.slice(1)}` : `Add ${resource.charAt(0).toUpperCase() + resource.slice(1)}`;
+            modalFields.innerHTML = '';
+
+            if (resource === 'user') {
+                modalFields.innerHTML = `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">First Name</label>
+                        <input type="text" name="first_name" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Last Name</label>
+                        <input type="text" name="last_name" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Email</label>
+                        <input type="email" name="email" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Roll Number</label>
+                        <input type="text" name="roll_number" class="w-full p-2 border rounded">
+                    </div>
+                    ${formId ? '' : `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Password</label>
+                        <input type="password" name="password" class="w-full p-2 border rounded" required>
+                    </div>
+                    `}
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_staff" class="mr-2">
+                            <span class="text-sm font-medium">Staff</span>
+                        </label>
+                    </div>
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_superuser" class="mr-2">
+                            <span class="text-sm font-medium">Superuser</span>
+                        </label>
+                    </div>
+                `;
+            } else if (resource === 'complaint') {
+                modalFields.innerHTML = `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Type</label>
+                        <select name="request_type" class="w-full p-2 border rounded" required>
+                            <option value="complaint">Complaint</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Room Number</label>
+                        <input type="text" name="room_number" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Category</label>
+                        <input type="text" name="category" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Details</label>
+                        <textarea name="details" class="w-full p-2 border rounded" required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Status</label>
+                        <select name="status" class="w-full p-2 border rounded">
+                            <option value="pending">Pending</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                `;
+            } else if (resource === 'feedback') {
+                modalFields.innerHTML = `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Environment Rating</label>
+                        <input type="text" name="environment_rating" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Service Rating</label>
+                        <input type="number" name="service_rating" min="1" max="5" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Comments</label>
+                        <textarea name="comments" class="w-full p-2 border rounded" required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Hostel</label>
+                        <input type="text" name="hostel" class="w-full p-2 border rounded" required>
+                    </div>
+                `;
+            } else if (resource === 'allocation') {
+                modalFields.innerHTML = `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Room ID</label>
+                        <input type="number" name="room_id" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Room Number</label>
+                        <input type="text" name="room_number" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Room Type</label>
+                        <input type="text" name="room_type" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Hostel ID</label>
+                        <input type="number" name="hostel_id" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium">Status</label>
+                        <select name="status" class="w-full p-2 border rounded">
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                `;
+            }
+
+            modal.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+            document.getElementById('modal-fields').innerHTML = '';
+            document.getElementById('form_id').value = '';
+        }
+
+        function editUser(id, first_name, last_name, email, roll_number, is_staff, is_superuser) {
+            openModal('user');
+            document.getElementById('form_id').value = id;
+            document.getElementById('modal-title').textContent = 'Edit User';
+            document.querySelector('input[name="first_name"]').value = first_name;
+            document.querySelector('input[name="last_name"]').value = last_name;
+            document.querySelector('input[name="email"]').value = email;
+            document.querySelector('input[name="roll_number"]').value = roll_number;
+            document.querySelector('input[name="is_staff"]').checked = is_staff;
+            document.querySelector('input[name="is_superuser"]').checked = is_superuser;
+        }
+
+        function editComplaint(id, request_type, room_number, category, details, status) {
+            openModal('complaint');
+            document.getElementById('form_id').value = id;
+            document.getElementById('modal-title').textContent = 'Edit Complaint';
+            document.querySelector('select[name="request_type"]').value = request_type;
+            document.querySelector('input[name="room_number"]').value = room_number;
+            document.querySelector('input[name="category"]').value = category;
+            document.querySelector('textarea[name="details"]').value = details;
+            document.querySelector('select[name="status"]').value = status;
+        }
+
+        function editFeedback(id, environment_rating, service_rating, comments, hostel) {
+            openModal('feedback');
+            document.getElementById('form_id').value = id;
+            document.getElementById('modal-title').textContent = 'Edit Feedback';
+            document.querySelector('input[name="environment_rating"]').value = environment_rating;
+            document.querySelector('input[name="service_rating"]').value = service_rating;
+            document.querySelector('textarea[name="comments"]').value = comments;
+            document.querySelector('input[name="hostel"]').value = hostel;
+        }
+
+        function editAllocation(id, room_id, room_number, room_type, hostel_id, status) {
+            openModal('allocation');
+            document.getElementById('form_id').value = id;
+            document.getElementById('modal-title').textContent = 'Edit Allocation';
+            document.querySelector('input[name="room_id"]').value = room_id;
+            document.querySelector('input[name="room_number"]').value = room_number;
+            document.querySelector('input[name="room_type"]').value = room_type;
+            document.querySelector('input[name="hostel_id"]').value = hostel_id;
+            document.querySelector('select[name="status"]').value = status;
+        }
+
+        // Auto-hide toasts after 5 seconds
+        document.addEventListener('DOMContentLoaded', () => {
+            const toasts = document.querySelectorAll('.toast');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,28 +1,308 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from werkzeug.exceptions import InternalServerError
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_restful import Api, Resource
 from flask_cors import CORS
+from werkzeug.exceptions import InternalServerError
 import os
 from datetime import datetime
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-import requests
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///" + os.path.join(basedir, "app.db")
 app.config['SECRET_KEY'] = 'my_secret_key'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+api = Api(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-# Updated User model to match Django's CustomUser
+# --- Validation Functions ---
+def validate_user_data(data, is_update=False, instance_id=None):
+    errors = {}
+    if not is_update or 'email' in data:
+        if not data.get('email'):
+            errors['email'] = 'Email is required'
+        elif not isinstance(data['email'], str) or len(data['email']) > 100:
+            errors['email'] = 'Invalid email'
+        elif db.session.query(User).filter_by(email=data['email']).filter(User.id != instance_id if instance_id else True).first():
+            errors['email'] = 'Email already exists'
+    
+    if not is_update or 'first_name' in data:
+        if not data.get('first_name'):
+            errors['first_name'] = 'First name is required'
+        elif not isinstance(data['first_name'], str) or len(data['first_name']) > 100:
+            errors['first_name'] = 'Invalid first name'
+    
+    if not is_update or 'last_name' in data:
+        if not data.get('last_name'):
+            errors['last_name'] = 'Last name is required'
+        elif not isinstance(data['last_name'], str) or len(data['last_name']) > 100:
+            errors['last_name'] = 'Invalid last name'
+    
+    if not is_update or 'password' in data:
+        if not is_update and not data.get('password'):
+            errors['password'] = 'Password is required'
+        elif data.get('password') and (not isinstance(data['password'], str) or len(data['password']) < 6):
+            errors['password'] = 'Password must be at least 6 characters'
+    
+    if 'roll_number' in data and data['roll_number']:
+        if not isinstance(data['roll_number'], str) or len(data['roll_number']) > 20:
+            errors['roll_number'] = 'Invalid roll number'
+        elif db.session.query(User).filter_by(roll_number=data['roll_number']).filter(User.id != instance_id if instance_id else True).first():
+            errors['roll_number'] = 'Roll number already exists'
+    
+    return errors
+
+def validate_student_profile_data(data):
+    errors = {}
+    if not data.get('user_id'):
+        errors['user_id'] = 'User ID is required'
+    elif not db.session.query(User).get(data['user_id']):
+        errors['user_id'] = 'User not found'
+    
+    if 'contact_number' in data and data['contact_number'] and (not isinstance(data['contact_number'], str) or len(data['contact_number']) > 15):
+        errors['contact_number'] = 'Invalid contact number'
+    
+    if 'profile_picture' in data and data['profile_picture'] and (not isinstance(data['profile_picture'], str) or len(data['profile_picture']) > 255):
+        errors['profile_picture'] = 'Invalid profile picture URL'
+    
+    return errors
+
+def validate_hostel_data(data):
+    errors = {}
+    if not data.get('name'):
+        errors['name'] = 'Name is required'
+    elif not isinstance(data['name'], str) or len(data['name']) > 100:
+        errors['name'] = 'Invalid name'
+    
+    if not data.get('total_floors'):
+        errors['total_floors'] = 'Total floors is required'
+    elif not isinstance(data['total_floors'], int) or data['total_floors'] < 1:
+        errors['total_floors'] = 'Total floors must be a positive integer'
+    
+    if 'main_image' in data and data['main_image'] and (not isinstance(data['main_image'], str) or len(data['main_image']) > 255):
+        errors['main_image'] = 'Invalid main image URL'
+    
+    return errors
+
+def validate_room_data(data):
+    errors = {}
+    if not data.get('hostel_id'):
+        errors['hostel_id'] = 'Hostel ID is required'
+    elif not db.session.query(Hostel).get(data['hostel_id']):
+        errors['hostel_id'] = 'Hostel not found'
+    
+    if not data.get('floor') and data['floor'] != 0:
+        errors['floor'] = 'Floor is required'
+    elif not isinstance(data['floor'], int) or data['floor'] < 0:
+        errors['floor'] = 'Floor must be a non-negative integer'
+    
+    if not data.get('room_number'):
+        errors['room_number'] = 'Room number is required'
+    elif not isinstance(data['room_number'], str) or len(data['room_number']) > 10:
+        errors['room_number'] = 'Invalid room number'
+    
+    if not data.get('room_type'):
+        errors['room_type'] = 'Room type is required'
+    elif data['room_type'] not in ['four', 'double', 'single']:
+        errors['room_type'] = 'Room type must be four, double, or single'
+    
+    if not data.get('ac_type'):
+        errors['ac_type'] = 'AC type is required'
+    elif data['ac_type'] not in ['ac', 'non_ac']:
+        errors['ac_type'] = 'AC type must be ac or non_ac'
+    
+    if not data.get('total_beds'):
+        errors['total_beds'] = 'Total beds is required'
+    elif not isinstance(data['total_beds'], int) or data['total_beds'] < 1:
+        errors['total_beds'] = 'Total beds must be a positive integer'
+    
+    if 'occupied_beds' in data and (not isinstance(data['occupied_beds'], int) or data['occupied_beds'] < 0):
+        errors['occupied_beds'] = 'Occupied beds must be a non-negative integer'
+    
+    if not data.get('price'):
+        errors['price'] = 'Price is required'
+    elif not isinstance(data['price'], (int, float)) or data['price'] < 0:
+        errors['price'] = 'Price must be a non-negative number'
+    
+    return errors
+
+def validate_allocation_data(data):
+    errors = {}
+    if not data.get('user_id'):
+        errors['user_id'] = 'User ID is required'
+    elif not db.session.query(User).get(data['user_id']):
+        errors['user_id'] = 'User not found'
+    
+    if not data.get('room_id'):
+        errors['room_id'] = 'Room ID is required'
+    elif not db.session.query(Room).get(data['room_id']):
+        errors['room_id'] = 'Room not found'
+    
+    if 'status' in data and data['status'] not in ['pending', 'allocated']:
+        errors['status'] = 'Status must be pending or allocated'
+    
+    return errors
+
+def validate_room_allocation_data(data):
+    errors = {}
+    if not data.get('hostel_id'):
+        errors['hostel_id'] = 'Hostel ID is required'
+    elif not db.session.query(Hostel).get(data['hostel_id']):
+        errors['hostel_id'] = 'Hostel not found'
+    
+    if not data.get('floor') and data['floor'] != 0:
+        errors['floor'] = 'Floor is required'
+    elif not isinstance(data['floor'], int) or data['floor'] < 0:
+        errors['floor'] = 'Floor must be a non-negative integer'
+    
+    if not data.get('room_number'):
+        errors['room_number'] = 'Room number is required'
+    elif not isinstance(data['room_number'], str) or len(data['room_number']) > 10:
+        errors['room_number'] = 'Invalid room number'
+    
+    if not data.get('room_type'):
+        errors['room_type'] = 'Room type is required'
+    elif data['room_type'] not in ['four', 'double', 'single']:
+        errors['room_type'] = 'Room type must be four, double, or single'
+    
+    return errors
+
+def validate_room_change_request_data(data):
+    errors = {}
+    if not data.get('user_id'):
+        errors['user_id'] = 'User ID is required'
+    elif not db.session.query(User).get(data['user_id']):
+        errors['user_id'] = 'User not found'
+    
+    if not data.get('current_allocation_id'):
+        errors['current_allocation_id'] = 'Current allocation ID is required'
+    elif not db.session.query(Allocation).get(data['current_allocation_id']):
+        errors['current_allocation_id'] = 'Allocation not found'
+    
+    if not data.get('requested_room_id'):
+        errors['requested_room_id'] = 'Requested room ID is required'
+    elif not db.session.query(Room).get(data['requested_room_id']):
+        errors['requested_room_id'] = 'Room not found'
+    
+    if not data.get('reason'):
+        errors['reason'] = 'Reason is required'
+    
+    if 'status' in data and data['status'] not in ['pending', 'approved', 'rejected']:
+        errors['status'] = 'Status must be pending, approved, or rejected'
+    
+    return errors
+
+def validate_fee_payment_data(data):
+    errors = {}
+    if not data.get('user_id'):
+        errors['user_id'] = 'User ID is required'
+    elif not db.session.query(User).get(data['user_id']):
+        errors['user_id'] = 'User not found'
+    
+    if not data.get('allocation_id'):
+        errors['allocation_id'] = 'Allocation ID is required'
+    elif not db.session.query(Allocation).get(data['allocation_id']):
+        errors['allocation_id'] = 'Allocation not found'
+    
+    if not data.get('amount'):
+        errors['amount'] = 'Amount is required'
+    elif not isinstance(data['amount'], (int, float)) or data['amount'] < 0:
+        errors['amount'] = 'Amount must be a non-negative number'
+    
+    if not data.get('transaction_id'):
+        errors['transaction_id'] = 'Transaction ID is required'
+    elif not isinstance(data['transaction_id'], str) or len(data['transaction_id']) > 100:
+        errors['transaction_id'] = 'Invalid transaction ID'
+    elif db.session.query(FeePayment).filter_by(transaction_id=data['transaction_id']).first():
+        errors['transaction_id'] = 'Transaction ID already exists'
+    
+    if 'status' in data and data['status'] not in ['pending', 'completed', 'failed']:
+        errors['status'] = 'Status must be pending, completed, or failed'
+    
+    return errors
+
+def validate_complaint_maintenance_data(data):
+    errors = {}
+    if not data.get('user_id'):
+        errors['user_id'] = 'User ID is required'
+    elif not db.session.query(User).get(data['user_id']):
+        errors['user_id'] = 'User not found'
+    
+    if not data.get('request_type'):
+        errors['request_type'] = 'Request type is required'
+    elif data['request_type'] not in ['complaint', 'maintenance']:
+        errors['request_type'] = 'Request type must be complaint or maintenance'
+    
+    if not data.get('room_number'):
+        errors['room_number'] = 'Room number is required'
+    elif not isinstance(data['room_number'], str) or len(data['room_number']) > 10:
+        errors['room_number'] = 'Invalid room number'
+    
+    if not data.get('category'):
+        errors['category'] = 'Category is required'
+    elif not isinstance(data['category'], str) or len(data['category']) > 50:
+        errors['category'] = 'Invalid category'
+    
+    if not data.get('details'):
+        errors['details'] = 'Details are required'
+    
+    if 'status' in data and data['status'] not in ['pending', 'resolved']:
+        errors['status'] = 'Status must be pending or resolved'
+    
+    return errors
+
+def validate_feedback_data(data):
+    errors = {}
+    if 'user_id' in data and data['user_id'] and not db.session.query(User).get(data['user_id']):
+        errors['user_id'] = 'User not found'
+    
+    if not data.get('environment_rating'):
+        errors['environment_rating'] = 'Environment rating is required'
+    elif not isinstance(data['environment_rating'], str) or len(data['environment_rating']) > 20:
+        errors['environment_rating'] = 'Invalid environment rating'
+    
+    if not data.get('service_rating'):
+        errors['service_rating'] = 'Service rating is required'
+    elif not isinstance(data['service_rating'], int) or data['service_rating'] < 1 or data['service_rating'] > 5:
+        errors['service_rating'] = 'Service rating must be between 1 and 5'
+    
+    if not data.get('comments'):
+        errors['comments'] = 'Comments are required'
+    
+    if not data.get('hostel'):
+        errors['hostel'] = 'Hostel is required'
+    elif not isinstance(data['hostel'], str) or len(data['hostel']) > 50:
+        errors['hostel'] = 'Invalid hostel name'
+    
+    return errors
+
+def validate_available_rooms_params(hostel_id, floor):
+    errors = {}
+    if not hostel_id:
+        errors['hostel_id'] = 'Hostel ID is required'
+    elif not isinstance(hostel_id, int) or not db.session.query(Hostel).get(hostel_id):
+        errors['hostel_id'] = 'Invalid or non-existent hostel ID'
+    
+    if floor is None:
+        errors['floor'] = 'Floor is required'
+    elif not isinstance(floor, int) or floor < 0:
+        errors['floor'] = 'Floor must be a non-negative integer'
+    else:
+        hostel = db.session.query(Hostel).get(hostel_id)
+        if hostel and floor >= hostel.total_floors:
+            errors['floor'] = f'Floor must be less than {hostel.total_floors}'
+    
+    return errors
+
+# --- Models ---
 class User(db.Model, UserMixin):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
@@ -33,17 +313,27 @@ class User(db.Model, UserMixin):
     roll_number = db.Column(db.String(20), nullable=True, unique=True)
     is_staff = db.Column(db.Boolean, default=False)
     is_superuser = db.Column(db.Boolean, default=False)
+    username = db.Column(db.String(100))
     
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password)
-
+    
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
         
     @property
     def name(self):
         return f"{self.first_name} {self.last_name}"
-
+    
+    @property
+    def role(self):
+        if self.is_superuser:
+            return "admin"
+        elif self.is_staff:
+            return "staff"
+        else:
+            return "user"
+    
     def to_dict(self):
         return {
             "id": self.id,
@@ -53,9 +343,9 @@ class User(db.Model, UserMixin):
             "roll_number": self.roll_number,
             "is_staff": self.is_staff,
             "is_superuser": self.is_superuser,
+            "role": self.role
         }
 
-# Student Profile model
 class StudentProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
@@ -73,7 +363,6 @@ class StudentProfile(db.Model):
             "bio": self.bio,
         }
 
-# Hostel model
 class Hostel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -90,14 +379,13 @@ class Hostel(db.Model):
             "features": self.features,
         }
 
-# Room model
 class Room(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     hostel_id = db.Column(db.Integer, db.ForeignKey('hostel.id'), nullable=False)
     floor = db.Column(db.Integer, nullable=False)
     room_number = db.Column(db.String(10), nullable=False)
-    room_type = db.Column(db.String(10), nullable=False)  # 'four', 'double', 'single'
-    ac_type = db.Column(db.String(10), nullable=False)  # 'ac', 'non_ac'
+    room_type = db.Column(db.String(10), nullable=False)
+    ac_type = db.Column(db.String(10), nullable=False)
     total_beds = db.Column(db.Integer, nullable=False)
     occupied_beds = db.Column(db.Integer, default=0)
     price = db.Column(db.Numeric(10, 2), nullable=False)
@@ -126,7 +414,6 @@ class Room(db.Model):
             "amenities": self.amenities,
         }
 
-# Allocation model
 class Allocation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -149,14 +436,13 @@ class Allocation(db.Model):
             "updated_at": self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
         }
 
-# Room Change Request model
 class RoomChangeRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     current_allocation_id = db.Column(db.Integer, db.ForeignKey('allocation.id'), nullable=False)
     requested_room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=False)
     reason = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(10), default='pending')  # 'pending', 'approved', 'rejected'
+    status = db.Column(db.String(10), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user = db.relationship('User', backref='room_change_requests')
@@ -175,7 +461,6 @@ class RoomChangeRequest(db.Model):
             "updated_at": self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
         }
 
-# Fee Payment model
 class FeePayment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -183,7 +468,7 @@ class FeePayment(db.Model):
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     payment_date = db.Column(db.DateTime, default=datetime.utcnow)
     transaction_id = db.Column(db.String(100), nullable=False, unique=True, index=True)
-    status = db.Column(db.String(10), default='pending')  # 'pending', 'completed', 'failed'
+    status = db.Column(db.String(10), default='pending')
     receipt = db.Column(db.String(255))
     user = db.relationship('User', backref='payments')
     allocation = db.relationship('Allocation', backref='payments')
@@ -200,15 +485,14 @@ class FeePayment(db.Model):
             "receipt": self.receipt,
         }
 
-# Updated ComplaintMaintenance model (previously Request in Flask)
 class ComplaintMaintenance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    request_type = db.Column(db.String(20), nullable=False)  # 'complaint', 'maintenance'
+    request_type = db.Column(db.String(20), nullable=False)
     room_number = db.Column(db.String(10), nullable=False)
     category = db.Column(db.String(50), nullable=False)
     details = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # 'pending', 'resolved'
+    status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref='complaint_maintenance_requests')
 
@@ -224,7 +508,6 @@ class ComplaintMaintenance(db.Model):
             "created_at": self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
         }
 
-# Updated Feedback model
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -246,11 +529,584 @@ class Feedback(db.Model):
             "submitted_at": self.submitted_at.strftime('%Y-%m-%d %H:%M:%S') if self.submitted_at else None,
         }
 
+# --- API Resources ---
+class BaseResource(Resource):
+    model = None
+
+    def get(self, id=None):
+        try:
+            if id:
+                instance = self.model.query.get_or_404(id)
+                return instance.to_dict(), 200
+            instances = self.model.query.all()
+            return [instance.to_dict() for instance in instances], 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+    def delete(self, id):
+        try:
+            instance = self.model.query.get_or_404(id)
+            db.session.delete(instance)
+            db.session.commit()
+            return {"message": f"{self.model.__name__} deleted"}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class UserResource(BaseResource):
+    model = User
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_user_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            user = User(
+                email=data['email'],
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                roll_number=data.get('roll_number'),
+                is_staff=data.get('is_staff', False),
+                is_superuser=data.get('is_superuser', False),
+            )
+            user.set_password(data['password'])
+            db.session.add(user)
+            db.session.commit()
+            return user.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            user = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_user_data(data, is_update=True, instance_id=id)
+            if errors:
+                return {"error": errors}, 400
+            
+            user.email = data.get('email', user.email)
+            user.first_name = data.get('first_name', user.first_name)
+            user.last_name = data.get('last_name', user.last_name)
+            user.roll_number = data.get('roll_number', user.roll_number)
+            user.is_staff = data.get('is_staff', user.is_staff)
+            user.is_superuser = data.get('is_superuser', user.is_superuser)
+            if 'password' in data:
+                user.set_password(data['password'])
+            db.session.commit()
+            return user.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class StudentProfileResource(BaseResource):
+    model = StudentProfile
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_student_profile_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            profile = StudentProfile(
+                user_id=data['user_id'],
+                contact_number=data.get('contact_number'),
+                profile_picture=data.get('profile_picture'),
+                bio=data.get('bio')
+            )
+            db.session.add(profile)
+            db.session.commit()
+            return profile.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            profile = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_student_profile_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            profile.contact_number = data.get('contact_number', profile.contact_number)
+            profile.profile_picture = data.get('profile_picture', profile.profile_picture)
+            profile.bio = data.get('bio', profile.bio)
+            db.session.commit()
+            return profile.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class HostelResource(BaseResource):
+    model = Hostel
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_hostel_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            hostel = Hostel(
+                name=data['name'],
+                total_floors=data['total_floors'],
+                main_image=data.get('main_image'),
+                features=data.get('features')
+            )
+            db.session.add(hostel)
+            db.session.commit()
+            return hostel.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            hostel = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_hostel_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            hostel.name = data.get('name', hostel.name)
+            hostel.total_floors = data.get('total_floors', hostel.total_floors)
+            hostel.main_image = data.get('main_image', hostel.main_image)
+            hostel.features = data.get('features', hostel.features)
+            db.session.commit()
+            return hostel.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class RoomResource(BaseResource):
+    model = Room
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_room_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            room = Room(
+                hostel_id=data['hostel_id'],
+                floor=data['floor'],
+                room_number=data['room_number'],
+                room_type=data['room_type'],
+                ac_type=data['ac_type'],
+                total_beds=data['total_beds'],
+                occupied_beds=data.get('occupied_beds', 0),
+                price=data['price'],
+                amenities=data.get('amenities')
+            )
+            db.session.add(room)
+            db.session.commit()
+            return room.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            room = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_room_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            room.hostel_id = data.get('hostel_id', room.hostel_id)
+            room.floor = data.get('floor', room.floor)
+            room.room_number = data.get('room_number', room.room_number)
+            room.room_type = data.get('room_type', room.room_type)
+            room.ac_type = data.get('ac_type', room.ac_type)
+            room.total_beds = data.get('total_beds', room.total_beds)
+            room.occupied_beds = data.get('occupied_beds', room.occupied_beds)
+            room.price = data.get('price', room.price)
+            room.amenities = data.get('amenities', room.amenities)
+            db.session.commit()
+            return room.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class AllocationResource(BaseResource):
+    model = Allocation
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_allocation_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            alloc = Allocation(
+                user_id=data['user_id'],
+                room_id=data['room_id'],
+                status=data.get('status', 'pending')
+            )
+            room = Room.query.get(data['room_id'])
+            if not room or room.beds_left <= 0:
+                return {"error": "Room not available"}, 400
+            room.occupied_beds += 1
+            db.session.add(alloc)
+            db.session.commit()
+            return alloc.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            alloc = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_allocation_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            alloc.user_id = data.get('user_id', alloc.user_id)
+            alloc.room_id = data.get('room_id', alloc.room_id)
+            alloc.status = data.get('status', alloc.status)
+            db.session.commit()
+            return alloc.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class RoomChangeRequestResource(BaseResource):
+    model = RoomChangeRequest
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_room_change_request_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            req = RoomChangeRequest(
+                user_id=data['user_id'],
+                current_allocation_id=data['current_allocation_id'],
+                requested_room_id=data['requested_room_id'],
+                reason=data['reason'],
+                status=data.get('status', 'pending')
+            )
+            db.session.add(req)
+            db.session.commit()
+            return req.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            req = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_room_change_request_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            req.user_id = data.get('user_id', req.user_id)
+            req.current_allocation_id = data.get('current_allocation_id', req.current_allocation_id)
+            req.requested_room_id = data.get('requested_room_id', req.requested_room_id)
+            req.reason = data.get('reason', req.reason)
+            req.status = data.get('status', req.status)
+            db.session.commit()
+            return req.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class FeePaymentResource(BaseResource):
+    model = FeePayment
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_fee_payment_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            payment = FeePayment(
+                user_id=data['user_id'],
+                allocation_id=data['allocation_id'],
+                amount=data['amount'],
+                payment_date=datetime.strptime(data['payment_date'], '%Y-%m-%d %H:%M:%S') if data.get('payment_date') else datetime.utcnow(),
+                transaction_id=data['transaction_id'],
+                status=data.get('status', 'pending'),
+                receipt=data.get('receipt')
+            )
+            db.session.add(payment)
+            db.session.commit()
+            return payment.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            payment = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_fee_payment_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            payment.user_id = data.get('user_id', payment.user_id)
+            payment.allocation_id = data.get('allocation_id', payment.allocation_id)
+            payment.amount = data.get('amount', payment.amount)
+            if 'payment_date' in data:
+                payment.payment_date = datetime.strptime(data['payment_date'], '%Y-%m-%d %H:%M:%S')
+            payment.transaction_id = data.get('transaction_id', payment.transaction_id)
+            payment.status = data.get('status', payment.status)
+            payment.receipt = data.get('receipt', payment.receipt)
+            db.session.commit()
+            return payment.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class ComplaintMaintenanceResource(BaseResource):
+    model = ComplaintMaintenance
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_complaint_maintenance_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            complaint = ComplaintMaintenance(
+                user_id=data['user_id'],
+                request_type=data['request_type'],
+                room_number=data['room_number'],
+                category=data['category'],
+                details=data['details'],
+                status=data.get('status', 'pending')
+            )
+            db.session.add(complaint)
+            db.session.commit()
+            return complaint.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            complaint = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_complaint_maintenance_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            complaint.user_id = data.get('user_id', complaint.user_id)
+            complaint.request_type = data.get('request_type', complaint.request_type)
+            complaint.room_number = data.get('room_number', complaint.room_number)
+            complaint.category = data.get('category', complaint.category)
+            complaint.details = data.get('details', complaint.details)
+            complaint.status = data.get('status', complaint.status)
+            db.session.commit()
+            return complaint.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class FeedbackResource(BaseResource):
+    model = Feedback
+
+    def post(self):
+        try:
+            data = request.get_json()
+            errors = validate_feedback_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            feedback = Feedback(
+                user_id=data.get('user_id'),
+                environment_rating=data['environment_rating'],
+                service_rating=data['service_rating'],
+                comments=data['comments'],
+                hostel=data['hostel'],
+                submitted_at=datetime.strptime(data['submitted_at'], '%Y-%m-%d %H:%M:%S') if data.get('submitted_at') else datetime.utcnow()
+            )
+            db.session.add(feedback)
+            db.session.commit()
+            return feedback.to_dict(), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+    def put(self, id):
+        try:
+            feedback = self.model.query.get_or_404(id)
+            data = request.get_json()
+            errors = validate_feedback_data(data)
+            if errors:
+                return {"error": errors}, 400
+            
+            feedback.user_id = data.get('user_id', feedback.user_id)
+            feedback.environment_rating = data.get('environment_rating', feedback.environment_rating)
+            feedback.service_rating = data.get('service_rating', feedback.service_rating)
+            feedback.comments = data.get('comments', feedback.comments)
+            feedback.hostel = data.get('hostel', feedback.hostel)
+            if 'submitted_at' in data:
+                feedback.submitted_at = datetime.strptime(data['submitted_at'], '%Y-%m-%d %H:%M:%S')
+            db.session.commit()
+            return feedback.to_dict(), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class AvailableRoomsResource(Resource):
+    def get(self):
+        try:
+            hostel_id = request.args.get('hostel_id', type=int)
+            floor = request.args.get('floor', type=int)
+            errors = validate_available_rooms_params(hostel_id, floor)
+            if errors:
+                return {"error": errors}, 400
+
+            available = {"four": [], "double": [], "single": []}
+            booked = []
+            rooms = Room.query.filter_by(hostel_id=hostel_id, floor=floor).all()
+            for room in rooms:
+                room_type = room.room_type
+                if room.beds_left > 0:
+                    available[room_type].append({
+                        "number": room.room_number,
+                        "beds_left": room.beds_left,
+                        "id": room.id,
+                        "ac_type": room.ac_type,
+                        "price": str(room.price),
+                        "amenities": room.amenities
+                    })
+                else:
+                    booked.append(room.room_number)
+            return {
+                "available": available,
+                "booked": booked,
+                "hostel": hostel_id,
+                "floor": floor
+            }, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+class RoomAllocationResource(Resource):
+    @login_required
+    def post(self):
+        try:
+            if current_user.is_superuser:
+                return {"success": False, "message": "Admins cannot allocate rooms."}, 400
+
+            # Handle both JSON and form data
+            if request.is_json:
+                data = request.get_json()
+            else:
+                data = {
+                    'hostel_id': request.form.get('hostel'),
+                    'floor': request.form.get('floor'),
+                    'room_number': request.form.get('room_number'),
+                    'room_type': request.form.get('room-type')
+                }
+
+            # Convert and validate inputs
+            try:
+                data['hostel_id'] = int(data['hostel_id'])
+                data['floor'] = int(data['floor'])
+            except (ValueError, TypeError):
+                return {"success": False, "message": "Invalid hostel_id or floor"}, 400
+
+            errors = validate_room_allocation_data(data)
+            if errors:
+                return {"success": False, "message": errors}, 400
+
+            hostel_obj = Hostel.query.get(data['hostel_id'])
+            if not hostel_obj:
+                return {"success": False, "message": "Hostel not found!"}, 404
+
+            room = Room.query.filter_by(
+                room_number=data['room_number'],
+                hostel_id=data['hostel_id'],
+                floor=data['floor'],
+                room_type=data['room_type']
+            ).first()
+            if not room:
+                return {"success": False, "message": "Room not found!"}, 404
+
+            if room.beds_left <= 0:
+                return {"success": False, "message": "Room not available!"}, 400
+
+            existing_allocation = Allocation.query.filter_by(user_id=current_user.id).first()
+            if existing_allocation:
+                return {"success": False, "message": "You have already booked a room!"}, 400
+
+            allocation = Allocation(
+                user_id=current_user.id,
+                room_id=room.id,
+                status='allocated'
+            )
+            room.occupied_beds += 1
+            db.session.add(allocation)
+            db.session.commit()
+            return {"success": True, "message": "Room allocated successfully!"}, 201
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "message": f"Error: {str(e)}"}, 500
+
+# --- API Routes ---
+api.add_resource(UserResource, '/api/v1/users', '/api/v1/users/<int:id>')
+api.add_resource(StudentProfileResource, '/api/v1/student_profiles', '/api/v1/student_profiles/<int:id>')
+api.add_resource(HostelResource, '/api/v1/hostels', '/api/v1/hostels/<int:id>')
+api.add_resource(RoomResource, '/api/v1/rooms', '/api/v1/rooms/<int:id>')
+api.add_resource(AllocationResource, '/api/v1/allocations', '/api/v1/allocations/<int:id>')
+api.add_resource(RoomChangeRequestResource, '/api/v1/room_change_requests', '/api/v1/room_change_requests/<int:id>')
+api.add_resource(FeePaymentResource, '/api/v1/fee_payments', '/api/v1/fee_payments/<int:id>')
+api.add_resource(ComplaintMaintenanceResource, '/api/v1/complaints', '/api/v1/complaints/<int:id>')
+api.add_resource(FeedbackResource, '/api/v1/feedbacks', '/api/v1/feedbacks/<int:id>')
+api.add_resource(AvailableRoomsResource, '/api/v1/available_rooms')
+api.add_resource(RoomAllocationResource, '/api/v1/room_allocation')
+
+# --- Legacy API Route for Django Compatibility ---
+@app.route('/api/get_available_rooms', methods=['GET'])
+def get_available_rooms():
+    try:
+        hostel_id = request.args.get('hostel_id', type=int)
+        floor = request.args.get('floor', type=int)
+        errors = validate_available_rooms_params(hostel_id, floor)
+        if errors:
+            return jsonify({"error": errors}), 400
+
+        available = {"four": [], "double": [], "single": []}
+        booked = []
+        rooms = Room.query.filter_by(hostel_id=hostel_id, floor=floor).all()
+        for room in rooms:
+            room_type = room.room_type
+            if room.beds_left > 0:
+                available[room_type].append({
+                    "number": room.room_number,
+                    "beds_left": room.beds_left,
+                    "id": room.id,
+                    "ac_type": room.ac_type,
+                    "price": str(room.price),
+                    "amenities": room.amenities
+                })
+            else:
+                booked.append(room.room_number)
+        return jsonify({
+            "available": available,
+            "booked": booked,
+            "hostel": hostel_id,
+            "floor": floor
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# --- Non-API Routes ---
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Ensure the database and tables are created
 with app.app_context():
     db.create_all()
     admin_user = User.query.filter_by(email='admin@example.com').first()
@@ -274,80 +1130,64 @@ def home():
 @login_required
 def room_allocation():
     if request.method == 'POST':
-        # Only allow non-admins to allocate rooms
         if current_user.is_superuser:
             return jsonify({"success": False, "message": "Admins cannot allocate rooms."}), 400
-
-        student_roll_no = request.form.get("student-roll-no")
-        if not student_roll_no or student_roll_no == "None":
-            return jsonify({"success": False, "message": "Invalid student roll number."}), 400
-
-        if request.method == 'POST':
+        try:
+            # Handle both JSON and form data
+            if request.is_json:
+                data = request.get_json()
+            else:
+                data = {
+                    'hostel_id': request.form.get('hostel'),
+                    'floor': request.form.get('floor'),
+                    'room_number': request.form.get('room_number'),
+                    'room_type': request.form.get('room-type')
+                }
+            
+            # Convert and validate inputs
             try:
-                hostel_id = int(request.form['hostel'])
-                hostel_obj = Hostel.query.get(hostel_id)
-                if not hostel_obj:
-                    return jsonify({'message': 'Hostel not found!', 'success': False})
-                floor = int(request.form['floor'])
-                room_number = int(request.form['room-number'])
-                room_type = request.form['room-type']
-                student_name = request.form['student-name']
-                student_roll_no = int(request.form['student-roll-no'])
+                data['hostel_id'] = int(data['hostel_id'])
+                data['floor'] = int(data['floor'])
+            except (ValueError, TypeError):
+                return jsonify({"success": False, "message": "Invalid hostel_id or floor"}), 400
 
-                print("Received data:", {
-                    "hostel": hostel_id,
-                    "floor": floor,
-                    "room_number": room_number,
-                    "room_type": room_type,
-                    "student_name": student_name,
-                    "student_roll": student_roll_no,
-                })
-                existing_allocation = Allocation.query.join(User).filter(User.roll_number == student_roll_no).first()
-                if existing_allocation:
-                    return jsonify({'message': 'You have already booked a room!', 'success': False})
+            errors = validate_room_allocation_data(data)
+            if errors:
+                return jsonify({"success": False, "message": errors}), 400
 
-                room = Room.query.filter_by(room_number=room_number, hostel_id=hostel_id, floor=floor, room_type=room_type).first()
-                if not room:
-                    return jsonify({'message': 'Room not found!', 'success': False})
+            hostel_obj = Hostel.query.get(data['hostel_id'])
+            if not hostel_obj:
+                return jsonify({'message': 'Hostel not found!', 'success': False}), 404
 
-                # Check if room is full
-                if room.beds_left <= 0:
-                    return jsonify({'message': 'Room not available!', 'success': False})
+            room = Room.query.filter_by(
+                room_number=data['room_number'],
+                hostel_id=data['hostel_id'],
+                floor=data['floor'],
+                room_type=data['room_type']
+            ).first()
+            if not room:
+                return jsonify({'message': 'Room not found!', 'success': False}), 404
 
-                # Check if user already has an allocation
-                existing_allocation = Allocation.query.filter_by(user_id=current_user.id).first()
-                if existing_allocation:
-                    return jsonify({'message': 'You have already booked a room!', 'success': False})
+            if room.beds_left <= 0:
+                return jsonify({'message': 'Room not available!', 'success': False}), 400
 
-                # Allocate room
-                allocation = Allocation(
-                    user_id=current_user.id,
-                    room_id=room.id,
-                    status='allocated'
-                )
-                room.occupied_beds += 1
-                db.session.add(allocation)
-                db.session.commit()
-                return jsonify({'message': 'Room allocated successfully!', 'success': True})
+            existing_allocation = Allocation.query.filter_by(user_id=current_user.id).first()
+            if existing_allocation:
+                return jsonify({'message': 'You have already booked a room!', 'success': False}), 400
 
-            except Exception as e:
-                print("Error:", str(e))
-                return jsonify({'message': f'Internal Server Error: {str(e)}', 'success': False}), 500
+            allocation = Allocation(
+                user_id=current_user.id,
+                room_id=room.id,
+                status='allocated'
+            )
+            room.occupied_beds += 1
+            db.session.add(allocation)
+            db.session.commit()
+            return jsonify({'message': 'Room allocated successfully!', 'success': True}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': f'Error: {str(e)}', 'success': False}), 500
 
-        hostels = Hostel.query.all()
-        # Convert to list of dicts for JSON serialization
-        hostels_data = [
-            {
-                "id": h.id,
-                "name": h.name,
-                "total_floors": h.total_floors,
-                # add other fields if needed
-            }
-            for h in hostels
-        ]
-        return render_template('room_allocation.html', hostels=hostels_data)
-
-    # For GET: convert hostels to list of dicts for JS
     hostels = Hostel.query.all()
     hostels_data = [
         {
@@ -361,77 +1201,34 @@ def room_allocation():
     ]
     return render_template('room_allocation.html', hostels=hostels_data)
 
-@app.route('/get_available_rooms', methods=['GET'])
-def get_available_rooms():
-    selected_hostel = request.args.get('hostel', default='hostel-1')
-    selected_floor = int(request.args.get('floor', default=1))
-
-    base_room = {
-        "hostel-1": 0,
-        "hostel-2": 0,
-        "hostel-3": 0,
-        "hostel-4": 0,
-    }
-    room_offset = base_room.get(selected_hostel, 100)
-    room_start = room_offset + (selected_floor * 100)
-    predefined_rooms = {
-        "four": list(range(room_start + 1, room_start + 17)),
-        "double": list(range(room_start + 17, room_start + 25)),
-        "single": list(range(room_start + 25, room_start + 35)),
-    }
-
-    available = {"four": [], "double": [], "single": []}
-    booked = []
-
-    for room_type, numbers in predefined_rooms.items():
-        max_beds = 4 if room_type == 'four' else 2 if room_type == 'double' else 1
-        for number in numbers:
-            count = Allocation.query.filter_by(
-                hostel=selected_hostel,
-                floor=selected_floor,
-                room_number=number,
-                room_type=room_type
-            ).count()
-            beds_left = max_beds - count
-            if beds_left > 0:
-                available[room_type].append({'number': number, 'beds_left': beds_left})
-            else:
-                booked.append(number)
-    return jsonify({"available": available, "booked": booked})
-
 @app.route('/terms_and_conditions')
 def terms_and_conditions():
     return render_template('terms_and_conditions.html')
-
-@app.route('/get_requests', methods=['GET'])
-@login_required
-def get_requests():
-    requests = ComplaintMaintenance.query.order_by(ComplaintMaintenance.created_at.desc()).all()
-    return jsonify([{'id': request.id, 'type': request.type, 'user': request.user.name, 'room_number': request.room_number, 'details': request.details, 'status': request.status} for request in requests])
 
 @app.route('/feedback', methods=['GET', 'POST'])
 @login_required
 def feedback():
     if request.method == 'POST':
         try:
-            environment_rating = request.form.get('environment_rating')
-            service_rating = request.form.get('service_rating')
-            comments = request.form.get('comments')
-            hostel = request.form.get('hostel')
+            data = {
+                'environment_rating': request.form.get('environment_rating'),
+                'service_rating': int(request.form.get('service_rating')),
+                'comments': request.form.get('comments'),
+                'hostel': request.form.get('hostel'),
+                'user_id': current_user.id
+            }
+            errors = validate_feedback_data(data)
+            if errors:
+                flash(f'Validation error: {errors}', 'error')
+                return redirect(url_for('feedback'))
 
-            new_feedback = Feedback(
-                environment_rating=environment_rating,
-                service_rating=service_rating,
-                comments=comments,
-                hostel=hostel,
-                user_id=current_user.id
-            )
+            new_feedback = Feedback(**data)
             db.session.add(new_feedback)
             db.session.commit()
             flash('Feedback submitted successfully!', 'success')
         except Exception as e:
             db.session.rollback()
-            flash('Error submitting feedback', 'error')
+            flash(f'Error submitting feedback: {str(e)}', 'error')
 
     feedbacks = Feedback.query.order_by(Feedback.submitted_at.desc()).all()
     hostels = Hostel.query.all()
@@ -457,20 +1254,13 @@ def login():
         password = request.form.get("password")
         role = request.form.get("role")
 
-        # Remove the role filter since we no longer have a role field
         user = User.query.filter_by(email=email).first()
-
         if user and user.check_password(password):
-            # Check role based on is_superuser and is_staff fields
             if (role == "admin" and user.is_superuser) or (role == "user" and not user.is_superuser):
                 login_user(user)
                 flash("Login successful!", "success")
-                if user.is_superuser:
-                    return redirect(url_for("dashboard"))
-                else:
-                    return redirect(url_for("home"))
-            else:
-                flash("Invalid role selected!", "danger")
+                return redirect(url_for("dashboard" if user.is_superuser else "home"))
+            flash("Invalid role selected!", "danger")
         else:
             flash("Invalid credentials!", "danger")
 
@@ -479,37 +1269,37 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        first_name = request.form.get('first_name', '')
-        last_name = request.form.get('last_name', '')
-        email = request.form.get('email', '')
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        roll_number = request.form.get('roll_number', '')
+        try:
+            data = {
+                'first_name': request.form.get('first_name'),
+                'last_name': request.form.get('last_name'),
+                'email': request.form.get('email'),
+                'password': request.form.get('password'),
+                'roll_number': request.form.get('roll_number')
+            }
+            if request.form.get('password') != request.form.get('confirm_password'):
+                flash('Passwords do not match!', 'danger')
+                return redirect(url_for('signup'))
 
-        if password != confirm_password:
-            flash('Passwords do not match!', 'danger')
-            return redirect(url_for('signup'))
+            errors = validate_user_data(data)
+            if errors:
+                flash(f'Validation error: {errors}', 'danger')
+                return redirect(url_for('signup'))
 
-        if User.query.filter_by(email=email).first():
-            flash('Email already exists!', 'danger')
-            return redirect(url_for('signup'))
+            new_user = User(
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                email=data['email'],
+                roll_number=data['roll_number']
+            )
+            new_user.set_password(data['password'])
+            db.session.add(new_user)
+            db.session.commit()
 
-        if User.query.filter_by(roll_number=roll_number).first():
-            flash('Roll number already exists!', 'danger')
-            return redirect(url_for('signup'))
-
-        new_user = User(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            roll_number=roll_number
-        )
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash("Registration successful! Please log in.", "success")
-        return redirect(url_for("login"))
+            flash("Registration successful! Please log in.", "success")
+            return redirect(url_for("login"))
+        except Exception as e:
+            flash(f'Error: {str(e)}', 'danger')
 
     return render_template('signup.html')
 
@@ -517,12 +1307,8 @@ def signup():
 @login_required
 def profile():
     user = current_user
-    allocation = None
-    hostel = None
-    if not user.is_superuser:
-        allocation = Allocation.query.filter_by(user_id=user.id).first()
-        if allocation:
-            hostel = allocation.room.hostel
+    allocation = Allocation.query.filter_by(user_id=user.id).first()
+    hostel = allocation.room.hostel if allocation else None
     return render_template('profile.html', user=user, allocation=allocation, hostel=hostel)
 
 @app.route('/logout')
@@ -531,22 +1317,6 @@ def logout():
     session.clear()
     flash('You have been logged out', 'success')
     return redirect(url_for('home'))
-
-@app.route('/get_user/<int:user_id>')
-@login_required
-def get_user(user_id):
-    if not current_user.is_superuser:
-        return jsonify({'error': 'Unauthorized'}), 403
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    return jsonify({
-        'id': user.id,
-        'name': user.name,
-        'email': user.email,
-        'username': user.username,
-        'role': user.role
-    })
 
 @app.route('/dashboard')
 @login_required
@@ -563,14 +1333,12 @@ def dashboard():
         )
     ).all() if search_query else User.query.all()
 
-    feedbacks = Feedback.query.order_by(Feedback.submitted_at.desc()).all()
-
     return render_template('dashboard.html',
                            users=users,
                            rooms_count=Room.query.count(),
                            pending_requests=ComplaintMaintenance.query.filter_by(status='pending').count(),
                            feedback_count=Feedback.query.count(),
-                           feedbacks=feedbacks,  # <-- always pass this
+                           feedbacks=Feedback.query.order_by(Feedback.submitted_at.desc()).all(),
                            active_tab='users',
                            search_query=search_query)
 
@@ -578,16 +1346,20 @@ def dashboard():
 @login_required
 def submit_request():
     try:
-        request_type = request.form.get('request_type')
-        req = ComplaintMaintenance(
-            request_type=request_type,
-            category=request.form.get('maintenance_type') or request.form.get('complaint_type'),
-            user_id=current_user.id,
-            room_number=request.form.get('room_number'),
-            details=request.form.get('details'),
-            status='pending'
-        )
-        
+        data = {
+            'request_type': request.form.get('request_type'),
+            'category': request.form.get('maintenance_type') or request.form.get('complaint_type'),
+            'user_id': current_user.id,
+            'room_number': request.form.get('room_number'),
+            'details': request.form.get('details'),
+            'status': 'pending'
+        }
+        errors = validate_complaint_maintenance_data(data)
+        if errors:
+            flash(f'Validation error: {errors}', 'error')
+            return redirect(url_for('complaint_and_maintenance'))
+
+        req = ComplaintMaintenance(**data)
         db.session.add(req)
         db.session.commit()
         flash('Request submitted successfully!', 'success')
@@ -623,29 +1395,21 @@ def view_requests():
         return redirect(url_for('home'))
     
     requests = ComplaintMaintenance.query.order_by(ComplaintMaintenance.created_at.desc()).all()
-    pending_requests = ComplaintMaintenance.query.filter_by(status='pending').count()
-    search_query = request.args.get('search', '')
-    users = User.query.filter(User.name.contains(search_query) | User.email.contains(search_query)).all() if search_query else User.query.all()
-    
     return render_template('dashboard.html',
-                           users=users,
+                           users=User.query.all(),
                            feedback_count=Feedback.query.count(),
                            requests=requests,
-                           pending_requests=pending_requests,
+                           pending_requests=ComplaintMaintenance.query.filter_by(status='pending').count(),
                            active_tab='requests',
-                           rooms_count=Room.query.count(),
-                           )
+                           rooms_count=Room.query.count())
 
 @app.route('/view_feedback')
 @login_required
 def view_feedback():
     if not current_user.is_superuser:
         return redirect(url_for('home'))
-    search_query = request.args.get('search', '')
-    users = User.query.filter(User.name.contains(search_query) | User.email.contains(search_query)).all() if search_query else User.query.all()
-    
     return render_template('dashboard.html',
-                           users=users,
+                           users=User.query.all(),
                            rooms_count=Room.query.count(),
                            pending_requests=ComplaintMaintenance.query.filter_by(status='pending').count(),
                            feedback_count=Feedback.query.count(),
@@ -660,615 +1424,20 @@ def view_allocations():
 
     search_query = request.args.get('search', '')
     users = User.query.filter(
-        User.first_name.contains(search_query) | User.last_name.contains(search_query) | User.email.contains(search_query)
+        db.or_(
+            User.first_name.contains(search_query),
+            User.last_name.contains(search_query),
+            User.email.contains(search_query)
+        )
     ).all() if search_query else User.query.all()
-
-    allocations = Allocation.query.all()  # <-- yahan objects bhejein, dict nahi
 
     return render_template(
         'dashboard.html',
         users=users,
         rooms_count=Room.query.count(),
-        allocations=allocations,  # <-- yahan bhi
+        allocations=Allocation.query.all(),
         active_tab='allocations'
     )
-
-@app.route('/api/room_allocations/<int:id>', methods=['GET'])
-def get_room_allocation(id):
-    alloc = Allocation.query.get_or_404(id)
-    return jsonify({
-        'id': alloc.id,
-        'hostel': alloc.hostel,
-        'floor': alloc.floor,
-        'room_number': alloc.room_number,
-        'room_type': alloc.room_type,
-        'beds_left': alloc.beds_left,
-        'user_id': alloc.user_id,
-        'student_name': alloc.student_name,
-        'student_roll_no': alloc.student_roll_no
-    })
-
-@app.route('/api/room_allocations', methods=['POST'])
-def create_room_allocation():
-    data = request.json
-    alloc = Allocation(
-        hostel=data['hostel'],
-        floor=data['floor'],
-        room_number=data['room_number'],
-        room_type=data['room_type'],
-        beds_left=data.get('beds_left', 4),
-        user_id=data['user_id'],
-        student_name=data['student_name'],
-        student_roll_no=data['student_roll_no']
-    )
-    db.session.add(alloc)
-    db.session.commit()
-    return jsonify({'message': 'Room allocation created', 'id': alloc.id}), 201
-
-@app.route('/api/room_allocations/<int:id>', methods=['PUT'])
-def update_room_allocation(id):
-    alloc = Allocation.query.get_or_404(id)
-    data = request.json
-    alloc.hostel = data.get('hostel', alloc.hostel)
-    alloc.floor = data.get('floor', alloc.floor)
-    alloc.room_number = data.get('room_number', alloc.room_number)
-    alloc.room_type = data.get('room_type', alloc.room_type)
-    alloc.beds_left = data.get('beds_left', alloc.beds_left)
-    alloc.user_id = data.get('user_id', alloc.user_id)
-    alloc.student_name = data.get('student_name', alloc.student_name)
-    alloc.student_roll_no = data.get('student_roll_no', alloc.student_roll_no)
-    db.session.commit()
-    return jsonify({'message': 'Room allocation updated'})
-
-@app.route('/api/room_allocations/<int:id>', methods=['DELETE'])
-def delete_room_allocation(id):
-    alloc = Allocation.query.get_or_404(id)
-    db.session.delete(alloc)
-    db.session.commit()
-    return jsonify({'message': 'Room allocation deleted'})
-
-# REQUEST API
-@app.route('/api/requests', methods=['GET'])
-def get_requests_api():
-    requests_list = ComplaintMaintenance.query.all()
-    result = []
-    for req in requests_list:
-        result.append({
-            'id': req.id,
-            'type': req.type,
-            'maintenance_type': req.maintenance_type,
-            'complaint_type': req.complaint_type,
-            'user_id': req.user_id,
-            'room_number': req.room_number,
-            'details': req.details,
-            'status': req.status,
-            'created_at': req.created_at
-        })
-    return jsonify(result)
-
-@app.route('/api/requests/<int:id>', methods=['GET'])
-def get_request_api(id):
-    req = ComplaintMaintenance.query.get_or_404(id)
-    return jsonify({
-        'id': req.id,
-        'type': req.type,
-        'maintenance_type': req.maintenance_type,
-        'complaint_type': req.complaint_type,
-        'user_id': req.user_id,
-        'room_number': req.room_number,
-        'details': req.details,
-        'status': req.status,
-        'created_at': req.created_at
-    })
-
-@app.route('/api/requests', methods=['POST'])
-def create_request():
-    data = request.json
-    req = ComplaintMaintenance(
-        type=data['type'],
-        maintenance_type=data.get('maintenance_type'),
-        complaint_type=data.get('complaint_type'),
-        user_id=data['user_id'],
-        room_number=data['room_number'],
-        details=data['details'],
-        status=data.get('status', 'pending')
-    )
-    db.session.add(req)
-    db.session.commit()
-    return jsonify({'message': 'Request created', 'id': req.id}), 201
-
-@app.route('/api/requests/<int:id>', methods=['PUT'])
-def update_request_api(id):
-    req = ComplaintMaintenance.query.get_or_404(id)
-    data = request.json
-    req.type = data.get('type', req.type)
-    req.maintenance_type = data.get('maintenance_type', req.maintenance_type)
-    req.complaint_type = data.get('complaint_type', req.complaint_type)
-    req.user_id = data.get('user_id', req.user_id)
-    req.room_number = data.get('room_number', req.room_number)
-    req.details = data.get('details', req.details)
-    req.status = data.get('status', req.status)
-    db.session.commit()
-    return jsonify({'message': 'Request updated'})
-
-@app.route('/api/requests/<int:id>', methods=['DELETE'])
-def delete_request_api(id):
-    req = ComplaintMaintenance.query.get_or_404(id)
-    db.session.delete(req)
-    db.session.commit()
-    return jsonify({'message': 'Request deleted'})
-
-# USERS API
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
-    result = []
-    for user in users:
-        result.append({
-            'id': user.id,
-            'name': user.name,
-            'email': user.email,
-            'username': user.username,
-            'role': user.role
-        })
-    return jsonify(result)
-
-@app.route('/api/users/<int:id>', methods=['GET'])
-def get_user_api(id):
-    user = User.query.get_or_404(id)
-    return jsonify({
-        'id': user.id,
-        'name': user.name,
-        'email': user.email,
-        'username': user.username,
-        'role': user.role
-    })
-
-@app.route('/api/users/<int:id>', methods=['DELETE'])
-def delete_user_api(id):
-    try:
-        user = User.query.get_or_404(id)
-        # Check if user has any room allocations
-        allocations = Allocation.query.filter_by(user_id=id).all()
-        if allocations:
-            return jsonify({
-                'message': 'Cannot delete user with active room allocations'
-            }), 400
-        # Check if user has any requests
-        requests = ComplaintMaintenance.query.filter_by(user_id=id).all()
-        if requests:
-            return jsonify({
-                'message': 'Cannot delete user with active requests'
-            }), 400
-        db.session.delete(user)
-        db.session.commit()
-        return jsonify({'message': 'User deleted successfully'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'message': f'Error deleting user: {str(e)}'
-        }), 500
-
-# FEEDBACKS API
-@app.route('/api/feedbacks', methods=['GET'])
-def get_feedbacks():
-    feedbacks = Feedback.query.all()
-    result = []
-    for fb in feedbacks:
-        result.append({
-            'id': fb.id,
-            'environment_rating': fb.environment_rating,
-            'service_rating': fb.service_rating,
-            'comments': fb.comments,
-            'hostel': fb.hostel,
-            'submitted_at': fb.submitted_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'user_id': fb.user_id
-        })
-    return jsonify(result)
-
-@app.route('/api/feedbacks/<int:id>', methods=['GET'])
-def get_feedback(id):
-    fb = Feedback.query.get_or_404(id)
-    return jsonify({
-        'id': fb.id,
-        'environment_rating': fb.environment_rating,
-        'service_rating': fb.service_rating,
-        'comments': fb.comments,
-        'hostel': fb.hostel,
-        'submitted_at': fb.submitted_at.strftime('%Y-%m-%d %H:%M:%S'),
-        'user_id': fb.user_id
-    })
-
-@app.route('/api/feedbacks/<int:id>', methods=['DELETE'])
-def delete_feedback_api(id):
-    try:
-        feedback = Feedback.query.get_or_404(id)
-        db.session.delete(feedback)
-        db.session.commit()
-        return jsonify({'message': 'Feedback deleted successfully'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'message': f'Error deleting feedback: {str(e)}'
-        }), 500
-
-@app.route('/api/get_available_rooms', methods=['GET'])
-def get_available_rooms_api():
-    try:
-        hostel_id = request.args.get('hostel_id', type=int)
-        floor = request.args.get('floor', type=int)
-        if not hostel_id or not floor:
-            return jsonify({"error": "Missing hostel_id or floor"}), 400
-
-        available = {"four": [], "double": [], "single": []}
-        booked = []
-
-        rooms = Room.query.filter_by(hostel_id=hostel_id, floor=floor).all()
-        for room in rooms:
-            room_type = room.room_type
-            if room.beds_left > 0:
-                available[room_type].append({
-                    "number": room.room_number,
-                    "beds_left": room.beds_left
-                })
-            else:
-                booked.append(room.room_number)
-        return jsonify({
-            "available": available,
-            "booked": booked,
-            "hostel": hostel_id,
-            "floor": floor
-        })
-    except Exception as e:
-        print(f"Error in get_available_rooms_api: {str(e)}")  # Debug print
-        return jsonify({
-            "error": str(e),
-            "available": {"four": [], "double": [], "single": []},
-            "booked": [],
-            "hostel": hostel_id,
-            "floor": floor
-        }), 500
-
-# USER CRUD
-@app.route('/api/users', methods=['GET', 'POST'])
-def users_api():
-    if request.method == 'GET':
-        return jsonify([u.to_dict() for u in User.query.all()])
-    data = request.json
-    user = User(
-        email=data['email'],
-        first_name=data['first_name'],
-        last_name=data['last_name'],
-        roll_number=data.get('roll_number'),
-        is_staff=data.get('is_staff', False),
-        is_superuser=data.get('is_superuser', False),
-    )
-    user.set_password(data['password'])
-    db.session.add(user)
-    db.session.commit()
-    return jsonify(user.to_dict()), 201
-
-@app.route('/api/users/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def user_api(id):
-    user = User.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(user.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        user.email = data.get('email', user.email)
-        user.first_name = data.get('first_name', user.first_name)
-        user.last_name = data.get('last_name', user.last_name)
-        user.roll_number = data.get('roll_number', user.roll_number)
-        user.is_staff = data.get('is_staff', user.is_staff)
-        user.is_superuser = data.get('is_superuser', user.is_superuser)
-        if 'password' in data:
-            user.set_password(data['password'])
-        db.session.commit()
-        return jsonify(user.to_dict())
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({'message': 'User deleted'})
-
-# STUDENT PROFILE CRUD
-@app.route('/api/student_profiles', methods=['GET', 'POST'])
-def student_profiles_api():
-    if request.method == 'GET':
-        return jsonify([p.to_dict() for p in StudentProfile.query.all()])
-    data = request.json
-    profile = StudentProfile(
-        user_id=data['user_id'],
-        contact_number=data.get('contact_number'),
-        profile_picture=data.get('profile_picture'),
-        bio=data.get('bio')
-    )
-    db.session.add(profile)
-    db.session.commit()
-    return jsonify(profile.to_dict()), 201
-
-@app.route('/api/student_profiles/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def student_profile_api(id):
-    profile = StudentProfile.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(profile.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        profile.contact_number = data.get('contact_number', profile.contact_number)
-        profile.profile_picture = data.get('profile_picture', profile.profile_picture)
-        profile.bio = data.get('bio', profile.bio)
-        db.session.commit()
-        return jsonify(profile.to_dict())
-    db.session.delete(profile)
-    db.session.commit()
-    return jsonify({'message': 'Student profile deleted'})
-
-# HOSTEL CRUD
-@app.route('/api/hostels', methods=['GET', 'POST'])
-def hostels_api():
-    if request.method == 'GET':
-        return jsonify([h.to_dict() for h in Hostel.query.all()])
-    data = request.json
-    hostel = Hostel(
-        name=data['name'],
-        total_floors=data['total_floors'],
-        main_image=data.get('main_image'),
-        features=data.get('features')
-    )
-    db.session.add(hostel)
-    db.session.commit()
-    return jsonify(hostel.to_dict()), 201
-
-@app.route('/api/hostels/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def hostel_api(id):
-    hostel = Hostel.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(hostel.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        hostel.name = data.get('name', hostel.name)
-        hostel.total_floors = data.get('total_floors', hostel.total_floors)
-        hostel.main_image = data.get('main_image', hostel.main_image)
-        hostel.features = data.get('features', hostel.features)
-        db.session.commit()
-        return jsonify(hostel.to_dict())
-    db.session.delete(hostel)
-    db.session.commit()
-    return jsonify({'message': 'Hostel deleted'})
-
-# ROOM CRUD
-@app.route('/api/rooms', methods=['GET', 'POST'])
-def rooms_api():
-    if request.method == 'GET':
-        return jsonify([r.to_dict() for r in Room.query.all()])
-    data = request.json
-    room = Room(
-        hostel_id=data['hostel_id'],
-        floor=data['floor'],
-        room_number=data['room_number'],
-        room_type=data['room_type'],
-        ac_type=data['ac_type'],
-        total_beds=data['total_beds'],
-        occupied_beds=data.get('occupied_beds', 0),
-        price=data['price'],
-        amenities=data.get('amenities')
-    )
-    db.session.add(room)
-    db.session.commit()
-    return jsonify(room.to_dict()), 201
-
-@app.route('/api/rooms/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def room_api(id):
-    room = Room.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(room.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        room.hostel_id = data.get('hostel_id', room.hostel_id)
-        room.floor = data.get('floor', room.floor)
-        room.room_number = data.get('room_number', room.room_number)
-        room.room_type = data.get('room_type', room.room_type)
-        room.ac_type = data.get('ac_type', room.ac_type)
-        room.total_beds = data.get('total_beds', room.total_beds)
-        room.occupied_beds = data.get('occupied_beds', room.occupied_beds)
-        room.price = data.get('price', room.price)
-        room.amenities = data.get('amenities', room.amenities)
-        db.session.commit()
-        return jsonify(room.to_dict())
-    db.session.delete(room)
-    db.session.commit()
-    return jsonify({'message': 'Room deleted'})
-
-# ALLOCATION CRUD
-@app.route('/api/allocations', methods=['GET', 'POST'])
-def allocations_api():
-    if request.method == 'GET':
-        return jsonify([a.to_dict() for a in Allocation.query.all()])
-    data = request.json
-    alloc = Allocation(
-        user_id=data['user_id'],
-        room_id=data['room_id'],
-        status=data.get('status', 'pending')
-    )
-    db.session.add(alloc)
-    db.session.commit()
-    return jsonify(alloc.to_dict()), 201
-
-@app.route('/api/allocations/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def allocation_api(id):
-    alloc = Allocation.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(alloc.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        alloc.user_id = data.get('user_id', alloc.user_id)
-        alloc.room_id = data.get('room_id', alloc.room_id)
-        alloc.status = data.get('status', alloc.status)
-        db.session.commit()
-        return jsonify(alloc.to_dict())
-    db.session.delete(alloc)
-    db.session.commit()
-    return jsonify({'message': 'Allocation deleted'})
-
-# ROOM CHANGE REQUEST CRUD
-@app.route('/api/room_change_requests', methods=['GET', 'POST'])
-def room_change_requests_api():
-    if request.method == 'GET':
-        return jsonify([r.to_dict() for r in RoomChangeRequest.query.all()])
-    data = request.json
-    req = RoomChangeRequest(
-        user_id=data['user_id'],
-        current_allocation_id=data['current_allocation_id'],
-        requested_room_id=data['requested_room_id'],
-        reason=data['reason'],
-        status=data.get('status', 'pending')
-    )
-    db.session.add(req)
-    db.session.commit()
-    return jsonify(req.to_dict()), 201
-
-@app.route('/api/room_change_requests/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def room_change_request_api(id):
-    req = RoomChangeRequest.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(req.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        req.user_id = data.get('user_id', req.user_id)
-        req.current_allocation_id = data.get('current_allocation_id', req.current_allocation_id)
-        req.requested_room_id = data.get('requested_room_id', req.requested_room_id)
-        req.reason = data.get('reason', req.reason)
-        req.status = data.get('status', req.status)
-        db.session.commit()
-        return jsonify(req.to_dict())
-    db.session.delete(req)
-    db.session.commit()
-    return jsonify({'message': 'Room change request deleted'})
-
-# FEE PAYMENT CRUD
-@app.route('/api/fee_payments', methods=['GET', 'POST'])
-def fee_payments_api():
-    if request.method == 'GET':
-        return jsonify([f.to_dict() for f in FeePayment.query.all()])
-    data = request.json
-    payment = FeePayment(
-        user_id=data['user_id'],
-        allocation_id=data['allocation_id'],
-        amount=data['amount'],
-        payment_date=datetime.strptime(data['payment_date'], '%Y-%m-%d %H:%M:%S') if 'payment_date' in data else datetime.utcnow(),
-        transaction_id=data['transaction_id'],
-        status=data.get('status', 'pending'),
-        receipt=data.get('receipt')
-    )
-    db.session.add(payment)
-    db.session.commit()
-    return jsonify(payment.to_dict()), 201
-
-@app.route('/api/fee_payments/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def fee_payment_api(id):
-    payment = FeePayment.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(payment.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        payment.user_id = data.get('user_id', payment.user_id)
-        payment.allocation_id = data.get('allocation_id', payment.allocation_id)
-        payment.amount = data.get('amount', payment.amount)
-        if 'payment_date' in data:
-            payment.payment_date = datetime.strptime(data['payment_date'], '%Y-%m-%d %H:%M:%S')
-        payment.transaction_id = data.get('transaction_id', payment.transaction_id)
-        payment.status = data.get('status', payment.status)
-        payment.receipt = data.get('receipt', payment.receipt)
-        db.session.commit()
-        return jsonify(payment.to_dict())
-    db.session.delete(payment)
-    db.session.commit()
-    return jsonify({'message': 'Fee payment deleted'})
-
-# COMPLAINT/MAINTENANCE CRUD
-@app.route('/api/complaints', methods=['GET', 'POST'])
-def complaints_api():
-    if request.method == 'GET':
-        return jsonify([c.to_dict() for c in ComplaintMaintenance.query.all()])
-    data = request.json
-    complaint = ComplaintMaintenance(
-        user_id=data['user_id'],
-        request_type=data['request_type'],
-        room_number=data['room_number'],
-        category=data['category'],
-        details=data['details'],
-        status=data.get('status', 'pending')
-    )
-    db.session.add(complaint)
-    db.session.commit()
-    return jsonify(complaint.to_dict()), 201
-
-@app.route('/api/complaints/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def complaint_api(id):
-    complaint = ComplaintMaintenance.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(complaint.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        complaint.user_id = data.get('user_id', complaint.user_id)
-        complaint.request_type = data.get('request_type', complaint.request_type)
-        complaint.room_number = data.get('room_number', complaint.room_number)
-        complaint.category = data.get('category', complaint.category)
-        complaint.details = data.get('details', complaint.details)
-        complaint.status = data.get('status', complaint.status)
-        db.session.commit()
-        return jsonify(complaint.to_dict())
-    db.session.delete(complaint)
-    db.session.commit()
-    return jsonify({'message': 'Complaint deleted'})
-
-# FEEDBACK CRUD
-@app.route('/api/feedbacks', methods=['GET', 'POST'])
-def feedbacks_api():
-    if request.method == 'GET':
-        return jsonify([f.to_dict() for f in Feedback.query.all()])
-    data = request.json
-    feedback = Feedback(
-        user_id=data.get('user_id'),
-        environment_rating=data['environment_rating'],
-        service_rating=data['service_rating'],
-        comments=data['comments'],
-        hostel=data['hostel'],
-        submitted_at=datetime.strptime(data['submitted_at'], '%Y-%m-%d %H:%M:%S') if 'submitted_at' in data else datetime.utcnow()
-    )
-    db.session.add(feedback)
-    db.session.commit()
-    return jsonify(feedback.to_dict()), 201
-
-@app.route('/api/feedbacks/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def feedback_api(id):
-    feedback = Feedback.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(feedback.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        feedback.user_id = data.get('user_id', feedback.user_id)
-        feedback.environment_rating = data.get('environment_rating', feedback.environment_rating)
-        feedback.service_rating = data.get('service_rating', feedback.service_rating)
-        feedback.comments = data.get('comments', feedback.comments)
-        feedback.hostel = data.get('hostel', feedback.hostel)
-        if 'submitted_at' in data:
-            feedback.submitted_at = datetime.strptime(data['submitted_at'], '%Y-%m-%d %H:%M:%S')
-        db.session.commit()
-        return jsonify(feedback.to_dict())
-    db.session.delete(feedback)
-    db.session.commit()
-    return jsonify({'message': 'Feedback deleted'})
-
-
-@login_required
-def delete_room_allocation(id):
-    if not current_user.is_superuser:
-        flash('Unauthorized', 'danger')
-        return redirect(url_for('dashboard'))
-    alloc = Allocation.query.get_or_404(id)
-    db.session.delete(alloc)
-    db.session.commit()
-    flash('Room allocation deleted!', 'success')
-    return redirect(url_for('view_allocations'))
 
 @app.route('/edit_room_allocation/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -1276,272 +1445,31 @@ def edit_room_allocation(id):
     if not current_user.is_superuser:
         flash('Unauthorized', 'danger')
         return redirect(url_for('dashboard'))
+    
     alloc = Allocation.query.get_or_404(id)
     if request.method == 'POST':
-        # Update allocation fields as needed
-        alloc.room_id = request.form.get('room_id', alloc.room_id)
-        alloc.status = request.form.get('status', alloc.status)
-        db.session.commit()
-        flash('Room allocation updated!', 'success')
-        return redirect(url_for('view_allocations'))
-    # Pass rooms for dropdown if needed
+        try:
+            data = {
+                'room_id': request.form.get('room_id'),
+                'status': request.form.get('status'),
+                'user_id': alloc.user_id
+            }
+            errors = validate_allocation_data(data)
+            if errors:
+                flash(f'Validation error: {errors}', 'error')
+                return redirect(url_for('edit_room_allocation', id=id))
+
+            alloc.room_id = data['room_id']
+            alloc.status = data['status']
+            db.session.commit()
+            flash('Room allocation updated!', 'success')
+            return redirect(url_for('view_allocations'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+    
     rooms = Room.query.all()
     return render_template('edit_room_allocation.html', allocation=alloc, rooms=rooms)
-
-# --- REST API: User ---
-@app.route('/api/users', methods=['GET', 'POST'])
-def api_users():
-    if request.method == 'GET':
-        return jsonify([u.to_dict() for u in User.query.all()])
-    data = request.json
-    user = User(
-        email=data['email'],
-        first_name=data['first_name'],
-        last_name=data['last_name'],
-        roll_number=data.get('roll_number'),
-        is_staff=data.get('is_staff', False),
-        is_superuser=data.get('is_superuser', False),
-    )
-    user.set_password(data['password'])
-    db.session.add(user)
-    db.session.commit()
-    return jsonify(user.to_dict()), 201
-
-@app.route('/api/users/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def api_user(id):
-    user = User.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(user.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        user.email = data.get('email', user.email)
-        user.first_name = data.get('first_name', user.first_name)
-        user.last_name = data.get('last_name', user.last_name)
-        user.roll_number = data.get('roll_number', user.roll_number)
-        user.is_staff = data.get('is_staff', user.is_staff)
-        user.is_superuser = data.get('is_superuser', user.is_superuser)
-        if 'password' in data:
-            user.set_password(data['password'])
-        db.session.commit()
-        return jsonify(user.to_dict())
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({'message': 'User deleted'})
-
-# --- REST API: StudentProfile ---
-@app.route('/api/student_profiles', methods=['GET', 'POST'])
-def api_student_profiles():
-    if request.method == 'GET':
-        return jsonify([p.to_dict() for p in StudentProfile.query.all()])
-    data = request.json
-    profile = StudentProfile(
-        user_id=data['user_id'],
-        contact_number=data.get('contact_number'),
-        profile_picture=data.get('profile_picture'),
-        bio=data.get('bio')
-    )
-    db.session.add(profile)
-    db.session.commit()
-    return jsonify(profile.to_dict()), 201
-
-@app.route('/api/student_profiles/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def api_student_profile(id):
-    profile = StudentProfile.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(profile.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        profile.contact_number = data.get('contact_number', profile.contact_number)
-        profile.profile_picture = data.get('profile_picture', profile.profile_picture)
-        profile.bio = data.get('bio', profile.bio)
-        db.session.commit()
-        return jsonify(profile.to_dict())
-    db.session.delete(profile)
-    db.session.commit()
-    return jsonify({'message': 'Student profile deleted'})
-
-# --- REST API: Hostel ---
-@app.route('/api/hostels', methods=['GET', 'POST'])
-def api_hostels():
-    if request.method == 'GET':
-        return jsonify([h.to_dict() for h in Hostel.query.all()])
-    data = request.json
-    hostel = Hostel(
-        name=data['name'],
-        total_floors=data['total_floors'],
-        main_image=data.get('main_image'),
-        features=data.get('features')
-    )
-    db.session.add(hostel)
-    db.session.commit()
-    return jsonify(hostel.to_dict()), 201
-
-@app.route('/api/hostels/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def api_hostel(id):
-    hostel = Hostel.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(hostel.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        hostel.name = data.get('name', hostel.name)
-        hostel.total_floors = data.get('total_floors', hostel.total_floors)
-        hostel.main_image = data.get('main_image', hostel.main_image)
-        hostel.features = data.get('features', hostel.features)
-        db.session.commit()
-        return jsonify(hostel.to_dict())
-    db.session.delete(hostel)
-    db.session.commit()
-    return jsonify({'message': 'Hostel deleted'})
-
-# --- REST API: Room ---
-@app.route('/api/rooms', methods=['GET', 'POST'])
-def api_rooms():
-    if request.method == 'GET':
-        return jsonify([r.to_dict() for r in Room.query.all()])
-    data = request.json
-    room = Room(
-        hostel_id=data['hostel_id'],
-        floor=data['floor'],
-        room_number=data['room_number'],
-        room_type=data['room_type'],
-        ac_type=data['ac_type'],
-        total_beds=data['total_beds'],
-        occupied_beds=data.get('occupied_beds', 0),
-        price=data['price'],
-        amenities=data.get('amenities')
-    )
-    db.session.add(room)
-    db.session.commit()
-    return jsonify(room.to_dict()), 201
-
-@app.route('/api/rooms/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def api_room(id):
-    room = Room.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(room.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        room.hostel_id = data.get('hostel_id', room.hostel_id)
-        room.floor = data.get('floor', room.floor)
-        room.room_number = data.get('room_number', room.room_number)
-        room.room_type = data.get('room_type', room.room_type)
-        room.ac_type = data.get('ac_type', room.ac_type)
-        room.total_beds = data.get('total_beds', room.total_beds)
-        room.occupied_beds = data.get('occupied_beds', room.occupied_beds)
-        room.price = data.get('price', room.price)
-        room.amenities = data.get('amenities', room.amenities)
-        db.session.commit()
-        return jsonify(room.to_dict())
-    db.session.delete(room)
-    db.session.commit()
-    return jsonify({'message': 'Room deleted'})
-
-# --- REST API: Allocation ---
-@app.route('/api/allocations', methods=['GET', 'POST'])
-def api_allocations():
-    if request.method == 'GET':
-        return jsonify([a.to_dict() for a in Allocation.query.all()])
-    data = request.json
-    alloc = Allocation(
-        user_id=data['user_id'],
-        room_id=data['room_id'],
-        status=data.get('status', 'pending')
-    )
-    db.session.add(alloc)
-    db.session.commit()
-    return jsonify(alloc.to_dict()), 201
-
-@app.route('/api/allocations/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def api_allocation(id):
-    alloc = Allocation.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(alloc.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        alloc.user_id = data.get('user_id', alloc.user_id)
-        alloc.room_id = data.get('room_id', alloc.room_id)
-        alloc.status = data.get('status', alloc.status)
-        db.session.commit()
-        return jsonify(alloc.to_dict())
-    db.session.delete(alloc)
-    db.session.commit()
-    return jsonify({'message': 'Allocation deleted'})
-
-# --- REST API: ComplaintMaintenance ---
-@app.route('/api/complaints', methods=['GET', 'POST'])
-def api_complaints():
-    if request.method == 'GET':
-        return jsonify([c.to_dict() for c in ComplaintMaintenance.query.all()])
-    data = request.json
-    complaint = ComplaintMaintenance(
-        user_id=data['user_id'],
-        request_type=data['request_type'],
-        room_number=data['room_number'],
-        category=data['category'],
-        details=data['details'],
-        status=data.get('status', 'pending')
-    )
-    db.session.add(complaint)
-    db.session.commit()
-    return jsonify(complaint.to_dict()), 201
-
-@app.route('/api/complaints/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def api_complaint(id):
-    complaint = ComplaintMaintenance.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(complaint.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        complaint.user_id = data.get('user_id', complaint.user_id)
-        complaint.request_type = data.get('request_type', complaint.request_type)
-        complaint.room_number = data.get('room_number', complaint.room_number)
-        complaint.category = data.get('category', complaint.category)
-        complaint.details = data.get('details', complaint.details)
-        complaint.status = data.get('status', complaint.status)
-        db.session.commit()
-        return jsonify(complaint.to_dict())
-    db.session.delete(complaint)
-    db.session.commit()
-    return jsonify({'message': 'Complaint deleted'})
-
-# --- REST API: Feedback ---
-@app.route('/api/feedbacks', methods=['GET', 'POST'])
-def api_feedbacks():
-    if request.method == 'GET':
-        return jsonify([f.to_dict() for f in Feedback.query.all()])
-    data = request.json
-    feedback = Feedback(
-        user_id=data.get('user_id'),
-        environment_rating=data['environment_rating'],
-        service_rating=data['service_rating'],
-        comments=data['comments'],
-        hostel=data['hostel'],
-        submitted_at=datetime.strptime(data['submitted_at'], '%Y-%m-%d %H:%M:%S') if 'submitted_at' in data else datetime.utcnow()
-    )
-    db.session.add(feedback)
-    db.session.commit()
-    return jsonify(feedback.to_dict()), 201
-
-@app.route('/api/feedbacks/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def api_feedback(id):
-    feedback = Feedback.query.get_or_404(id)
-    if request.method == 'GET':
-        return jsonify(feedback.to_dict())
-    if request.method == 'PUT':
-        data = request.json
-        feedback.user_id = data.get('user_id', feedback.user_id)
-        feedback.environment_rating = data.get('environment_rating', feedback.environment_rating)
-        feedback.service_rating = data.get('service_rating', feedback.service_rating)
-        feedback.comments = data.get('comments', feedback.comments)
-        feedback.hostel = data.get('hostel', feedback.hostel)
-        if 'submitted_at' in data:
-            feedback.submitted_at = datetime.strptime(data['submitted_at'], '%Y-%m-%d %H:%M:%S')
-        db.session.commit()
-        return jsonify(feedback.to_dict())
-    db.session.delete(feedback)
-    db.session.commit()
-    return jsonify({'message': 'Feedback deleted'})
-
 
 @app.route("/api/routes", methods=["GET"])
 def list_routes():
@@ -1558,4 +1486,3 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-

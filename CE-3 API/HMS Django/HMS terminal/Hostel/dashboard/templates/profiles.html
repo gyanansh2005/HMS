@@ -1,0 +1,37 @@
+{% extends 'home.html' %}
+{% block content %}
+    <h2>Manage Profiles</h2>
+    <form method="post">
+        {% csrf_token %}
+        <label>User ID</label>
+        <input type="number" name="user_id" required>
+        <label>Contact Number</label>
+        <input type="text" name="contact_number">
+        <label>Profile Picture URL</label>
+        <input type="url" name="profile_picture">
+        <label>Bio</label>
+        <textarea name="bio"></textarea>
+        <button type="submit">Save Profile</button>
+    </form>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>User ID</th>
+            <th>Contact Number</th>
+            <th>Bio</th>
+            <th>Actions</th>
+        </tr>
+        {% for profile in profiles %}
+            <tr>
+                <td>{{ profile.id }}</td>
+                <td>{{ profile.user_id }}</td>
+                <td>{{ profile.contact_number|default:'N/A' }}</td>
+                <td>{{ profile.bio|default:'N/A' }}</td>
+                <td>
+                    <a href="{% url 'profiles' %}?id={{ profile.id }}">Edit</a>
+                    <a href="{% url 'delete_profile' profile.id %}" onclick="return confirm('Are you sure?')">Delete</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

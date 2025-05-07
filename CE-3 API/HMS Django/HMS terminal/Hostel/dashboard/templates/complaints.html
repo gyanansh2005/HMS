@@ -1,0 +1,52 @@
+{% extends 'home.html' %}
+{% load static %}
+
+{% block title %}Manage Complaints - HMS{% endblock %}
+
+{% block content %}
+    <h2>Manage Complaints</h2>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" value="{{ request.user.id }}">
+        <label>Request Type</label>
+        <select name="request_type" required>
+            <option value="complaint">Complaint</option>
+            <option value="maintenance">Maintenance</option>
+        </select>
+        <label>Room Number</label>
+        <input type="text" name="room_number" required>
+        <label>Category</label>
+        <input type="text" name="category" required>
+        <label>Details</label>
+        <textarea name="details" required></textarea>
+        <label>Status</label>
+        <select name="status">
+            <option value="pending">Pending</option>
+            <option value="resolved">Resolved</option>
+        </select>
+        <button type="submit">Save Complaint</button>
+    </form>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Room</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {% for complaint in complaints %}
+            <tr>
+                <td>{{ complaint.id }}</td>
+                <td>{{ complaint.request_type }}</td>
+                <td>{{ complaint.room_number }}</td>
+                <td>{{ complaint.category }}</td>
+                <td>{{ complaint.status }}</td>
+                <td>
+                    <a href="{% url 'complaints' %}?id={{ complaint.id }}">Edit</a>
+                    <a href="{% url 'delete_complaint' complaint.id %}" onclick="return confirm('Are you sure?')">Delete</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

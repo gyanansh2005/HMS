@@ -1,0 +1,71 @@
+{% extends 'home.html'%}
+{% block content %}
+    <h2>Manage Room Allocations</h2>
+    <h3>Available Rooms (Hostel ID: 1, Floor: 0)</h3>
+    <table>
+        <tr>
+            <th>Room Number</th>
+            <th>Type</th>
+            <th>Beds Left</th>
+            <th>AC Type</th>
+            <th>Price</th>
+        </tr>
+        {% for room_type, rooms in rooms.available.items %}
+            {% for room in rooms %}
+                <tr>
+                    <td>{{ room.number }}</td>
+                    <td>{{ room_type }}</td>
+                    <td>{{ room.beds_left }}</td>
+                    <td>{{ room.ac_type }}</td>
+                    <td>{{ room.price }}</td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </table>
+    <h3>Create/Update Allocation</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" value="{{ request.user.id }}">
+        <label>Room ID</label>
+        <input type="number" name="room_id" required>
+        <label>Room Number</label>
+        <input type="text" name="room_number" required>
+        <label>Room Type</label>
+        <input type="text" name="room_type" required>
+        <label>Hostel ID</label>
+        <input type="number" name="hostel_id" required>
+        <label>Status</label>
+        <select name="status">
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+        <button type="submit">Save Allocation</button>
+    </form>
+    <h3>Booked Rooms</h3>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>User ID</th>
+            <th>Room Number</th>
+            <th>Room Type</th>
+            <th>Hostel ID</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {% for allocation in allocations %}
+            <tr>
+                <td>{{ allocation.id }}</td>
+                <td>{{ allocation.user_id }}</td>
+                <td>{{ allocation.room_number }}</td>
+                <td>{{ allocation.room_type }}</td>
+                <td>{{ allocation.hostel_id }}</td>
+                <td>{{ allocation.status }}</td>
+                <td>
+                    <a href="{% url 'allocations' %}?id={{ allocation.id }}">Edit</a>
+                    <a href="{% url 'delete_allocation' allocation.id %}" onclick="return confirm('Are you sure?')">Delete</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

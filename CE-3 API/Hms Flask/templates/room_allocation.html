@@ -13,10 +13,10 @@
     {% block content %}
     <div class="container">
         <h2>Room Allocation</h2>
-        <form id="room-allocation-form">
+        <form id="room-allocation-form" method="POST" action="/room_allocation">
             <div class="form-group">
                 <label for="hostel">Hostel:</label>
-                <select name="hostel" id="hostel" class="form-control" required>
+                <select name="hostel_id" id="hostel" class="form-control" required>
                     {% for hostel in hostels %}
                         <option value="{{ hostel.id }}">{{ hostel.name }}</option>
                     {% endfor %}
@@ -38,8 +38,8 @@
                 <input type="text" name="student-roll-no" id="student-roll-no" class="form-control" 
                        value="{{ current_user.roll_number }}" readonly>
             </div>
-            <input type="hidden" name="room-number" id="room-number">
-            <input type="hidden" name="room-type" id="room-type">
+            <input type="hidden" name="room_number" id="room-number">
+            <input type="hidden" name="room_type" id="room-type">
             <button type="submit" class="btn btn-primary mt-2">Book Room</button>
         </form>
 
@@ -116,7 +116,7 @@
             fetch(`/api/get_available_rooms?hostel_id=${hostelId}&floor=${selectedFloor}`)
                 .then(response => response.json())
                 .then(data => {
-                    renderRooms('four-sharing-grid', data.available.four, data.booked, 'four');
+                    renderRooms('four-sharing-grid', data.available.four, data.booked, 'four'); 
                     renderRooms('double-sharing-grid', data.available.double, data.booked, 'double');
                     renderRooms('single-seater-grid', data.available.single, data.booked, 'single');
                 })
@@ -126,65 +126,142 @@
         }
 
         function renderRooms(gridId, rooms, bookedRooms, roomType) {
-            const grid = document.getElementById(gridId);
-            grid.innerHTML = '';
-            if ((!rooms || rooms.length === 0) && (!bookedRooms || bookedRooms.length === 0)) {
-                grid.innerHTML = '<span style="color:gray;">No available rooms</span>';
-                return;
-            }
-            // Show available rooms
-            rooms.forEach(room => {
-                const div = document.createElement('div');
-                div.className = 'room available';
-                div.title = `Room ${room.number} (${room.beds_left} beds left)`;
-                div.innerHTML = `<span>Room ${room.number}</span> <span class="badge">${room.beds_left} left</span>`;
-                div.dataset.roomNumber = room.number;
-                div.dataset.roomType = roomType;
-                div.onclick = function() {
-                    if (selectedRoom) selectedRoom.classList.remove('selected');
-                    selectedRoom = div;
-                    selectedRoomType = roomType;
-                    div.classList.add('selected');
-                    document.getElementById('room-number').value = room.number;
-                    document.getElementById('room-type').value = roomType;
-                };
-                grid.appendChild(div);
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+    if ((!rooms || rooms.length === 0) && (!bookedRooms || bookedRooms.length === 0)) {
+        grid.innerHTML = '<span style="color:gray;">No available rooms</span>';
+        return;
+    }
+    
+    rooms.forEach(room => {
+        const div = document.createElement('div');
+        div.className = 'room available';
+        div.title = `Room ${room.number} (${room.beds_left} beds left)`;
+        div.innerHTML = `<span>Room ${room.number}</span> <span class="badge">${room.beds_left} left</span>`;
+        div.dataset.roomNumber = room.number;
+        div.dataset.roomType = roomType;
+        div.onclick = function() {
+            if (selectedRoom) selectedRoom.classList.remove('selected');
+            selectedRoom = div;
+            selectedRoomType = roomType;
+            div.classList.add('selected');
+            
+            // Ensure room number is stored as a string
+            document.getElementById('room-number').value = String(room.number);
+            document.getElementById('room-type').value = roomType;
+            
+            console.log('Selected room:', {
+                number: room.number,
+                type: roomType,
+                formValues: {
+                    room_number: document.getElementById('room-number').value,
+                    room_type: document.getElementById('room-type').value
+                }
             });
-            // Show booked rooms
-            if (bookedRooms && bookedRooms.length > 0) {
-                bookedRooms.forEach(roomNum => {
-                    const div = document.createElement('div');
-                    div.className = 'room booked';
-                    div.title = `Room ${roomNum} (Full)`;
-                    div.innerHTML = `<span>Room ${roomNum}</span> <span class="badge badge-danger">Full</span>`;
-                    grid.appendChild(div);
-                });
-            }
-        }
+        };
+        grid.appendChild(div);
+    });
+    
+    if (bookedRooms && bookedRooms.length > 0) {
+        bookedRooms.forEach(roomNum => {
+            const div = document.createElement('div');
+            div.className = 'room booked';
+            div.title = `Room ${roomNum} (Full)`;
+            div.innerHTML = `<span>Room ${roomNum}</span> <span class="badge badge-danger">Full</span>`;
+            grid.appendChild(div);
+        });
+    }
+}
 
         document.getElementById("room-allocation-form").addEventListener("submit", function (event) {
-            event.preventDefault();
-            if (!selectedRoom) {
-                alert("Please select a room first.");
-                return;
-            }
-            const formData = new FormData(event.target);
-            fetch("/room_allocation", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                if (data.success) {
-                    fetchAvailableRooms();
-                    if (selectedRoom) selectedRoom.classList.remove('selected');
-                    selectedRoom = null;
-                    selectedRoomType = null;
+    event.preventDefault();
+    
+    const roomNumber = document.getElementById('room-number').value;
+    const roomType = document.getElementById('room-type').value;
+    
+    if (!roomNumber || !roomType) {
+        alert("Please select a room first.");
+        return;
+    }
+    
+    const hostelId = document.getElementById('hostel').value;
+    const floor = document.getElementById('floor').value;
+    
+    if (!hostelId || !floor) {
+        alert("Please select a valid hostel and floor.");
+        return;
+    }
+    
+    const formData = new FormData(this);
+    
+    // Create a JSON object for cleaner logging
+    const formDataObj = {};
+    formData.forEach((value, key) => {
+        formDataObj[key] = value;
+    });
+    
+    // Ensure the correct parameter names are used
+    if (formDataObj.hasOwnProperty('hostel') && !formDataObj.hasOwnProperty('hostel_id')) {
+        formDataObj.hostel_id = formDataObj.hostel;
+        delete formDataObj.hostel;
+    }
+    
+    console.log('Form data being sent:', formDataObj);
+
+    // Send data as JSON
+    fetch("/room_allocation", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formDataObj)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                console.log('Error response:', errorData);
+                throw new Error(JSON.stringify(errorData));
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        alert(data.message || "Room allocated successfully!");
+        if (data.success) {
+            fetchAvailableRooms();
+            if (selectedRoom) selectedRoom.classList.remove('selected');
+            selectedRoom = null;
+            selectedRoomType = null;
+            document.getElementById('room-number').value = '';
+            document.getElementById('room-type').value = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        try {
+            const errorData = JSON.parse(error.message);
+            if (errorData.message) {
+                if (typeof errorData.message === 'object') {
+                    // Handle validation errors
+                    let errorMessage = "Validation errors:\n";
+                    Object.entries(errorData.message).forEach(([field, msg]) => {
+                        errorMessage += `- ${field}: ${msg}\n`;
+                    });
+                    alert(errorMessage);
+                } else {
+                    alert(errorData.message);
                 }
-            })
-            .catch(error => alert("Error allocating room."));
-        });
+            } else {
+                alert("Error allocating room.");
+            }
+        } catch (e) {
+            alert("Error allocating room.");
+        }
+    });
+});
+    
     </script>
 
     <style>

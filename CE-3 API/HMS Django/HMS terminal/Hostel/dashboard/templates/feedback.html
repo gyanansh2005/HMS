@@ -1,0 +1,38 @@
+{% extends 'home.html' %}
+{% block content %}
+    <h2>Manage Feedback</h2>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" value="{{ request.user.id }}">
+        <label>Environment Rating</label>
+        <input type="text" name="environment_rating" required>
+        <label>Service Rating</label>
+        <input type="number" name="service_rating" min="1" max="5" required>
+        <label>Comments</label>
+        <textarea name="comments" required></textarea>
+        <label>Hostel</label>
+        <input type="text" name="hostel" required>
+        <button type="submit">Save Feedback</button>
+    </form>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Environment Rating</th>
+            <th>Service Rating</th>
+            <th>Hostel</th>
+            <th>Actions</th>
+        </tr>
+        {% for feedback in feedbacks %}
+            <tr>
+                <td>{{ feedback.id }}</td>
+                <td>{{ feedback.environment_rating }}</td>
+                <td>{{ feedback.service_rating }}</td>
+                <td>{{ feedback.hostel }}</td>
+                <td>
+                    <a href="{% url 'feedback' %}?id={{ feedback.id }}">Edit</a>
+                    <a href="{% url 'delete_feedback' feedback.id %}" onclick="return confirm('Are you sure?')">Delete</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
