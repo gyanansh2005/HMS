@@ -87,7 +87,7 @@ def dashboard(request):
         elif resource == 'allocation':
             serializer = RoomAllocationSerializer(data=data)
             data['user_id'] = request.user.id
-            endpoint = f"/api/v1/room_allocation/{data.get('id')}" if 'id' in data else '/api/v1/room_allocation'
+            endpoint = f"/api/v1/allocations/{data.get('id')}" if 'id' in data else '/api/v1/allocations'
         
         if resource != 'user' and serializer and serializer.is_valid():
             logger.debug(f"Sending data to {endpoint}: {serializer.validated_data}")
@@ -150,7 +150,7 @@ def dashboard(request):
     users = api_get('/api/v1/users',request)or []
     complaints = api_get('/api/v1/complaints', request) or []
     feedbacks = api_get('/api/v1/feedbacks', request) or []
-    allocations = api_get('/api/v1/room_allocation', request) or []
+    allocations = api_get('/api/v1/allocations', request) or []
     return render(request, 'dashboard.html', {
         'user_count': len(users),
         'complaint_count': len(complaints),
@@ -276,11 +276,11 @@ def allocations(request):
         if serializer.is_valid():
             data = serializer.validated_data
             data['user_id'] = request.user.id
-            logger.debug(f"Sending data to /api/v1/room_allocation: {data}")
+            logger.debug(f"Sending data to /api/v1/allocations: {data}")
             if 'id' in request.POST:
-                response = api_put(f"/api/v1/room_allocation/{request.POST['id']}", data, request)
+                response = api_put(f"/api/v1/allocations/{request.POST['id']}", data, request)
             else:
-                response = api_post('/api/v1/room_allocation', data, request)
+                response = api_post('/api/v1/allocations', data, request)
             if response:
                 if 'error' in response:
                     logger.error(f"API error saving allocation: {response['error']}")
@@ -288,13 +288,13 @@ def allocations(request):
                 else:
                     messages.success(request, 'Allocation saved successfully!')
                 return redirect('allocations')
-            logger.error(f"API call to /api/v1/room_allocation failed, response is None")
+            logger.error(f"API call to /api/v1/allocations failed, response is None")
             messages.error(request, 'Failed to save allocation: API call returned no response. Check server logs.')
             return redirect('allocations')
         logger.error(f"Serializer errors for allocation: {serializer.errors}")
         messages.error(request, serializer.errors)
         return redirect('allocations')
-    allocations = api_get('/api/v1/room_allocation', request) or []
+    allocations = api_get('/api/v1/allocations', request) or []
     rooms = api_get('/api/v1/available_rooms?hostel_id=1&floor=0', request) or {}
     return render(request, 'allocations.html', {'allocations': allocations, 'rooms': rooms})
 
@@ -338,7 +338,7 @@ def delete_feedback(request, id):
 @login_required
 @api_view(['DELETE'])
 def delete_allocation(request, id):
-    response = api_delete(f"/api/v1/room_allocation/{id}", request)
+    response = api_delete(f"/api/v1/allocations/{id}", request)
     if response:
         if 'error' in response:
             logger.error(f"API error deleting allocation: {response['error']}")
@@ -346,6 +346,6 @@ def delete_allocation(request, id):
         else:
             messages.success(request, 'Allocation deleted successfully!')
         return redirect('allocations')
-    logger.error(f"API delete call to /api/v1/room_allocation/{id} failed")
+    logger.error(f"API delete call to /api/v1/allocations/{id} failed")
     messages.error(request, 'Failed to delete allocation: API call returned no response')
     return redirect('allocations')
